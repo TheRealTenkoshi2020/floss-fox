@@ -1,0 +1,26 @@
+{
+  "app": "floss-fox",
+  "schema": 1,
+  "exported": "2026-10-10T22:00:00.000Z",
+  "projects": [
+    {
+      "id": "fixture-v1-project",
+      "name": "V1 fixture",
+      "notes": "made with schema 1",
+      "buyBrand": "sullivans",
+      "items": [
+        {"code": "310", "qty": 2, "stated": true, "src": ["310 x2"]},
+        {"code": "415", "qty": null, "stated": true, "src": ["415 x?"]},
+        {"code": "817", "qty": 1, "stated": false, "src": ["817"]}
+      ],
+      "decisions": {
+        "310": {"status": "buy", "owned": 0.5, "anchor": null},
+        "415": {"status": "check", "owned": null, "anchor": null},
+        "817": {"status": "have", "owned": null, "anchor": null}
+      },
+      "purchased": {"sullivans:45053": true},
+      "created": "2026-10-10T21:00:00.000Z",
+      "updated": "2026-10-10T21:30:00.000Z"
+    }
+  ]
+}
