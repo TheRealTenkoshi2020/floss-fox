@@ -46,8 +46,20 @@ footer{color:var(--mut);font-size:.8rem}footer a{color:#9a4522}
 .printonly{display:none}#copyfallback{width:100%;min-height:120px;margin-top:6px}
 @media(max-width:640px){.totals tr{display:grid;grid-template-columns:5.5em 1fr;gap:8px;border:0;padding:3px 0}.totals td{padding:0}.lbl{display:block;font-size:.75rem;color:var(--mut);font-weight:600;margin-top:4px}}
 @media print{.printonly{display:block}#review,.totals,.bagwarn{display:block!important}}
+.tabs{display:flex;gap:8px;margin:0 0 14px}.tabs button{background:var(--card);border:1.5px solid var(--line);color:var(--txt);min-height:44px}.tabs button[aria-pressed=true]{background:var(--lime);border-color:var(--lime);color:#fff}
+button,.filebtn,select,input[type=text],input[type=number]{min-height:44px}.filebtn{display:inline-flex;align-items:center;border-radius:999px;padding:0 18px;font-weight:600;cursor:pointer}
+input[type=text],input[type=number],.pnotes{font:inherit;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff;color:var(--txt);max-width:100%}
+.saveproj{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}.saveproj input{flex:1;min-width:180px}
+.projlist{list-style:none;padding:0;margin:0 0 10px}.projlist li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}.seg label{display:inline-flex;align-items:center;justify-content:center;min-width:56px;min-height:44px;padding:0 8px;cursor:pointer;font-weight:600;font-size:.9rem}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}.seg input:checked+span{text-decoration:underline}.seg label:has(input:checked){background:var(--blush)}.seg label:has(input:focus-visible){outline:3px solid #e9a77f;outline-offset:-3px}
+.ptable td{vertical-align:top}.qbox{width:5.5em}.unk{color:#a3361b;font-weight:700}.ready{font-size:1.05rem;padding:10px 12px;border-radius:12px;background:#f1f5ee;border:1px solid #c5d3bf}.ready.no{background:#fdf1ea;border-color:#e9b9a4}
+.plan h3{margin:14px 0 6px;font-size:1rem}.plan ul{margin:0;padding-left:0;list-style:none}.plan li{padding:4px 0}
+@media print{#projListCard,#storeMsg{display:none!important}#projEdit{border:0}}
 </style></head><body><div class="wrap">
 <header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><h1 id="appname"></h1><p>Paste a DMC thread list → see chart-listed Anchor and Sullivans equivalents, then build a printable shopping list in the brand you choose. Runs in your browser; once loaded it keeps working without a connection.</p></div></header>
+<nav class="tabs noprint" aria-label="Sections"><button type="button" id="tabConvert" aria-pressed="true">Quick convert</button><button type="button" id="tabProjects" aria-pressed="false">My projects <span id="projCount"></span></button></nav>
+<div id="convertView">
 <div class="card noprint">
 <label for="inp"><b>Your DMC list</b></label>
 <textarea id="inp" placeholder="310&#10;DMC 321 Red x2&#10;3865, 762, B5200"></textarea>
@@ -69,7 +81,19 @@ footer{color:var(--mut);font-size:.8rem}footer a{color:#9a4522}
 <div class="totals" id="totals"></div>
 <p class="bagwarn">⚠️ Avoid unbranded "DMC-compatible" bags of floss. In one stitcher's wash test a no-name brand bled. Test a skein before a big project.</p>
 <div class="row noprint"><button class="pri" onclick="print()">Print list</button><button class="sec" id="copy">Copy as text</button></div>
+<div class="saveproj noprint"><label for="newProjName"><b>Save as a project</b> <small class="mut">(to mark Have / Check / Buy and keep a shopping list)</small></label><div class="row"><input id="newProjName" type="text" maxlength="100" placeholder="Project name, e.g. Fox sampler"><button class="sec" id="saveProj" type="button">Save project</button></div></div>
 <p id="copymsg" class="hint" role="status" aria-live="polite"></p><textarea id="copyfallback" class="noprint" hidden readonly aria-label="Shopping list text to copy"></textarea>
+</div>
+</div>
+<div id="projectsView" hidden>
+<div id="storeMsg" class="errbox" role="alert" hidden></div>
+<div class="card noprint" id="projListCard"><h2>My projects</h2>
+<p class="hint">Projects are saved only in this browser on this device. They aren't synced or backed up, and clearing browser data (or the browser itself) can remove them. Download a backup now and then; keeping it is up to you.</p>
+<ul id="projList" class="projlist"></ul>
+<div class="row"><button class="sec" type="button" id="newEmpty">New empty project</button><button class="sec" type="button" id="backupBtn">Download backup (JSON)</button><label class="sec filebtn" for="restoreFile">Restore backup…</label><input type="file" id="restoreFile" accept=".json,application/json" class="sr"></div>
+<div id="restorePanel" class="notes" hidden></div>
+<p id="projStatus" class="hint" role="status" aria-live="polite"></p></div>
+<div class="card" id="projEdit" hidden></div>
 </div>
 <footer><p><b>Data:</b> DMC→Anchor pairings from the <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_anchor">Cyberstitchers DMC to Anchor chart</a> (downloaded 10 Oct 2026): <span id="cov"></span>. Cyberstitchers notes pairings "may not be an exact match", and its swatches are DMC colours, so Floss Fox shows DMC swatches only and no longer computes colour-distance alternates. Sullivans numbers come from <a href="https://www.sullivansusa.net/wp-content/uploads/2021/09/Conversion-Chart-from-DMC.pdf">Sullivans USA's official DMC conversion chart</a>, cross-checked against <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_sullivans">Cyberstitchers</a> (all 454 overlapping codes agree): <span id="sullcov"></span>. Brand notes summarise stitcher reviews and tests (<a href="https://sirithre.com/cxc-floss-how-does-it-compare-to-dmc/">Sirithre</a>, <a href="https://lordlibidan.com/are-cheap-embroidery-threads-worth-it/">Lord Libidan</a>, <a href="https://www.thread-bare.com/blog/5-cross-stitch-floss-brands-compared">Thread Bare</a>, <a href="https://stitchmate.app/tools/sullivans-color-chart">Stitchmate</a>). Check real skeins or a shade card before buying. Unofficial; not affiliated with DMC, Anchor, Sullivans or CXC.</p>
 <p><b>Prices</b> (USD estimates, checked <span id="pdate"></span>): <span id="psrc"></span>. Sources: <a href="https://business.walmart.com/browse/arts-crafts/embroidery-floss/2809790_6337649_8167029">Walmart Business</a>, <a href="https://herrschners.com/dmc-6-strand-embroidery-floss/">Herrschners</a>, <a href="https://www.lovecrafts.com/en-us/p/dmc-6-strand-embroidery-floss?sku=10185707">LoveCrafts</a>, <a href="https://artpatt.com/blog/dmc-vs-anchor-floss-comparison">ArtPatt</a>, <a href="https://www.amazon.com/dp/B0036ZWESW">Amazon (Sullivans)</a>.</p>
@@ -172,4 +196,5 @@ $('sullcov').textContent=Object.keys(SULL).length+' of '+Object.keys(DMC).length
 $('cov').textContent=Object.keys(DMC).length+' DMC codes, '+Object.values(DMC).filter(e=>e.anchor.length).length+' with at least one chart Anchor match';
 $('psrc').textContent=['dmc','anchor','sullivans','cxcSet'].map(k=>k+': '+PRICES[k].src).join(' · ');$('pdate').textContent=PRICES.checked;
 if(location.search==="?sample")$('sample').onclick();
-</script></body></html>
+</script>
+<script src="projects.js"></script></body></html>
