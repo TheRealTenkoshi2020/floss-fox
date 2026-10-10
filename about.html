@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>About · Floss Fox</title><meta name="description" content="About for Floss Fox, a free DMC to Anchor floss converter.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="canonical" href="https://meat-hammer2020.github.io/floss-fox/about.html"><style>
+:root{--bg:#f7f1e6;--card:#fffaf2;--line:#e6dccb;--txt:#3b2f28;--mut:#6f6257;--lime:#b4532a;--pink:#5f7a5c;--blush:#f3d9cf}
+*{box-sizing:border-box}body{margin:0;background:var(--bg) radial-gradient(#e9dfcd 1px,transparent 1px) 0 0/14px 14px;color:var(--txt);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+header h1{margin:0;font-size:1.8rem}header h1 span{color:var(--lime)}header p{margin:4px 0 18px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 10px #7a4b2a12;padding:16px;margin-bottom:16px}
+textarea{width:100%;min-height:150px;background:#fff;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:15px ui-monospace,monospace}
+textarea:focus{outline:2px solid var(--lime)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+button{border:0;border-radius:999px;padding:10px 18px;font-weight:600;font-size:15px;cursor:pointer}
+.pri{background:var(--lime);color:#fff}.pri:hover{background:#9a4522}button:focus-visible{outline:3px solid #e9a77f;outline-offset:2px}.sec{background:var(--card);color:var(--pink);border:1.5px solid var(--pink)}.sec:hover{background:#eef2ea}
+.hint{color:var(--mut);font-size:.88rem;margin:6px 0 0}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--mut);font-weight:600;font-size:.85rem}
+.sw{display:inline-block;width:22px;height:22px;border-radius:6px;border:1px solid #0003;vertical-align:middle;margin-right:6px}
+.alt{display:inline-flex;align-items:center;margin:2px 10px 2px 0;font-size:.9rem;color:var(--mut)}
+.tag{font-size:.75rem;padding:1px 7px;border-radius:999px;background:var(--blush);color:#7a3a22;margin-left:4px}
+.warn{color:#a3361b;font-weight:600}header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header .logo{width:52px;height:52px;flex:none}header .t{flex:1;min-width:200px}h2::before{content:'🦊 ';font-size:.9em}footer .paw{color:var(--lime)}h2{margin:0 0 10px;font-size:1.15rem}h2 small{color:var(--mut);font-weight:400}
+ul.shop{list-style:none;padding:0;margin:0;columns:2}ul.shop li{padding:4px 0;break-inside:avoid}
+ul.shop input{accent-color:var(--pink);width:18px;height:18px;vertical-align:middle;margin-right:6px}
+footer{color:var(--mut);font-size:.8rem}footer a{color:#9a4522}
+@media(max-width:640px){thead{display:none}tr{display:block;border-bottom:1px solid var(--line);padding:8px 0}td{display:block;border:0;padding:3px 0}ul.shop{columns:1}header h1{font-size:1.5rem}}
+@media print{h2::before{content:''}header{display:block}header .logo{display:none}body{background:#fff;color:#000}.noprint,header p,#results,footer{display:none!important}.card{border:0;background:#fff;padding:0}
+#shopcard{display:block!important}ul.shop{columns:2}.sw{border:1px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tag{color:#000;border-color:#000}}
+ .card h2::before{content:''} .card p,.card li{max-width:65ch}</style></head>
+<body><div class="wrap"><header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><h1>Floss <span>Fox</span></h1><p><a href="index.html" style="color:#9a4522">← Back to the converter</a></p></div></header>
+<div class="card"><h2>About Floss Fox</h2>
+<p>Hi, I'm Myke. I built Floss Fox as a small side project after seeing how often stitchers have DMC patterns but can only buy Anchor locally. I'm not a professional developer. I tested it with my girlfriend, who is a stitcher and kindly put up with a lot of questions about thread.</p>
+<h2>Where the data comes from</h2>
+<p>The DMC-to-Anchor pairings and colour values come from the <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_anchor">Cyberstitchers conversion charts</a>. Huge thanks to Cyberstitchers for maintaining them. The "alternates" are calculated by this page from colour distance, not taken from any chart.</p>
+<h2>Please double-check colours</h2>
+<p>Colours on screen are approximate and every screen is different. Some DMC shades have no Anchor equivalent. Before buying, compare real skeins or a printed colour card.</p>
+<h2 id="affiliates">Affiliate links</h2>
+<p>Floss Fox has no affiliate links yet. If I add them later, I'll label them clearly. Buying through them would never cost you more.</p>
+<p>Not affiliated with DMC or Anchor. Questions or corrections: <a href="https://github.com/meat-hammer2020/floss-fox/issues">open an issue on GitHub</a></p></div><footer><p><a href="index.html">Converter</a> · <a href="about.html">About</a> · <a href="privacy.html">Privacy</a></p></footer></div></body></html>

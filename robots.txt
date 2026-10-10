@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://meat-hammer2020.github.io/floss-fox/sitemap.xml
