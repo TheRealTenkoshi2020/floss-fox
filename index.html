@@ -56,6 +56,18 @@ input[type=text],input[type=number],.pnotes{font:inherit;border:1px solid var(--
 .ptable td{vertical-align:top}.qbox{width:5.5em}.unk{color:#a3361b;font-weight:700}.ready{font-size:1.05rem;padding:10px 12px;border-radius:12px;background:#f1f5ee;border:1px solid #c5d3bf}.ready.no{background:#fdf1ea;border-color:#e9b9a4}
 .plan h3{margin:14px 0 6px;font-size:1rem}.plan ul{margin:0;padding-left:0;list-style:none}.plan li{padding:4px 0}
 @media print{#projListCard,#storeMsg{display:none!important}#projEdit{border:0}}
+.cards{list-style:none;padding:0;margin:8px 0}.tcard{border:1.5px solid var(--line);border-left-width:6px;border-radius:12px;padding:8px 10px;margin:0 0 8px;background:#fff}
+.tcard.st-have,.tcard.st-received{border-left-color:#6f8f62}.tcard.st-buy{border-left-color:#b5532a}.tcard.st-awaiting{border-left-color:#c08a2e}.tcard.st-review{border-left-color:#a3361b;border-left-style:double}
+.thead{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}.tname{line-height:1.3}.ind{font-weight:700;font-size:.9rem;text-align:right}
+.thead .seg{grid-column:1}.thead .exp{grid-column:2;justify-self:end;padding:0 12px}.why{font-size:.85rem;color:#8a2f17;margin-top:4px}
+.tdet{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}.fld{margin:6px 0}.fld>label:first-child,.flbl{display:block;font-size:.8rem;font-weight:600;color:var(--mut)}.inl{margin-left:8px}
+.small{min-height:44px;font-size:.85rem}.rform{margin-top:6px}
+.psum{border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0;background:#fffdf9}.sumgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.sumgrid div{background:#f7efe6;border-radius:10px;padding:6px 8px}.sumgrid dt{font-size:.78rem;color:var(--mut)}.sumgrid dd{margin:0;font-weight:800;font-size:1.15rem}
+.jump{display:flex;flex-wrap:wrap;gap:8px}.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1.5px solid var(--line);border-radius:999px;font-weight:600;text-decoration:none;color:#8f3d1c}
+.pmore summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
+@media (min-width:700px){.thead{grid-template-columns:minmax(0,1fr) auto auto auto}.thead .seg{grid-column:auto}.thead .exp{grid-column:auto}.ind{text-align:left;min-width:12ch}}
+@media (max-width:420px){.sumgrid{grid-template-columns:repeat(2,1fr)}}
+@media print{.tcard{break-inside:avoid}}
 </style></head><body><div class="wrap">
 <header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><h1 id="appname"></h1><p>Paste a DMC thread list → see chart-listed Anchor and Sullivans equivalents, then build a printable shopping list in the brand you choose. Runs in your browser; once loaded it keeps working without a connection.</p></div></header>
 <nav class="tabs noprint" aria-label="Sections"><button type="button" id="tabConvert" aria-pressed="true">Quick convert</button><button type="button" id="tabProjects" aria-pressed="false">My projects <span id="projCount"></span></button></nav>
