@@ -61,7 +61,7 @@ footer{color:var(--mut);font-size:.8rem}footer a{color:#9a4522}
 <p><b>CXC</b> (budget brand): sold mainly as full sets. Reviewers say it uses DMC-style numbers, but Floss Fox has no verified per-colour data or set contents, so it isn't offered per colour. Poly-cotton and a bit fluffier.</p>
 <p>Metallic and variegated threads aren't substituted automatically. Colour swatches show the <i>DMC</i> colour only.</p></div></div>
 <div id="shopcard" class="card" hidden><h2><span id="shoptitle"></span> shopping list</h2>
-<div class="toggle noprint"><label for="dest"><b>Buy in:</b></label> <select id="dest"><option value="anchor">Anchor</option><option value="sullivans">Sullivans</option><option value="dmc">DMC (original)</option></select></div>
+<div class="toggle noprint"><label for="dest"><b>Buy in:</b></label> <select id="dest"><option value="sullivans" selected>Sullivans</option><option value="anchor">Anchor</option><option value="dmc">DMC (original)</option></select></div>
 <p class="printonly" id="destprint"></p>
 <p id="affdisc" class="hint" hidden>🦊 Heads up: some store links here are affiliate links. If you buy through them, Floss Fox may earn a small commission at no extra cost to you. <a href="about.html#affiliates">More info</a></p>
 <ul class="shop" id="shop"></ul>
@@ -112,7 +112,7 @@ const choice={};const checked=new Set();
 function resolve(it,dest){const c=it.code,f=fam(c);
  if(dest==='dmc')return{ok:true,to:c,prov:'original'};
  if(f!=='solid')return{ok:false,why:`${f} thread: no automatic substitution`};
- if(dest==='sullivans')return SULL[c]?{ok:true,to:SULL[c],prov:'official chart'}:{ok:false,why:'no Sullivans match in chart'};
+ if(dest==='sullivans')return SULL[c]?{ok:true,to:SULL[c],prov:'official chart'}:{ok:false,why:`no Sullivans match in chart; buy DMC ${c} instead (or switch "Buy in" to DMC)`};
  const o=DMC[c].anchor;if(!o.length)return{ok:false,why:'no Anchor match in chart'};
  const ch=choice[c];
  if(c==='WHITE'||c==='B5200')return ch?{ok:true,to:ch,prov:'your choice (disputed mapping)'}:{ok:false,why:'disputed white mapping: choose in the Matches table',review:true};
