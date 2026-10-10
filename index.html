@@ -51,7 +51,7 @@ footer{color:var(--mut);font-size:.8rem}footer a{color:#9a4522}
 <div class="card noprint">
 <label for="inp"><b>Your DMC list</b></label>
 <textarea id="inp" placeholder="310&#10;DMC 321 Red x2&#10;3865, 762, B5200"></textarea>
-<p class="hint">One colour per line, or separate with commas/semicolons. Quantity (whole skeins, 1 or more): "x2", "×2", "310x2", "2 skeins" or "(2)". No quantity = 1.</p>
+<p class="hint">One colour per line, or separate with commas/semicolons. Quantity (whole skeins, 1 or more): "x2", "×2", "310x2", "2 skeins" or "(2)". Don't know? Write "x?". No quantity is treated as 1 and marked "(assumed)".</p>
 <div class="row"><button class="pri" id="go">Convert</button><button class="sec" id="sample">Try a sample</button><button class="sec" id="clear">Clear</button></div>
 </div>
 <div id="status" class="sr" role="status" aria-live="polite"></div>
@@ -91,6 +91,7 @@ const BRAND={anchor:"Anchor",sullivans:"Sullivans",dmc:"DMC"};
 const $=id=>document.getElementById(id);
 document.title=APP_NAME;$('appname').innerHTML=APP_NAME.replace(/(\S+)$/,'<span>$1</span>');$('shoptitle').textContent=APP_NAME;$('affdisc').hidden=!SHOW_AFFILIATE_DISCLOSURE;
 const lab=c=>c==='WHITE'?'BLANC (White)':c;const disp=(d,t)=>d==='dmc'?lab(t):t;
+const qtxt=it=>it.qty===null?'? (quantity unknown)':it.qty+(it.stated===false?' (assumed)':'');const qn=q=>q===null?'?':q;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fam=c=>{const n=DMC[c].name.toLowerCase();return /metallic/.test(n)?'metallic':/variegated/.test(n)?'variegated':'solid'};
 // ---- Parsing: never partially accept a piece of input ----
@@ -101,21 +102,23 @@ function parse(text){const items=[],errs=[];
   if(!m){errs.push({t,why:'not recognised as a DMC number'});return}
   let code=m[1].toUpperCase();r=r.slice(m[0].length);
   if(code==='BLANC')code='WHITE';if(/^\d$/.test(code))code='0'+code;
-  let qty='1';const qre=[/^\s*x\s*(-?[\d.]+)/i,/\bx\s*(-?[\d.]+)/i,/\(\s*(-?[\d.]+)\s*\)/,/(-?[\d.]+)\s*(?:skeins?|sk)\b/i,/(-?[\d.]+)\s*x\b/i];
+  let qty=null;const N='(-?[\\d.]+|\\?)';const qre=[new RegExp('^\\s*x\\s*'+N,'i'),new RegExp('\\bx\\s*'+N,'i'),new RegExp('\\(\\s*'+N+'\\s*\\)'),new RegExp(N+'\\s*(?:skeins?|sk)\\b','i'),/(-?[\d.]+)\s*x\b/i,/(?:^|\s)(\?)(?=\s|$)/];
   for(const q of qre){const mm=r.match(q);if(mm){qty=mm[1];r=r.replace(mm[0],' ');break}}
   if(/\d/.test(r)){errs.push({t,why:'contains more than one number. Put each colour on its own line or separate with commas'});return}
-  if(!/^\d+$/.test(qty)||+qty<1){errs.push({t,why:`quantity "${qty}" isn't a whole number of skeins (1 or more)`});return}
+  if(/\?|\bskeins?\b|\bsk\b|\bx\b|\b(one|two|three|four|five|six|seven|eight|nine|ten|half)\b/i.test(r)){errs.push({t,why:'couldn\'t read the quantity. Use a number like "x2", or "x?" if you don\'t know'});return}
+  const stated=qty!==null;if(qty==='?')qty=null;else if(qty===null)qty='1';
+  if(qty!==null&&(!/^\d+$/.test(qty)||+qty<1)){errs.push({t,why:`quantity "${qty}" isn't a whole number of skeins (1 or more)`});return}
   if(!DMC[code]){errs.push({t,why:`DMC ${code} isn't in the chart data`});return}
-  const ex=items.find(i=>i.code===code);if(ex){ex.qty+=+qty;ex.src.push(t)}else items.push({code,qty:+qty,src:[t]})});
+  const q=qty===null?null:+qty;const ex=items.find(i=>i.code===code);if(ex){ex.qty=(ex.qty===null||q===null)?null:ex.qty+q;ex.stated=ex.stated||stated;ex.src.push(t)}else items.push({code,qty:q,stated,src:[t]})});
  return{items,errs}}
 // ---- Resolution per destination brand ----
 const choice={};const checked=new Set();
-function resolve(it,dest){const c=it.code,f=fam(c);
+function resolve(it,dest,pick){const c=it.code,f=fam(c);
  if(dest==='dmc')return{ok:true,to:c,prov:'original'};
  if(f!=='solid')return{ok:false,why:`${f} thread: no automatic substitution`};
  if(dest==='sullivans')return SULL[c]?{ok:true,to:SULL[c],prov:'official chart'}:{ok:false,why:`no Sullivans match in chart; buy DMC ${c} instead (or switch "Buy in" to DMC)`};
  const o=DMC[c].anchor;if(!o.length)return{ok:false,why:'no Anchor match in chart'};
- const ch=choice[c];
+ const ch=pick!==undefined?pick:choice[c];
  if(c==='WHITE'||c==='B5200')return ch?{ok:true,to:ch,prov:'your choice (disputed mapping)'}:{ok:false,why:'disputed white mapping: choose in the Matches table',review:true};
  if(o.length>1)return{ok:true,to:ch||o[0],prov:ch&&ch!==o[0]?'your choice of chart options':'chart option 1 of '+o.length};
  return{ok:true,to:o[0],prov:'chart'}}
@@ -133,30 +136,30 @@ function anchorCell(it){const c=it.code,o=DMC[c].anchor,f=fam(c);
 function renderTable(){const {items,errs}=state;
  $('errs').innerHTML=errs.length?`<div class="errbox"><b>Couldn't use ${errs.length} entr${errs.length>1?'ies':'y'}:</b><ul>${errs.map(e=>`<li>"${esc(e.t)}": ${esc(e.why)}</li>`).join('')}</ul></div>`:'';
  $('tbl').innerHTML=items.length?`<table><thead><tr><th>DMC</th><th>Anchor (chart)</th><th>Sullivans (official chart)</th></tr></thead><tbody>${items.map(it=>{const e=DMC[it.code],f=fam(it.code);
-  return `<tr><td>${sw(e.hex)}<b>DMC ${esc(lab(it.code))}</b> ${f!=='solid'?`<span class="tag">${f}</span>`:''}<br><small class="mut">${esc(e.name)} · ×${it.qty} · from "${it.src.map(esc).join('", "')}"</small></td>
+  return `<tr><td>${sw(e.hex)}<b>DMC ${esc(lab(it.code))}</b> ${f!=='solid'?`<span class="tag">${f}</span>`:''}<br><small class="mut">${esc(e.name)} · ×${qtxt(it)} · from "${it.src.map(esc).join('", "')}"</small></td>
   <td><span class="lbl">Anchor (chart)</span>${anchorCell(it)}</td><td><span class="lbl">Sullivans (official chart)</span>${f!=='solid'?`<span class="warn">${f}: not substituted</span>`:SULL[it.code]?`<b>${SULL[it.code]}</b>`:'<span class="warn">No match</span>'}</td></tr>`}).join('')}</tbody></table>`:'';
  document.querySelectorAll('.pick').forEach(s=>s.onchange=()=>{choice[s.dataset.code]=s.value||undefined;renderList()});
- const sk=items.reduce((a,i)=>a+i.qty,0);
+ const sk=items.reduce((a,i)=>a+(i.qty||0),0)+(items.some(i=>i.qty===null)?' + unknown':'');
  $('summary').innerHTML=items.length||errs.length?`Recognised <b>${items.length}</b> colour${items.length===1?'':'s'} (${sk} skein${sk===1?'':'s'}) · <b>${errs.length}</b> input problem${errs.length===1?'':'s'}${items.length?' · <a href="#shopcard">Jump to shopping list ↓</a>':''}`:'';
  $('results').hidden=!(items.length||errs.length);$('shopcard').hidden=!items.length}
 function buildList(){const dest=$('dest').value,groups={},review=[];
  state.items.forEach(it=>{const r=resolve(it,dest);if(!r.ok){review.push({it,r});return}
-  const g=groups[r.to]||(groups[r.to]={to:r.to,qty:0,from:[],prov:new Set()});g.qty+=it.qty;g.from.push(it.code);g.prov.add(r.prov)});
+  const g=groups[r.to]||(groups[r.to]={to:r.to,qty:0,from:[],prov:new Set()});g.qty=(g.qty===null||it.qty===null)?null:g.qty+it.qty;g.from.push(it.code);g.prov.add(r.prov)});
  return{dest,lines:Object.values(groups),review}}
-function costRows(){const n=state.items.reduce((a,i)=>a+i.qty,0);
- const row=(dest)=>{let k=0;state.items.forEach(it=>{if(fam(it.code)==='solid'&&resolve(it,dest).ok)k+=it.qty});const p=PRICES[dest];
-  if(!k)return[BRAND[dest],'No supported or priced matches; cost unknown'];
-  const v=`≈ ${rng(p.lo*k,p.hi*k)} USD`;return[BRAND[dest],k===n?`Complete: ${v}`:`Matched items only (${k} of ${n} skeins), project incomplete: ${v}; the rest unknown`]};
+function costRows(){const n=state.items.reduce((a,i)=>a+(i.qty||0),0),unk=state.items.filter(i=>i.qty===null).length;
+ const row=(dest)=>{let k=0;state.items.forEach(it=>{if(fam(it.code)==='solid'&&it.qty!==null&&resolve(it,dest).ok)k+=it.qty});const p=PRICES[dest];
+  if(!k)return[BRAND[dest],unk&&unk===state.items.length?'Quantity unknown; cost unknown':'No supported or priced matches; cost unknown'];
+  const v=`≈ ${rng(p.lo*k,p.hi*k)} USD`;const u=unk?`; ${unk} colour${unk>1?'s':''} with unknown quantity not counted`:'';return[BRAND[dest],k===n&&!unk?`Complete: ${v}`:`Matched items only (${k} of ${n} known skeins), project incomplete: ${v}; the rest unknown${u}`]};
  return[row('dmc'),row('anchor'),row('sullivans'),['CXC full set',`Set purchase ≈ $${PRICES.cxcSet.lo}–${PRICES.cxcSet.hi} USD (~${PRICES.cxcSet.colours} colours). Contents and per-colour quantities aren't verified, so coverage and shortfalls can't be checked.`]]}
 function renderList(){const L=buildList();$('destprint').textContent='Buying in: '+BRAND[L.dest];
  $('shop').innerHTML=L.lines.map(g=>{const key=L.dest+':'+g.to;const merge=g.from.length>1;
-  return `<li><label><input type="checkbox" data-key="${esc(key)}"${checked.has(key)?' checked':''}><b>${BRAND[L.dest]} ${esc(disp(L.dest,g.to))}</b> × ${g.qty} <small>(for DMC ${g.from.map(c=>esc(lab(c))).join(', ')} · ${[...g.prov].map(esc).join('; ')})</small></label>${merge?`<div class="warn small">⚠ ${g.from.length} different pattern colours map to this one thread. Check that's what you want.</div>`:''}</li>`}).join('')||'<li class="mut">Nothing ready to buy yet. See "Needs review".</li>';
+  return `<li><label><input type="checkbox" data-key="${esc(key)}"${checked.has(key)?' checked':''}><b>${BRAND[L.dest]} ${esc(disp(L.dest,g.to))}</b> × ${qn(g.qty)} <small>(for DMC ${g.from.map(c=>esc(lab(c))).join(', ')} · ${[...g.prov].map(esc).join('; ')})</small></label>${merge?`<div class="warn small">⚠ ${g.from.length} different pattern colours map to this one thread. Check that's what you want.</div>`:''}</li>`}).join('')||'<li class="mut">Nothing ready to buy yet. See "Needs review".</li>';
  document.querySelectorAll('#shop input[type=checkbox]').forEach(cb=>cb.onchange=()=>{cb.checked?checked.add(cb.dataset.key):checked.delete(cb.dataset.key)});
- $('review').innerHTML=L.review.length?`<div class="errbox"><b>Needs review (not on the list):</b><ul>${L.review.map(({it,r})=>`<li>DMC ${esc(lab(it.code))} × ${it.qty}: ${esc(r.why)}</li>`).join('')}</ul></div>`:'';
+ $('review').innerHTML=L.review.length?`<div class="errbox"><b>Needs review (not on the list):</b><ul>${L.review.map(({it,r})=>`<li>DMC ${esc(lab(it.code))} × ${qn(it.qty)}: ${esc(r.why)}</li>`).join('')}</ul></div>`:'';
  const rows=costRows();$('totals').innerHTML=`<b>Estimated costs for this list</b><table>${rows.map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</table><small>Rough estimates (prices checked ${PRICES.checked}), before shipping. Metallic/variegated threads aren't priced. Check the store.</small>`}
 function listText(){const L=buildList(),out=[`${APP_NAME} shopping list: buying in ${BRAND[L.dest]}`];
- L.lines.forEach(g=>{const key=L.dest+':'+g.to;out.push(`[${checked.has(key)?'x':' '}] ${BRAND[L.dest]} ${disp(L.dest,g.to)} x${g.qty} (DMC ${g.from.map(lab).join(', ')}; ${[...g.prov].join('; ')})`+(g.from.length>1?' ⚠ several pattern colours share this thread':''))});
- if(L.review.length){out.push('','Needs review (not included):');L.review.forEach(({it,r})=>out.push(`- DMC ${lab(it.code)} x${it.qty}: ${r.why}`))}
+ L.lines.forEach(g=>{const key=L.dest+':'+g.to;out.push(`[${checked.has(key)?'x':' '}] ${BRAND[L.dest]} ${disp(L.dest,g.to)} x${qn(g.qty)} (DMC ${g.from.map(lab).join(', ')}; ${[...g.prov].join('; ')})`+(g.from.length>1?' ⚠ several pattern colours share this thread':''))});
+ if(L.review.length){out.push('','Needs review (not included):');L.review.forEach(({it,r})=>out.push(`- DMC ${lab(it.code)} x${qn(it.qty)}: ${r.why}`))}
  if(state.errs.length){out.push('','Input problems:');state.errs.forEach(e=>out.push(`- "${e.t}": ${e.why}`))}
  out.push('','Estimated costs:');costRows().forEach(([a,b])=>out.push(`- ${a}: ${b}`));out.push(`(Prices checked ${PRICES.checked}; estimates only.)`);return out.join('\n')}
 function run(){state=parse($('inp').value);renderTable();renderList();$('status').textContent=state.items.length?`${state.items.length} colours recognised, ${state.errs.length} problems`:''}
