@@ -78,7 +78,7 @@ function plan(p){const dest=p.buyBrand,threads=[];
  return{dest,threads,lines,review:by(['review']),have:by(['have','received']),sum,ready:sum.total>0&&sum.sufficient===sum.total}}
 // Pip celebrates once per real not-ready -> ready transition (pose only, no bubble: the headline right beside it already says it).
 const CEL=()=>{setTimeout(()=>{const f=document.getElementById('pCel');if(f){f.classList.remove('pip-cheer')}},4000);
- return`<span class="pcel pipfig pip-cheer" id="pCel" aria-hidden="true"><picture><source type="image/webp" srcset="assets/pip/pip-celebrating-160.webp 160w, assets/pip/pip-celebrating-320.webp 320w" sizes="64px"><img src="assets/pip/pip-celebrating-160.jpg" width="160" height="243" alt=""></picture></span>`};
+ return`<span class="pcel pipfig pip-cheer" id="pCel" aria-hidden="true"><picture><source type="image/webp" srcset="assets/pip/pip-celebrating-160.webp 160w, assets/pip/pip-celebrating-320.webp 320w" sizes="64px"><img src="assets/pip/pip-celebrating-160.png" width="160" height="243" alt=""></picture></span>`};
 const FL=()=>window.FlossFoxLinks||{buyLinks:()=>'',retailersFor:()=>[]};
 const DISC=()=>`<p class="affdisc noprint"><b>Affiliate links:</b> Floss Fox may earn a small commission at no extra cost to you. <a href="about.html#affiliates">More info</a>${window.FLOSS_FOX_TEST_LINKS?' (Preview: test links, not tracked.)':''}</p>`;
 const plural=(n,w,ws)=>`${n} ${n===1?w:(ws||w+'s')}`;
@@ -273,11 +273,13 @@ function csv(p){const P=plan(p),q=v=>{v=v===null||v===undefined?'':String(v);if(
   rows.push([p.name,lab(it.code),DMC[it.code].name,it.qty===null?'UNKNOWN':it.qty,(a=>a===0?'yes':a>=it.qty?'assumed':'partly assumed')(asmOf(it)),d.status||'not checked',d.owned===null?'':d.owned,BRAND[P.dest],r.ok?disp(P.dest,r.to):'',r.ok?r.prov:'',line?t.rem+(line.from.length>1?` (shared line total ${line.q})`:''):'',line?(line.bought?'yes':'no'):'',t.recv||'',SN[t.state],t.why,it.qty===null?'':asmOf(it)])});
  return rows.map(r=>r.map(q).join(',')).join('\r\n')+'\r\n'}
 function backup(){const d={app:'floss-fox',schema:SCHEMA,exported:nowISO(),projects:store.projects};download(JSON.stringify(d,null,2),'floss-fox-backup-'+nowISO().slice(0,10)+'.json','application/json');pstatus(`Backup downloaded with ${store.projects.length} project(s). Keep the file somewhere safe.`)}
+const RPIP=p=>`<picture><source type="image/webp" srcset="assets/pip/pip-${p}-160.webp"><img class="rpip" data-pose="${p}" src="assets/pip/pip-${p}-160.png" width="160" height="240" alt=""></picture>`;
 function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBox').open=true;if(file.size>5e6){R.hidden=false;R.innerHTML='<b class="warn">That file is too large to be a Floss Fox backup.</b>';return}
+ R.hidden=false;R.innerHTML=RPIP('thinking')+'<p>Let me check this backup…</p>'; // shown only while the file is really being read and checked
  file.text().then(t=>{let d;try{d=JSON.parse(t)}catch(e){d=null}const m=d&&d.app==='floss-fox'?migrate(d):null;
-  if(!m||m.tooNew){pendingRestore=null;R.hidden=false;R.innerHTML=`<b class="warn">${m&&m.tooNew?'This backup was made by a newer version of Floss Fox and can\'t be restored here.':'This file isn\'t a valid Floss Fox backup. Nothing was changed.'}</b>`;pstatus('Restore failed: nothing changed.');return}
+  if(!m||m.tooNew){pendingRestore=null;R.hidden=false;R.innerHTML=RPIP('puzzled')+`<b class="warn">${m&&m.tooNew?'This backup was made by a newer version of Floss Fox and can\'t be restored here.':'This file isn\'t a valid Floss Fox backup. Nothing was changed.'}</b>`;pstatus('Restore failed: nothing changed.');return}
   pendingRestore=m.data.projects;const clash=pendingRestore.filter(p=>proj(p.id)).length;R.hidden=false;
-  R.innerHTML=`<p><b>Backup contains ${pendingRestore.length} project(s)</b>${m.skipped?`; ${m.skipped} damaged or duplicate entr${m.skipped>1?'ies were':'y was'} skipped`:''}. ${clash?`${clash} already exist here (same project).`:'None of them already exist here.'}</p>
+  R.innerHTML=RPIP('thinking')+`<p><b>I checked it. Backup contains ${pendingRestore.length} project(s)</b>${m.skipped?`; ${m.skipped} damaged or duplicate entr${m.skipped>1?'ies were':'y was'} skipped`:''}. ${clash?`${clash} already exist here (same project).`:'None of them already exist here.'}</p>
   ${clash?`<fieldset><legend>For projects that already exist:</legend><label><input type="radio" name="rmode" value="replace" checked> Replace mine with the backup version</label><br><label><input type="radio" name="rmode" value="skip"> Keep mine, skip those</label><br><label><input type="radio" name="rmode" value="copy"> Keep both (import as a renamed copy)</label></fieldset>`:''}
   <div class="row"><button type="button" class="pri" id="rGo">Restore</button><button type="button" class="sec" id="rCancel">Cancel</button></div>`;
   $('rCancel').onclick=()=>{pendingRestore=null;R.hidden=true;pstatus('Restore cancelled.')};

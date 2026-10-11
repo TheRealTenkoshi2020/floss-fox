@@ -15,7 +15,7 @@ const st=()=>(typeof state!=='undefined'?state:{items:[],errs:[]}); /* global st
 const dupN=()=>st().items.filter(i=>i.src.length>1).length;
 const destV=()=>($('dest')||{}).value||'dmc';
 const BR={dmc:'DMC',sullivans:'Sullivans',anchor:'Anchor'};
-const pipImg=(pose,cls)=>`<picture><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img class="${cls}" src="assets/pip/pip-${pose}-160.jpg" width="160" height="215" alt="" decoding="async"></picture>`;
+const pipImg=(pose,cls)=>`<picture><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img class="${cls}" src="assets/pip/pip-${pose}-160.png" width="160" height="240" alt="" decoding="async"></picture>`;
 const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
 const TOUR_SAMPLE='310\n321\n666\n699';
 const linksOn=()=>!!(window.FlossFoxLinks&&FlossFoxLinks.enabled&&FlossFoxLinks.enabled());
@@ -25,7 +25,7 @@ const toConvert=()=>{if(!inView('convertView'))$('tabConvert').click()};
 /* ---------- Step configuration (single source of truth) ---------- */
 const STEPS=[
  {id:'enter',title:'Add your colors',target:()=>$('inp'),anchor:()=>document.querySelector('.hero .row'),
-  pose:()=>st().errs.length?'puzzled':'curious',
+  pose:()=>st().errs.length?'puzzled':'pointing',
   msg:()=>"First, pop your DMC thread numbers in here! You can type them or paste your whole list.",
   more:()=>st().errs.length?`${plural(st().errs.length,'line')} couldn't be read yet. They're listed in red under Your colors.`:st().items.length?`You've added ${plural(st().items.length,'color')}. Tap Next when you're ready.`:"Then tap Add my colors. Want to practise first? I can fill in a short sample list.",
   extra:()=>st().items.length?'':`<button type="button" class="sec" data-t="example">Try an example (310, 321, 666, 699)</button>`,
@@ -42,13 +42,13 @@ const STEPS=[
   ready:()=>!$('results').hidden,
   help:'Swatches show the DMC color on screen, which is only an approximation.'},
  {id:'brands',title:'Other thread brands',target:()=>$('shopcard').hidden?null:$('dest'),anchor:()=>document.querySelector('#shopcard .toggle'),
-  pose:()=>'helpful',
+  pose:()=>'pointing',
   msg:()=>"Did you know you can look at other thread brands too? Let's explore your options!",
   more:()=>`Use <b>Brand to buy</b> to switch between DMC, Sullivans and Anchor. Matches come from published conversion charts, so colors may not be exact. Compare real thread if it matters. The cost table shows rough price estimates for each brand, before shipping; prices change, so check the store.${destV()!=='dmc'?` You're looking at ${BR[destV()]} now: ${plural(window.FlossFoxAltFor?FlossFoxAltFor(destV()):0,'color')} of ${st().items.length} have a chart match.`:''}`,
   ready:()=>!$('shopcard').hidden,optional:true,
   help:'Metallic and variegated threads are never swapped automatically.'},
  {id:'shop',title:'Your shopping list',target:()=>$('shopcard').hidden?null:$('shop'),anchor:()=>$('shop'),
-  pose:()=>'helpful',
+  pose:()=>'pointing',
   msg:()=>"Now let's get your threads organized so they're easier to shop for!",
   more:()=>`Tick the boxes as you shop, or use <b>Print list</b> and <b>Copy as text</b> below. <b>Save project</b> keeps the list in this browser; in My projects you can mark what you have, open <b>Shop my list</b> in the store, and download a spreadsheet (CSV).${linksOn()?' Store links are optional affiliate links. You never need them to use Floss Fox.':''}`,
   ready:()=>!$('shopcard').hidden,
@@ -61,6 +61,9 @@ const STEPS=[
 ];
 
 /* ---------- Tour card ---------- */
+// Pointing Pip: his paw points to his left (screen right). Mirror him when the target's centre is to his left on screen.
+function aim(){if(!card||!tgt)return;const i=card.querySelector('.tpip');if(!i||card.dataset.pose!=='pointing')return;const a=i.getBoundingClientRect(),b=tgt.getBoundingClientRect();
+ const mir=(b.left+b.right)/2<(a.left+a.right)/2;i.classList.toggle('mirror',mir);card.dataset.mirror=mir}
 let idx=-1,card=null,tgt=null,returnFocus=null,readSince=0;
 const live=t=>{const l=$('tourLive');if(l){l.textContent='';setTimeout(()=>{l.textContent=t},30)}};
 function clearTarget(){if(tgt)tgt.classList.remove('tour-target');tgt=null}
@@ -71,12 +74,12 @@ function place(el,anchor,focus){const a=anchor&&anchor.isConnected&&anchor.offse
 function render(focus){const S=STEPS[idx];if(!S)return;toConvert();removeCard();
  const t=S.target();const missing=!t&&!S.final;const notReady=S.ready&&!S.ready();
  if(t){t.classList.add('tour-target');tgt=t}
- const c=document.createElement('section');c.className='tourcard noprint';c.id='tourCard';c.setAttribute('aria-labelledby','tourH');c.dataset.step=S.id;c.dataset.pose=S.pose();
+ const c=document.createElement('section');c.className='tourcard noprint';c.id='tourCard';c.setAttribute('aria-labelledby','tourH');c.dataset.step=S.id;let pose=S.pose();if(pose==='pointing'&&!t)pose='helpful';c.dataset.pose=pose;
  const back=idx>0?'<button type="button" class="ghost" data-t="back">Back</button>':'';
  const nextLbl=S.final?'':notReady||missing?(S.optional?'Skip this step':'Skip this step'):'Next';
  const btns=S.final?'<button type="button" class="pri" data-t="start">Start using Floss Fox</button><button type="button" class="sec" data-t="tips">Explore more tips</button>':`${S.extra?S.extra():''}<button type="button" class="pri" data-t="next">${nextLbl}</button>${back}<button type="button" class="ghost" data-t="skip">Skip tour</button>`;
- c.innerHTML=`${pipImg(S.pose(),'tpip')}<div><p class="tstep">Step ${idx+1} of ${STEPS.length}</p><h2 id="tourH" tabindex="-1">${esc(S.title)}</h2><p class="tmsg">${esc(S.msg())}</p><p class="tmore">${S.more()}</p>${missing&&!notReady?'<p class="tmore">I can\'t find that part of the page right now, so you can skip ahead.</p>':''}</div><div class="row">${btns}${S.final?back:''}<button type="button" class="ghost" data-t="close" aria-label="Close the tour">Close</button></div>`;
- card=c;place(c,t?S.anchor():null,focus);readSince=performance.now();
+ c.innerHTML=`${pipImg(pose,'tpip')}<div><p class="tstep">Step ${idx+1} of ${STEPS.length}</p><h2 id="tourH" tabindex="-1">${esc(S.title)}</h2><p class="tmsg">${esc(S.msg())}</p><p class="tmore">${S.more()}</p>${missing&&!notReady?'<p class="tmore">I can\'t find that part of the page right now, so you can skip ahead.</p>':''}</div><div class="row">${btns}${S.final?back:''}<button type="button" class="ghost" data-t="close" aria-label="Close the tour">Close</button></div>`;
+ card=c;place(c,t?S.anchor():null,focus);aim();readSince=performance.now();
  setTourPref({status:'active',step:idx});if(PIP())PIP().setTour(true)}
 function go(i,announce=true){idx=Math.max(0,Math.min(STEPS.length-1,i));render(true);if(announce)live(`Pip's tour, step ${idx+1} of ${STEPS.length}: ${STEPS[idx].title}`)}
 function start(){closeAsk(false);removeInvite();returnFocus=document.activeElement&&document.activeElement!==document.body?document.activeElement:$('askPipBtn');toConvert();go(0)}
@@ -92,7 +95,7 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('askPip'
 document.addEventListener('flossfox:result',e=>{if(idx<0)return;const S=STEPS[idx];
  if(S.id==='enter'&&S.done()&&e.detail.submitted&&!st().errs.length){go(1);return}
  const f=card&&card.contains(document.activeElement)?document.activeElement.dataset.t:null;render(false);if(f){const b=card.querySelector(`[data-t="${f}"]`);if(b)b.focus()}});
-window.addEventListener('resize',()=>{if(card&&tgt&&!tgt.isConnected)render(false)});
+window.addEventListener('resize',()=>{if(card&&tgt&&!tgt.isConnected)render(false);else aim()});
 
 /* ---------- First-visit invite / resume ---------- */
 let invite=null;
@@ -124,7 +127,7 @@ const TOPICS=[
  ['tour','Start the tour again','']];
 let lastTopic=null;
 function renderAsk(){const c=context();const a=TOPICS.find(t=>t[0]===lastTopic);
- ask.innerHTML=`<div class="ahead">${pipImg('helpful','')}<div><h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}">${esc(c.text)}</p></div></div>
+ ask.innerHTML=`${a?'':`<span class="apeek" aria-hidden="true">${pipImg('peeking','')}</span>`}<div class="ahead${a?'':' peek'}" data-pose="${a?'thinking':'helpful'}">${pipImg(a?'thinking':'helpful','')}<div><h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}">${esc(c.text)}</p></div></div>
  ${idx>=0?'<div class="row"><button type="button" class="pri" data-a="resume">Back to the tour</button></div>':''}
  <div class="atopics" role="group" aria-label="Help topics">${TOPICS.map(t=>`<button type="button" class="sec" data-a="${t[0]}"${t[0]===lastTopic?' aria-pressed="true"':''}>${esc(t[1])}</button>`).join('')}</div>
  ${a?`<div class="aans" id="askAns" tabindex="-1"><b>${esc(a[1])}</b><p>${esc(a[2])}</p></div>`:''}

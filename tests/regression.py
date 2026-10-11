@@ -338,16 +338,17 @@ with sync_playwright() as p:
     PK = os.environ.get('FF_PIP_KEY', 'flossfox.pip.v1')
     pp = page(412, True); reqs = []; pp.on('request', lambda r: reqs.append(r.url)); pp.goto(B); pp.wait_for_load_state('networkidle')
     pst = lambda g: g.evaluate("[FlossFoxPip.current(), document.getElementById('pip').dataset.pose, document.getElementById('pipMsg').textContent]")
-    ok('P1 Pip appears on load with welcome (greeting)', pp.locator('#pip').is_visible() and pst(pp) == ['welcome', 'greeting', "Hi! I'm Pip. Let's get your threads sorted!"], pst(pp))
+    ok('P1 Pip appears on load; returning visitor gets welcome back (greeting-alt)', pp.locator('#pip').is_visible() and pst(pp) == ['welcomeBack', 'greeting-alt', 'Welcome back! Ready for another list?'], pst(pp))
     ok('P1b image loaded and decorative (alt=""), bubble not a live region', pp.evaluate("document.getElementById('pipImg').naturalWidth") > 0 and pp.get_attribute('#pipImg', 'alt') == '' and pp.get_attribute('#pipMsg', 'aria-live') is None)
     from urllib.parse import urlparse
     bad = []
-    for a in ['greeting', 'curious', 'puzzled', 'duplicates', 'helpful', 'tangled', 'celebrating', 'sleepy']:
+    POSES = ['greeting', 'curious', 'puzzled', 'duplicates', 'helpful', 'tangled', 'celebrating', 'sleepy', 'thinking', 'pointing', 'peeking', 'neutral', 'greeting-alt']
+    for a in POSES:
         for w in [160, 320, 480]:
-            for ext in ['webp', 'jpg']:
+            for ext in ['webp', 'png']:
                 r = pp.request.get(B + f'assets/pip/pip-{a}-{w}.{ext}')
                 if r.status != 200 or len(r.body()) > 60000: bad.append((a, w, ext, r.status, len(r.body())))
-    ok('P2 all 48 Pip files (8 poses) load and are small (<60 KB)', not bad, bad)
+    ok('P2 all 78 Pip files (13 poses, WebP + PNG) load and are small (<60 KB)', not bad, bad)
     pp.wait_for_timeout(800)
     ok('P2b no requests outside the site origin', all(urlparse(u).netloc == urlparse(B).netloc for u in reqs if u.startswith('http')), [u for u in reqs if urlparse(u).netloc != urlparse(B).netloc][:5])
     def sub(g, t): g.fill('#inp', t); g.click('#go'); return pst(g)
@@ -358,7 +359,7 @@ with sync_playwright() as p:
     s3c = sub(pp, '310, 321, 415'); ok('P3c3 later clean lists do not celebrate again', s3c[0] == 'listReady', s3c)
     s4 = sub(pp, '310\n310\nzzz'); ok('P3d priority: error beats duplicate', s4[0] == 'error', s4)
     s5 = sub(pp, '   '); ok('P3e empty submit -> curious guidance', s5[:2] == ['empty', 'curious'], s5)
-    pp.click('#clear'); ok('P3f clear -> welcome', pst(pp)[0] == 'welcome')
+    pp.click('#clear'); ok('P3f clear -> calm idle (neutral)', pst(pp)[:2] == ['idle', 'neutral'], pst(pp))
     pp.click('#tabHelp'); pp.click('#tabConvert'); pp.locator('#inp').focus(); ok('P3g focusing the empty box -> attentive (curious)', pst(pp)[:2] == ['attentive', 'curious'], pst(pp))
     pp.click('#sample'); ok('P3h example list uses the same rules (duplicate/listReady)', pst(pp)[0] in ('duplicate', 'listReady', 'error'), pst(pp))
     sub(pp, '310, 321'); before = pst(pp)
@@ -400,7 +401,7 @@ with sync_playwright() as p:
     # all 8 states load the right art
     loaded = q.evaluate("""async()=>{const out={};for(const n of ['welcome','listReady','error','duplicate','helpful','tangled','celebrating','sleepy']){FlossFoxPip.show(n,{items:[{src:['a','a']}],errs:[{t:'x',kind:'code'}]});const i=document.getElementById('pipImg');await new Promise(r=>{if(i.complete&&i.naturalWidth)r();else{i.onload=r;i.onerror=r}});out[n]=[document.getElementById('pip').dataset.pose,i.naturalWidth>0,/pip-([a-z]+)-/.exec(i.currentSrc)[1]]}return out}""")
     ok('Q1 all 8 poses load their own artwork', all(v[1] and v[0] == v[2] for v in loaded.values()) and {v[0] for v in loaded.values()} == {'greeting', 'curious', 'puzzled', 'duplicates', 'helpful', 'tangled', 'celebrating', 'sleepy'}, loaded)
-    ok('Q1b no "thinking" art and its state is never used', q.evaluate("!('thinking' in FlossFoxPip.ART) && FlossFoxPip.STATES.processing.pose==='thinking'"))
+    ok('Q1b fake "processing" state still never shown (thinking only for real checks)', q.evaluate("FlossFoxPip.STATES.processing.pose==='thinking'"))
     old = q.evaluate("['welcome','attentive','empty','listReady','duplicate','error'].map(n=>[n,FlossFoxPip.STATES[n].pose])")
     ok('Q1c old states keep their poses', old == [['welcome', 'greeting'], ['attentive', 'curious'], ['empty', 'curious'], ['listReady', 'curious'], ['duplicate', 'duplicates'], ['error', 'puzzled']], old)
     q.goto(B); q.fill('#inp', '310, 321'); q.click('#go'); q.wait_for_timeout(4300)
@@ -585,7 +586,7 @@ with sync_playwright() as p:
     ok('T2 start: step 1 of 5, heading focused, real input highlighted', step(g) == 0 and 'Step 1 of 5' in g.inner_text('#tourCard') and g.evaluate("document.activeElement.id") == 'tourH' and g.evaluate("document.getElementById('inp').classList.contains('tour-target')") and g.locator('#tourInvite').count() == 0)
     g.wait_for_timeout(120); ok('T2b step change announced politely', 'step 1 of 5' in g.inner_text('#tourLive') and g.get_attribute('#tourLive', 'aria-live') == 'polite')
     ok('T2c S1 words and example offer', 'First, pop your DMC thread numbers in here! You can type them or paste your whole list.' in g.inner_text('#tourCard') and g.locator('#tourCard [data-t=example]').count() == 1 and g.input_value('#inp') == '')
-    ok('T15 S1 pose curious (right image)', cpose(g) == ['curious', 'curious'], cpose(g))
+    ok('T15 S1 pose pointing at the real input (right image, not mirrored)', cpose(g) == ['pointing', 'pointing'] and g.get_attribute('#tourCard', 'data-mirror') == 'false', cpose(g))
     ok('T2d the highlighted input stays usable', (g.fill('#inp', '310 x2\n321') or True) and g.input_value('#inp') == '310 x2\n321')
     g.click('#go'); g.wait_for_timeout(100)
     ok('T6 real list advances to step 2, card inside results', step(g) == 1 and g.evaluate("!!document.querySelector('#results #tourCard')") and "Here's what I found!" in g.inner_text('#tourCard') and 'recognized 2 colors' in g.inner_text('#tourCard'), g.inner_text('#tourCard'))
@@ -685,6 +686,57 @@ with sync_playwright() as p:
     ok('T13 reduced motion: no animation in the tour, Pip still', rmt.evaluate("document.getElementById('tourCard').getAnimations({subtree:true}).length") == 0 and rmt.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
     allrq = g.rq + d.rq + e.rq + v.rq + a.rq + h.rq
     ok('T22 tour + Ask Pip make no outside requests', all(_up(u).netloc == _up(B).netloc for u in allrq if u.startswith('http')), [u for u in allrq if _up(u).netloc != _up(B).netloc][:5])
+    # ---------- Milestone 1.4: transparent art + 5 new poses ----------
+    import io
+    from PIL import Image as _Im
+    noalpha = []
+    for a in POSES:
+        for w in [160, 320, 480]:
+            for ext in ['webp', 'png']:
+                r = pp.request.get(B + f'assets/pip/pip-{a}-{w}.{ext}'); im = _Im.open(io.BytesIO(r.body()))
+                has = im.mode in ('RGBA', 'LA') or (im.mode == 'P' and 'transparency' in im.info)
+                corner = im.convert('RGBA').getpixel((0, 0))[3] if has else 255
+                if r.status != 200 or not has or corner != 0 or im.width != w: noalpha.append((a, w, ext, im.mode, corner))
+    ok('M1 all 78 Pip images load, have an alpha channel and transparent corners', not noalpha, noalpha)
+    ok('M1b no JPG Pip assets referenced anywhere', pp.request.get(B + 'assets/pip/pip-greeting-320.jpg').status == 404 and '.jpg' not in pp.evaluate("document.getElementById('pipImg').srcset+document.getElementById('pipImg').src"))
+    tile = pp.evaluate("(()=>{const f=getComputedStyle(document.getElementById('pipFig'));const r=document.getElementById('pipFig').getBoundingClientRect();return [f.backgroundColor,f.borderTopColor,Math.round(r.width),Math.round(r.height)]})()")
+    ok('M2 no white tile: frame transparent, same 84x118 frame on phones', tile[0] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[1] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[2:] == [84, 118], tile)
+    pdm = page(1280); pdm.goto(B); fr = pdm.evaluate("(()=>{const r=document.getElementById('pipFig').getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)]})()")
+    ok('M2b same 140x196 frame on desktop', fr == [140, 196], fr)
+    fv = tp(1280); ok('M3 first visit keeps the original greeting', fv.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose]") == ['welcome', 'greeting'])
+    rv = tp(412, fresh=False); ok('M4 returning visitor (tour done/dismissed): welcome back with greeting-alt', rv.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose]") == ['welcomeBack', 'greeting-alt'])
+    rv.click('#inp'); f1 = rv.evaluate("FlossFoxPip.current()"); rv.click('#heroH'); f2 = rv.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose]")
+    ok('M5 focus -> curious (attentive); leaving the empty box -> calm neutral idle', f1 == 'attentive' and f2 == ['idle', 'neutral'], (f1, f2))
+    rv.fill('#inp', '310'); rv.click('#go'); ok('M5b a real list still wins over idle', rv.evaluate("FlossFoxPip.current()") in ('listReady', 'celebrating'))
+    rv.click('#askPipBtn'); pk = rv.evaluate("""(()=>{const p=document.getElementById('askPip').getBoundingClientRect(),i=document.querySelector('#askPip .apeek img');if(!i||!i.offsetParent)return null;const r=i.getBoundingClientRect();
+      const hit=[...document.querySelectorAll('#askPip button,#askPip input,#askPip label')].filter(b=>{const q=b.getBoundingClientRect();return !(q.right<=r.left||q.left>=r.right||q.bottom<=r.top||q.top>=r.bottom)}).length;return [Math.round(p.right-r.right),hit,/pip-peeking-160/.test(i.currentSrc)]})()""")
+    ok('M6 phone Ask Pip: peeking Pip pinned flush right, covers no control', pk is not None and 0 <= pk[0] <= 1 and pk[1] == 0 and pk[2], pk)
+    ok('M6b compact Ask Pip button uses peeking on phones', 'pip-peeking-160' in rv.evaluate("document.querySelector('#askPipBtn img').currentSrc"))
+    rv.click('#askPip [data-a=enter]'); rv.wait_for_timeout(400); th = rv.evaluate("[document.querySelector('#askPip .ahead').dataset.pose,/pip-thinking-160/.test(document.querySelector('#askPip .ahead img').currentSrc||document.querySelector('#askPip .ahead img').src),!!document.querySelector('#askPip .apeek')]")
+    ok('M7 Ask Pip answer -> thinking (a real "let me check" moment), no double Pip', th == ['thinking', True, False], th)
+    ok('M7b desktop Ask Pip: no peeking, helpful header', (pdm.click('#askPipBtn') or True) and not pdm.locator('#askPip .apeek img').is_visible() and pdm.evaluate("document.querySelector('#askPip .ahead').dataset.pose") == 'helpful')
+    bk = tp(412, fresh=False); bk.click('#tabProjects'); bk.click('#backupBox summary')
+    bk.set_input_files('#restoreFile', {'name': 'b.json', 'mimeType': 'application/json', 'buffer': open(FIX, 'rb').read()}); bk.wait_for_timeout(300)
+    ok('M8 restoring a backup: thinking Pip with the real check result', bk.get_attribute('#restorePanel .rpip', 'data-pose') == 'thinking' and 'I checked it' in bk.inner_text('#restorePanel'))
+    bk.set_input_files('#restoreFile', {'name': 'x.json', 'mimeType': 'application/json', 'buffer': b'not json'}); bk.wait_for_timeout(300)
+    ok('M8b invalid backup -> puzzled, nothing changed', bk.get_attribute('#restorePanel .rpip', 'data-pose') == 'puzzled' and 'Nothing was changed' in bk.inner_text('#restorePanel'))
+    pt = tp(412); pt.click('#tourYes'); poses = []
+    def tinfo(g): return g.evaluate("""(()=>{const c=document.getElementById('tourCard'),i=c.querySelector('.tpip'),t=document.querySelector('.tour-target');const a=i.getBoundingClientRect();let ov=false,dir=null;
+      if(t){const b=t.getBoundingClientRect();ov=!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom);dir=(b.left+b.right)/2<(a.left+a.right)/2}return [c.dataset.pose,c.dataset.mirror||null,ov,dir,i.classList.contains('mirror')]})()""")
+    poses.append(tinfo(pt)); addlist(pt, '310 x2\n321'); poses.append(tinfo(pt)); nxt(pt); poses.append(tinfo(pt)); nxt(pt); poses.append(tinfo(pt)); nxt(pt); poses.append(tinfo(pt))
+    ok('M9 tour: pointing on the control steps (1, 3, 4), helpful on results, celebrating at the end', [x[0] for x in poses] == ['pointing', 'helpful', 'pointing', 'pointing', 'celebrating'], poses)
+    ok('M9b pointing Pip never covers the target and mirrors exactly when the target is on his other side', all(not x[2] and x[4] == x[3] for x in poses if x[0] == 'pointing'), poses)
+    pd2 = tp(1280); pd2.click('#tourYes'); d1 = tinfo(pd2); ok('M9c desktop step 1 pointing, not covering the input', d1[0] == 'pointing' and not d1[2] and d1[4] == d1[3], d1)
+    lay2 = []
+    for w in [320, 412, 880, 1280]:
+        g2 = tp(w, fresh=False); t0 = g2.evaluate("document.getElementById('inp').getBoundingClientRect().top+scrollY"); tt = []
+        for n in ['welcomeBack', 'idle', 'attentive', 'helpful', 'welcome']:
+            g2.evaluate(f"FlossFoxPip.show('{n}')"); g2.wait_for_timeout(40); tt.append(g2.evaluate("document.getElementById('inp').getBoundingClientRect().top+scrollY"))
+        if any(t != t0 for t in tt) or g2.evaluate('document.documentElement.scrollWidth') > w: lay2.append((w, t0, tt))
+        g2.context.close()
+    ok('M10 new poses: no layout shift or overflow 320-1280', not lay2, lay2)
+    rmn = tp(412, fresh=False, rm=True); rmn.evaluate("FlossFoxPip.show('idle')"); ok('M11 reduced motion on new poses', rmn.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
+    hdn = tp(412, fresh=False, init=f"localStorage.setItem('{PFX}.pip.v1','hidden')"); hdn.click('#askPipBtn'); ok('M12 Pip hidden: Ask Pip still shows its peeking Pip', hdn.locator('#askPip .apeek img').is_visible() and hdn.locator('#pipFig').is_hidden())
     # ---------- Phone layout ----------
     pm = page(412, True); pm.goto(B + '?sample'); pm.wait_for_timeout(200)
     ok('phone convert: no horizontal overflow', pm.evaluate('document.documentElement.scrollWidth') <= 412)
