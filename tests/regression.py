@@ -426,6 +426,58 @@ with sync_playwright() as p:
           return {tw:t.width,th:t.height,near:Math.abs(t.top-f.bottom)<60,over:[ov(t,i),ov(t,go),ov(f,i),ov(m,i),ov(t,m),ov(t,f)].some(Boolean),goBottom:go.bottom,vh:innerHeight,inpTop:i.top}})()""")
         ok(f'Q4 {w}px: toggle next to Pip, ≥44px, nothing overlaps; main button on first screen', r['tw'] >= 44 and r['th'] >= 44 and r['near'] and not r['over'] and r['goBottom'] <= r['vh'], r)
         g.context.close()
+    # ---------- Retailer / affiliate links (1.3) ----------
+    def rcfg(enabled, wrap='', aid='AFFILIATE_ID_PLACEHOLDER'):
+        R = [{'id': 'michaels', 'name': 'Michaels', 'enabled': enabled, 'brands': ['dmc'], 'affiliateId': aid, 'wrap': wrap, 'template': 'https://www.michaels.com/search?q={q}'},
+             {'id': 'hobbylobby', 'name': 'Hobby Lobby', 'enabled': enabled, 'brands': ['dmc'], 'affiliateId': aid, 'wrap': wrap, 'template': 'https://www.hobbylobby.com/search?query={q}'}]
+        return 'window.FLOSS_FOX_RETAILERS=' + json.dumps(R) + ';window.FLOSS_FOX_TEST_LINKS=false;'
+    def rpage(body, w=412):
+        c = br.new_context(viewport={'width': w, 'height': 900}, is_mobile=w < 700); c.route('**/retailers.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body=body))
+        g = c.new_page(); g.on('dialog', lambda d: d.accept()); return g
+    STORES = ('michaels.com', 'hobbylobby.com', 'anrdoezrs', 'cj.com', 'dpbolvw', 'jdoqocy', 'tkqlhce', 'kqzyfj')
+    dflt = page(); dflt.goto(B); en = dflt.evaluate("(window.FLOSS_FOX_RETAILERS||[]).filter(r=>r.enabled).length")
+    print('RETAILERS_ENABLED_IN_THIS_BUILD', en)
+    if 'floss-fox-dev' not in B:
+        ok('A0 production default: all retailers disabled', en == 0)
+    else:
+        ok('A0 dev preview: both retailers enabled with test (untracked) IDs', en == 2 and dflt.evaluate("FLOSS_FOX_TEST_LINKS===true && FLOSS_FOX_RETAILERS.every(r=>/TEST/.test(r.affiliateId)&&!r.wrap)"))
+    off = rpage(rcfg(False)); off.goto(B + '?sample')
+    ok('A1 disabled: no store links, no disclosure', off.locator('.buyat a').count() == 0 and off.locator('#affdisc').is_hidden())
+    off.click('#saveProj'); off.click('#openSaved'); off.click('#pAllBuy'); off.click('#pShop')
+    ok('A1b disabled: none in project plan or Shopping mode', off.locator('.buyat a, .affdisc:visible').count() == 0)
+    reqs = []
+    on = rpage(rcfg(True, 'https://www.anrdoezrs.net/click-{id}?url={url}', '1234567-7654321')); on.on('request', lambda r: reqs.append(r.url))
+    on.goto(B + '?sample'); on.wait_for_load_state('networkidle')
+    n310 = on.locator('#shop li:has-text("DMC 310") .buyat a')
+    ok('A2 enabled: Buy at Michaels / Buy at Hobby Lobby per line', n310.count() == 2 and 'Buy at Michaels' in n310.nth(0).inner_text() and 'Buy at Hobby Lobby' in n310.nth(1).inner_text())
+    allrel = on.evaluate("[...document.querySelectorAll('.buyat a')].every(a=>a.rel==='sponsored noopener'&&a.target==='_blank')")
+    ok('A3 every store link has rel="sponsored noopener" and target=_blank', allrel and on.locator('.buyat a').count() >= 2)
+    h = n310.nth(0).get_attribute('href')
+    ok('A3b tracked link uses the configured wrapper and the encoded store search', h.startswith('https://www.anrdoezrs.net/click-1234567-7654321?url=') and 'michaels.com%2Fsearch%3Fq%3DDMC%2520310%2520embroidery%2520floss' in h, h)
+    ok('A4 FTC disclosure shown, worded exactly, directly before the list', on.locator('#affdisc').is_visible() and 'Affiliate links: Floss Fox may earn a small commission at no extra cost to you' in on.inner_text('#affdisc') and on.evaluate("document.getElementById('affdisc').nextElementSibling.id") == 'shop')
+    ok('A5 no store/network requests on load or render', not [u for u in reqs if any(s in u for s in STORES)], [u for u in reqs if any(s in u for s in STORES)][:3])
+    ok('A5b links never claim price, stock or availability', not any(w in on.inner_text('#shop').lower() for w in ['in stock', 'available', 'cheapest', 'sale', 'deal']))
+    on.select_option('#dest', 'sullivans'); ok('A6 brands not configured (Sullivans) get no store links', on.locator('#shop .buyat a').count() == 0)
+    on.select_option('#dest', 'dmc'); on.context.grant_permissions(['clipboard-read', 'clipboard-write'])
+    ctext = on.evaluate("listText()")
+    ok('A7 copy text keeps working and lists plain (untracked) store URLs', 'DMC 310' in ctext and 'Michaels: https://www.michaels.com/search?q=DMC%20310%20embroidery%20floss' in ctext and 'anrdoezrs' not in ctext)
+    on.emulate_media(media='print'); ok('A7b store links and disclosure hidden in print', on.locator('.buyat').first.is_hidden() and on.locator('#affdisc').is_hidden()); on.emulate_media(media='screen')
+    on.click('#saveProj'); on.click('#openSaved'); on.click('#pAllBuy')
+    ok('A8 project shopping list: links + disclosure right above them', on.locator('#pPlan .affdisc').count() == 1 and on.locator('#pPlan .buyat a').count() >= 2 and on.evaluate("document.querySelector('#pPlan .affdisc').nextElementSibling.tagName") == 'UL')
+    csvp = on.evaluate("FlossFoxProjects.csv(FlossFoxProjects._store().projects[0])")
+    ok('A8b CSV unchanged by links (no URLs, same columns)', 'michaels' not in csvp.lower() and csvp.splitlines()[0].startswith('project,dmc_code'))
+    on.click('#pShop')
+    ok('A9 Shopping mode: links on to-buy cards + disclosure', on.locator('#shList .buyat a').count() >= 2 and on.locator('.affdisc:visible').count() == 1)
+    ok('A9b Pip unaffected (still honest list state on Add colors)', on.evaluate("FlossFoxPip.current()") in ('duplicate', 'listReady', 'error'))
+    ow = []
+    for w in [320, 360, 412, 600, 768, 880, 1024, 1280]:
+        g = rpage(rcfg(True), w); g.goto(B + '?sample'); a = g.evaluate('document.documentElement.scrollWidth')
+        g.click('#saveProj'); g.click('#openSaved'); g.click('#pAllBuy'); b2 = g.evaluate('document.documentElement.scrollWidth'); g.click('#pShop'); c2 = g.evaluate('document.documentElement.scrollWidth')
+        tg = g.evaluate("Math.min(...[...document.querySelectorAll('.buyat a')].filter(a=>a.offsetParent).map(a=>a.getBoundingClientRect().height))")
+        if max(a, b2, c2) > w or tg < 44: ow.append((w, a, b2, c2, tg))
+        g.context.close()
+    ok('A10 no overflow 320-1280 with links on; link targets >= 44px', not ow, ow)
+    cl = rpage(rcfg(True)); cl.goto(B + '?sample'); cr2 = cl.evaluate(CJS); ok('A11 contrast with links + disclosure', not cr2['fails'], cr2['fails'])
     # ---------- Phone layout ----------
     pm = page(412, True); pm.goto(B + '?sample'); pm.wait_for_timeout(200)
     ok('phone convert: no horizontal overflow', pm.evaluate('document.documentElement.scrollWidth') <= 412)
