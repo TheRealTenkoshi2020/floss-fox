@@ -87,3 +87,22 @@ Use a 1–5 scale (1 = strongly disagree, 5 = strongly agree) unless the questio
 ## 9. After the sessions
 - Write up the results in one table per scenario. Keep direct quotes, keep observed behaviour separate from opinions, and record the devices actually used.
 - Delete any personal notes participants ask you to remove. Nothing is collected by the app itself.
+
+---
+
+## Addendum for Milestone 1.2 (preview build, branch `milestone-1.2`)
+
+Run these with the 1.2 preview (open `index.html` from `floss-fox-1.2-preview.zip`, or a local server). Same volunteers, consent and recording rules as above.
+
+| # | Scenario (read aloud) | Watch for | Success |
+|---|---|---|---|
+| A | "You've never seen this site. Find out what it does without help." | Do they read the headline/3 steps; time to first action | Says what it's for in < 30 s and starts typing or taps *Try an example* |
+| B | "Type two of your own colors, then try the example, then get your colors back." | Do they notice the example banner; do they find *Back to my list* | Draft restored with no help; nothing saved by accident |
+| C | "You're in the craft store with this list. Buy 310 and 321 (you got 1 skein of 321, the pattern needs 3)." | Use of *Shop my list → Bought it → I have it with me → amount* | Ends with 310 done, 321 still listed with 2 left |
+| D | "You ordered 415 online. Record that, then pretend it arrived." | *Waiting for delivery* then *I received it* | 415 shows as bought, then as done, without a wrong "ready" in between |
+| E | "Find 3799 in this 150-color project and mark it Not sure." | Search box, filters | Found in < 20 s |
+| F | "Oops, you checked in 310 by mistake. Fix it." | *Done → Undo received* | Fixed in < 30 s, understands it's back on the list |
+
+Extra 1.2 questions (1–5 agree scale): "The words on the screen were easy to understand." "I always knew what to do next." "I trusted the *Ready to stitch* message." "Shopping mode would work for me in a store." Open: "Which word or button confused you?"
+
+Proposed 1.2 pass bar: ≥ 80% complete A–F unaided; average ≥ 4 on the four statements; zero volunteers believe a bought-but-not-received thread counts as ready.
