@@ -60,12 +60,12 @@ function plan(p){const dest=p.buyBrand,threads=[];
  p.items.forEach(it=>{const d=p.decisions[it.code],r=resolve(it,dest,d.anchor),req=it.qty,own=d.owned;const t={it,d,r,state:'review',why:'',q:0,rem:0,recv:0,recvOther:false};threads.push(t);
   const needsPick=dest==='anchor'&&fam(it.code)==='solid'&&!d.anchor&&(r.review||DMC[it.code].anchor.length>1);
   const K=(k,w)=>{t.kind=k;t.why=w};
-  if(needsPick){K('match',r.review?'Please confirm this color match. Sources disagree on the Anchor white, so choose one in Details.':'Please confirm this color match. Anchor has more than one possible match, so choose one in Details.');return}
-  if(d.status==='have'){if(req===null)K('amount',"Check the amount needed. It isn't entered yet, so Floss Fox can't tell whether you have enough. Add it in Details.");else if(own!==null&&own<req)K('other',`You noted ${own} skein${own===1?'':'s'}, but the pattern needs ${req}. Choose Need to buy, or update what you have.`);else t.state='have';return}
-  if(d.status==='check'){K('unsure',`Not sure yet. Check your stash, then choose Have enough or Need to buy.${own!==null?` (You noted ${own}.)`:''}${req===null?" The amount needed isn't entered.":''}`);return}
-  if(d.status!=='buy'){K('unchecked','Not checked yet. Choose Have enough, Need to buy or Not sure.');return}
+  if(needsPick){K('match',r.review?'Sources disagree on the Anchor match for white. Choose the one you want in Details.':'Anchor has more than one possible match. Choose the one you want in Details.');return}
+  if(d.status==='have'){if(req===null)K('amount',"Floss Fox can't tell whether you have enough until the amount needed is entered. Add it in Details.");else if(own!==null&&own<req)K('other',`You noted ${own} skein${own===1?'':'s'}, but the pattern needs ${req}. Choose Need to buy, or update what you have.`);else t.state='have';return}
+  if(d.status==='check'){K('unsure',`Check your stash, then choose Have enough or Need to buy.${own!==null?` (You noted ${own}.)`:''}${req===null?" The amount needed isn't entered.":''}`);return}
+  if(d.status!=='buy'){K('unchecked','Choose Have enough, Need to buy or Not sure.');return}
   if(!r.ok){K('other',plainWhy(it,r));return}
-  if(req===null){K('amount','How many skeins does your pattern need? Add the amount in Details so this color can be checked off.');return}
+  if(req===null){K('amount','How many skeins does your pattern need? Add it in Details so this color can be checked off.');return}
   t.q=own===null?req:Math.ceil(req-own-1e-9);
   if(t.q<=0){t.kind='other';t.why=`You noted ${own}, which covers the ${req} needed. Choose Have enough instead?`;return}
   if(d.recv){if(d.recv.brand===dest&&d.recv.to===r.to)t.recv=d.recv.qty;else t.recvOther=true}
@@ -85,7 +85,7 @@ function planText(p){const P=plan(p),o=[`${APP_NAME} project: ${p.name}`,`Brand 
  const tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),co=P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy');
  o.push('NEED TO BUY:');if(!tb.length&&!co.length)o.push('- none');tb.forEach(l=>o.push('[ ] '+lineTxt(P,l)));co.forEach(t=>o.push(`[ ] DMC ${lab(t.it.code)}: amount not entered (add it to check this color off)`));
  o.push('','BOUGHT — CHECK IN WHEN IT ARRIVES (not counted as ready yet):');if(!aw.length)o.push('- none');aw.forEach(l=>o.push('[x] '+lineTxt(P,l)));
- o.push('','NEEDS ATTENTION (not on the buy list yet):');if(!P.review.length)o.push('- none');P.review.forEach(x=>o.push(`- DMC ${lab(x.it.code)} (needs ${needTxt(x.it)}): ${x.why}`));
+ o.push('','NEEDS ATTENTION (not on the buy list yet):');if(!P.review.length)o.push('- none');P.review.forEach(x=>o.push(`- DMC ${lab(x.it.code)} (needs ${needTxt(x.it)}): ${(KIND[x.kind]||KIND.other)[1]}. ${x.why}`));
  o.push('','READY (you have enough or received it):');if(!P.have.length)o.push('- none');P.have.forEach(x=>o.push(`- DMC ${lab(x.it.code)} (needs ${needTxt(x.it)}${x.d.owned!==null?`, you have ${x.d.owned}`:''}${x.state==='received'?`, received ${x.recv} ${BRAND[P.dest]} ${disp(P.dest,x.r.to)}`:', already had it'})`));
  if(p.notes)o.push('','Notes: '+p.notes);o.push('',costLine(P),'Color swatches and brand matches are approximate. Compare real thread before swapping.');return o.join('\n')}
 function summaryText(P){const s=P.sum;return`${s.sufficient} of ${s.total} colors ready · ${s.toBuy} to buy · ${s.awaiting} bought, waiting to check in · ${s.review} need attention`}
@@ -113,18 +113,19 @@ function destCell(p,it){const d=p.decisions[it.code],dest=p.buyBrand,c=it.code,f
  const r=resolve(it,dest,d.anchor);return`<span class="flbl">Brand match</span>`+(r.ok?`<b>${BRAND[dest]} ${esc(disp(dest,r.to))}</b> <small class="mut">(${esc(r.prov)})</small>`:`<span>${esc(plainWhy(it,r))}</span>`)}
 const expanded=new Set();let justOpened=null,filt='all',query='',mode='edit',shopPanel=null;
 const sid=k=>k.replace(/[^\w-]/g,'_');
-const KIND={amount:['✎','Amount needed'],match:['?','Confirm the color match'],unsure:['?','Not sure yet'],unchecked:['○','Not checked yet'],other:['!','Needs a look']};
+const KIND={amount:['✎','Add the amount'],match:['?','Confirm the color match'],unsure:['?','Not sure yet'],unchecked:['○','Not checked yet'],other:['!','Needs a look']};
 function statInfo(t){if(t.state==='have')return['✓','You have enough'];if(t.state==='received')return['✓','Received: ready'];if(t.state==='buy')return['🛒',`Need to buy · ${plural(t.rem,'skein')}`];if(t.state==='awaiting')return['📦','Bought: check it in when it arrives'];return KIND[t.kind]||KIND.other}
 const FILTERS=[['all','All'],['todo','Still to do'],['buy','Need to buy'],['att','Needs attention'],['ready','Ready']];
 const inFilter=(t,f)=>f==='all'||(f==='todo'&&!['have','received'].includes(t.state))||(f==='buy'&&['buy','awaiting'].includes(t.state))||(f==='att'&&t.state==='review')||(f==='ready'&&['have','received'].includes(t.state));
-const cap=t=>t?t[0].toUpperCase()+t.slice(1):t;
+const ABBR={vy:'very',dk:'dark',lt:'light',md:'medium',ul:'ultra',ult:'ultra',med:'medium'};
+const cap=t=>{if(!t)return t;t=t.replace(/\b(vy|dk|lt|md|ul|ult|med)\b\.?/gi,m=>ABBR[m.replace('.','').toLowerCase()]);return t[0].toUpperCase()+t.slice(1)};
 const STLBL={have:'Have enough',buy:'Need to buy',check:'Not sure'};
 function card(p,P,t){const it=t.it,d=t.d,c=esc(it.code),e=DMC[it.code],f=fam(it.code),open=expanded.has(it.code),L=esc(lab(it.code)),si=statInfo(t);
- return`<li class="tcard st-${t.state}" id="card-${c}" data-code="${c}" data-search="${esc((lab(it.code)+' '+e.name+' '+(t.r.ok?t.r.to:'')).toLowerCase())}"><div class="main"><div class="top">
+ return`<li class="tcard st-${t.state}${t.kind?' k-'+t.kind:''}" id="card-${c}" data-code="${c}" data-search="${esc((lab(it.code)+' '+e.name+' '+(t.r.ok?t.r.to:'')).toLowerCase())}"><div class="main"><div class="top">
  <span class="bigsw" style="background:${e.hex}" title="Approximate DMC color"></span>
  <div class="ident"><div class="code">DMC ${L}${f!=='solid'?` <span class="tag">${f}</span>`:''}</div><div class="cname">${esc(cap(e.name))}${P.dest!=='dmc'&&t.r.ok?` · use <b>${BRAND[P.dest]} ${esc(disp(P.dest,t.r.to))}</b>`:''}</div>
  <div class="need">${it.qty===null?'<span class="unk">Amount needed: not entered</span>':`${plural(it.qty,'skein')} needed${it.stated===false?' (assumed)':''}`}</div>
- <div class="stat ${t.state}"><span aria-hidden="true">${si[0]}</span> ${si[1]}</div></div>
+ <div class="stat ${t.state}${t.kind?' k-'+t.kind:''}"><span aria-hidden="true">${si[0]}</span> ${si[1]}</div></div>
  <button type="button" class="sec exp" id="x-${c}" data-exp="${c}" aria-expanded="${open}" aria-controls="det-${c}">${open?'Hide details':'Details'}<span class="sr"> for DMC ${L}</span></button></div>
  <div class="seg" role="radiogroup" aria-label="Do you have DMC ${L}?">${['have','buy','check'].map(s=>`<label><input type="radio" name="st-${c}" id="st-${c}-${s}" value="${s}" data-st="${c}" ${d.status===s?'checked':''}><span>${STLBL[s]}</span></label>`).join('')}</div></div>
  ${t.state==='review'?`<div class="why">${esc(t.why)}</div>`:''}${t.recvOther?'<div class="why">A thread you checked in for a different brand isn\'t counted here.</div>':''}
@@ -136,11 +137,11 @@ function card(p,P,t){const it=t.it,d=t.d,c=esc(it.code),e=DMC[it.code],f=fam(it.
   ${d.recv?`<div class="fld"><span class="flbl">Checked in</span>${d.recv.qty} × ${esc(BRAND[d.recv.brand])} ${esc(disp(d.recv.brand,d.recv.to))} <button type="button" class="sec small" id="rr-${c}" data-rr="${c}">Undo received</button></div>`:''}
   <div class="fld"><button type="button" class="ghost small" id="rm-${c}" data-rm="${c}">Remove this color<span class="sr"> (DMC ${L})</span></button></div></div></li>`}
 function nextSteps(P){const k={};P.threads.forEach(t=>{if(t.state==='review')k[t.kind]=(k[t.kind]||0)+1});const s=P.sum,o=[];
- if(k.amount)o.push(['att',`${s2(k.amount)} need${k.amount===1?'s':''} an amount before your list is complete.`,'Review them','att']);
+ if(k.amount)o.push(['att',`${s2(k.amount)} need${k.amount===1?'s':''} an amount before your list is complete.`,k.amount===1?'Review it':'Review them','att']);
  if(k.match)o.push(['att',`You chose another brand for ${s2(k.match)}. Please confirm the match${k.match===1?'':'es'}.`,'Review','att']);
- if(k.unchecked)o.push(['att',`${s2(k.unchecked)} ${k.unchecked===1?"isn't":"aren't"} checked yet. Tap Have enough, Need to buy or Not sure.`,'Show them','att']);
- if(k.unsure)o.push(['att',`${s2(k.unsure)} marked Not sure. Check your stash when you can.`,'Show them','att']);
- if(k.other)o.push(['att',`${s2(k.other)} need${k.other===1?'s':''} a second look.`,'Show them','att']);
+ if(k.unchecked)o.push(['att',`${s2(k.unchecked)} ${k.unchecked===1?"isn't":"aren't"} checked yet. Tap Have enough, Need to buy or Not sure.`,k.unchecked===1?'Show it':'Show them','att']);
+ if(k.unsure)o.push(['att',`${s2(k.unsure)} marked Not sure. Check your stash when you can.`,k.unsure===1?'Show it':'Show them','att']);
+ if(k.other)o.push(['att',`${s2(k.other)} need${k.other===1?'s':''} a second look.`,k.other===1?'Show it':'Show them','att']);
  if(s.awaiting)o.push(['wait',`${plural(s.awaiting,'thread')} ${s.awaiting===1?'was':'were'} bought but ${s.awaiting===1?"hasn't":"haven't"} been checked in yet.`,'Check them in','shop']);
  if(s.toBuy)o.push(['buy',`${s2(s.toBuy)} to buy.`,'Shop my list','shop']);return o}
 function renderEditor(){if(mode==='shop')return renderShop();const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;return}
@@ -178,15 +179,15 @@ function renderPlan(p,P){P=P||plan(p);const s=P.sum,tb=P.lines.filter(l=>!l.boug
  <section class="psum" id="pSummary" data-ready="${P.ready}" aria-labelledby="pSumH"><h2 class="sr" id="pSumH">Project summary</h2>
  <p class="headline" role="status" aria-live="polite">${P.ready?`${foxSvg('fox')}<span>All your threads are accounted for. You're ready to stitch!<span class="sr" id="sSuf">${s.sufficient} of ${s.total}</span></span>`:`<span><span id="sSuf">${s.sufficient} of ${s.total}</span> colors ready</span>`}</p>
  ${s.total?`<div class="bar" role="progressbar" aria-label="Colors ready" aria-valuemin="0" aria-valuemax="${s.total}" aria-valuenow="${s.sufficient}" aria-valuetext="${s.sufficient} of ${s.total} colors ready"><span style="width:${pct}%"></span></div>`:''}
- <ul class="stats"><li><b id="sBuy">${s.toBuy}</b>to buy</li><li><b id="sAw">${s.awaiting}</b>bought, waiting to check in</li><li><b id="sRev">${s.review}</b>need attention</li></ul>
+ ${P.ready?`<p class="skeins">${s.total} of ${s2(s.total)} have enough or have been checked in. Happy stitching! 🧵</p>`:''}<ul class="stats"${P.ready?' hidden':''}><li><b id="sBuy">${s.toBuy}</b>to buy</li><li><b id="sAw">${s.awaiting}</b>bought, waiting to check in</li><li><b id="sRev">${s.review}</b>need attention</li></ul>
  ${skeins||colorOnly?`<p class="skeins">Skeins still to get: <b>${skeins}</b>${colorOnly?` · plus ${s2(colorOnly)} with no amount entered, so the total isn't complete`:''}</p>`:''}
  ${steps.length?`<ul class="next noprint">${steps.map(([c,t,b,a],i)=>`<li class="${c}"><span>${esc(t)}</span><button type="button" class="sec small" id="ns-${i}" data-ns="${a}">${b}</button></li>`).join('')}</ul>`:''}
- <nav class="jump noprint" aria-label="Jump to"><a href="#pThreads">Your colors</a><a href="#pReviewH">Needs attention (${s.review})</a><a href="#pShopH">Shopping list (${P.lines.length})</a></nav></section>`;
+ <nav class="jump noprint" aria-label="Jump to"${P.ready?' hidden':''}><a href="#pThreads">Your colors</a><a href="#pReviewH">Needs attention (${s.review})</a><a href="#pShopH">Shopping list (${P.lines.length})</a></nav></section>`;
  $('pPlan').innerHTML=`<h3 id="pShopH" tabindex="-1">Shopping list</h3><h4>Need to buy</h4><ul>${tb.map(l=>`<li><label><input type="checkbox" id="pb-${esc(l.key)}" data-bought="${esc(l.key)}"> ${li(l)}</label>${mw(l)}</li>`).join('')}${P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy').map(t=>`<li>DMC ${esc(lab(t.it.code))} · <span class="unk">amount not entered</span>. Add it to check this color off.</li>`).join('')||(tb.length?'':'<li class="mut">Nothing left to buy.</li>')}</ul>
  <h4>Bought: check in when it arrives</h4><p class="hint">Ticking a thread as bought doesn't count it as ready. Check it in once you have it in hand.</p><ul>${aw.map(l=>{const k=sid(l.key);return`<li><label><input type="checkbox" id="pb-${esc(l.key)}" data-bought="${esc(l.key)}" checked> ${li(l)}</label>${mw(l)}
   <div class="noprint"><button type="button" class="sec small" id="rb-${k}" data-rb="${esc(l.key)}">I received this thread…</button>
   <div class="rform" id="rf-${k}" hidden><label for="rq-${k}">How many skeins of ${BRAND[P.dest]} ${esc(disp(P.dest,l.to))} arrived? (${l.q} still needed)</label><br><input type="number" id="rq-${k}" min="1" step="1" inputmode="numeric" class="qbox"> <button type="button" class="pri small" id="rc-${k}" data-rc="${esc(l.key)}">Save</button> <button type="button" class="ghost small" data-rx="${k}">Cancel</button></div></div></li>`}).join('')||'<li class="mut">Nothing waiting.</li>'}</ul>
- <h3 id="pReviewH" tabindex="-1">Needs attention</h3><ul>${P.review.map(x=>`<li>DMC ${esc(lab(x.it.code))} · needs ${x.it.qty===null?'<span class="unk">amount not entered</span>':plural(x.it.qty,'skein')}: ${esc(x.why)}</li>`).join('')||'<li class="mut">Nothing needs attention.</li>'}</ul>
+ <h3 id="pReviewH" tabindex="-1">Needs attention</h3><ul>${P.review.map(x=>`<li>DMC ${esc(lab(x.it.code))} · needs ${x.it.qty===null?'<span class="unk">amount not entered</span>':plural(x.it.qty,'skein')}: <b>${(KIND[x.kind]||KIND.other)[1]}.</b> ${esc(x.why)}</li>`).join('')||'<li class="mut">Nothing needs attention.</li>'}</ul>
  <h3>Ready</h3><ul>${P.have.map(x=>`<li>DMC ${esc(lab(x.it.code))} · needs ${x.it.qty===null?'<span class="unk">amount not entered</span>':plural(x.it.qty,'skein')}${x.d.owned!==null?` · you have ${x.d.owned}`:''} · ${x.state==='received'?`received ${x.recv} ${BRAND[P.dest]} ${esc(disp(P.dest,x.r.to))}`:'already had it'}</li>`).join('')||'<li class="mut">None yet.</li>'}</ul>
  ${p.notes?`<p class="printonly"><b>Notes:</b> ${esc(p.notes)}</p>`:''}<div class="totals">${esc(costLine(P))}</div>
  <div class="row noprint"><button type="button" class="pri" id="pPrint">Print</button><button type="button" class="sec" id="pCopy">Copy as text</button><button type="button" class="sec" id="pCsv">Download spreadsheet (CSV)</button></div>
@@ -214,9 +215,9 @@ function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;
  <p class="shopsum" role="status" aria-live="polite">${need?`You still need ${s2(need)}.`:(aw.length?'Everything is bought. Check threads in as they arrive.':'Nothing left to buy.')}</p>
  ${P.lines.length||co.length?`<p class="hint">Skeins still to get: <b>${P.lines.reduce((a,l)=>a+l.q,0)}</b>${co.length?` · ${s2(co.length)} with no amount entered`:''}</p>`:''}
  ${P.lines.length+co.length>6?`<div class="searchrow"><label class="sr" for="shSearch">Find a thread</label><input type="search" id="shSearch" placeholder="Find a thread, e.g. 310" autocomplete="off"><button type="button" class="sec" id="shSearchClear" hidden>Clear</button></div>`:''}</div>
- ${P.sum.review?`<p class="hint">${s2(P.sum.review)} still need${P.sum.review===1?'s':''} attention in your project, so ${P.sum.review===1?"it isn't":"they aren't"} on this list yet.</p>`:''}
+ ${P.sum.review-co.length>0?(n=>`<p class="hint">${s2(n)} still need${n===1?'s':''} attention in your project, so ${n===1?"it isn't":"they aren't"} on this list yet.</p>`)(P.sum.review-co.length):''}
  <p id="shMsg" class="ok-msg" role="status" aria-live="polite"></p>
- <ul class="shoplist" id="shList">${tb.map(l=>sc(l,false)).join('')}${co.map(t=>`<li class="scard" data-q="${esc((lab(t.it.code)+' '+DMC[t.it.code].name).toLowerCase())}"><div class="top"><span class="bigsw" style="background:${DMC[t.it.code].hex}"></span><div><div class="code">DMC ${esc(lab(t.it.code))}</div><div class="for">${esc(DMC[t.it.code].name)}</div></div><div class="qty unk">Amount not entered</div></div><p class="hint">Add the amount in your project to check this color off.</p></li>`).join('')}<li class="noresults" id="shNoRes" hidden></li></ul>
+ <ul class="shoplist" id="shList">${tb.map(l=>sc(l,false)).join('')}${co.map(t=>`<li class="scard" data-q="${esc((lab(t.it.code)+' '+DMC[t.it.code].name).toLowerCase())}"><div class="top"><span class="bigsw" style="background:${DMC[t.it.code].hex}"></span><div><div class="code">DMC ${esc(lab(t.it.code))}</div><div class="for">${esc(cap(DMC[t.it.code].name))}</div></div><div class="qty unk" style="font-size:.85rem">Amount not entered</div></div><p class="hint">Add the amount in your project to check this color off.</p></li>`).join('')}<li class="noresults" id="shNoRes" hidden></li></ul>
  ${!tb.length&&!co.length?`<div class="empty">${foxSvg('emptyfox')}<b>${aw.length?'All bought!':'Nothing to buy'}</b>${aw.length?'Check threads in below as they arrive.':P.ready?"You're ready to stitch.":'Mark colors as Need to buy in your project to see them here.'}</div>`:''}
  ${aw.length?`<h3>Bought: check in when it arrives (${aw.length})</h3><ul class="shoplist" id="shAw">${aw.map(l=>sc(l,true)).join('')}</ul>`:''}
  <details class="donebox"${done.length&&!tb.length?' open':''}><summary>Done (${done.length})</summary><ul class="shoplist">${done.map(t=>`<li class="scard"><div class="top"><span class="bigsw" style="background:${DMC[t.it.code].hex}"></span><div><div class="code">DMC ${esc(lab(t.it.code))}</div><div class="for">${t.state==='received'?`Received ${t.recv} × ${BRAND[P.dest]} ${esc(disp(P.dest,t.r.to))}`:'You have enough'}</div></div></div>${t.state==='received'?`<div class="acts"><button type="button" class="ghost" id="sx-${esc(t.it.code)}" data-sx="${esc(t.it.code)}">Undo received</button></div>`:''}</li>`).join('')||'<li class="mut" style="list-style:none">Nothing yet.</li>'}</ul></details>
