@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const PIP_KEY='flossfox.pip.v1';           // stores only "shown"/"hidden"
 // Returning visitor = the tour was already completed or dismissed (tour.js pref). Read-only here.
-const returning=(()=>{try{const t=JSON.parse(localStorage.getItem(PIP_KEY.replace(/\.pip\.v1$/,'.tour.v1'))||'null');return !!t&&(t.status==='done'||t.status==='dismissed')}catch(e){return false}})();
+const returning=(()=>{try{const t=JSON.parse(localStorage.getItem(PIP_KEY.replace(/\.pip\.v1$/,'.tour.v1'))||'null');if(t&&(t.status==='done'||t.status==='dismissed'))return true;const d=JSON.parse(localStorage.getItem(PIP_KEY.replace(/\.pip\.v1$/,'.v1'))||'null');return !!(d&&d.projects&&d.projects.length)}catch(e){return false}})(); // genuine returning visitor: finished/dismissed the tour, or has saved projects
 const SIZES=[160,320,480];
 // Poses with real (transparent) artwork. 'thinking' is used only for real checks (Ask Pip answers, backup check); the 'processing' state stays unused (no fake delays).
 const ART={greeting:'greeting',curious:'curious',puzzled:'puzzled',duplicates:'duplicates',helpful:'helpful',tangled:'tangled',celebrating:'celebrating',sleepy:'sleepy',
@@ -38,7 +38,7 @@ const STATES={
  processing: {pose:'thinking',   pri:30, anim:'fade',  msg:()=>'Let me look at your list…'}, // reserved: parsing is instant, so never shown (no fake delays)
  celebrating:{pose:'celebrating',pri:35, anim:'cheer', msg:()=>'Yay! Your list is ready!'},
  duplicate:  {pose:'duplicates', pri:40, anim:'pop',   msg:r=>r.items.filter(i=>i.src.length>1).length===1?"Found a repeat! I've combined it for you.":"Found some repeats! I've combined them for you."},
- goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"That's the tour! Have fun stitching. I'm here if you need me."},
+ goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"Have fun! Ask me anytime."},
  error:      {pose:errPose,      pri:50, anim:'tilt',  msg:errMsg},
  tangled:    {pose:'tangled',    pri:8,  anim:'wiggle',msg:()=>TANGLE[tn%2]},
  sleepy:     {pose:'sleepy',     pri:5,  anim:'doze',  msg:()=>''},
@@ -99,7 +99,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeou
 const seen=new Map();
 function projectReady(id,ready){const prev=seen.get(id);seen.set(id,!!ready);return prev===false&&!!ready&&!fig.hidden}
 // Visibility preference
-function vis(on,store){fig.hidden=!on;msg.hidden=!on;el.classList.toggle('pipoff',!on);el.parentElement.classList.toggle('nopip',!on);tog.setAttribute('aria-expanded',String(on));tog.textContent=on?'Hide Pip':'Show Pip';
+function vis(on,store){fig.hidden=!on;document.body.classList.toggle('pip-hidden-all',!on);msg.hidden=!on;el.classList.toggle('pipoff',!on);el.parentElement.classList.toggle('nopip',!on);tog.setAttribute('aria-expanded',String(on));tog.textContent=on?'Hide Pip':'Show Pip';
  if(!on)clearOver();else show(base,null,false);if(store)try{localStorage.setItem(PIP_KEY,on?'shown':'hidden')}catch(e){}}
 let pref='shown';try{pref=localStorage.getItem(PIP_KEY)||'shown'}catch(e){}
 vis(pref!=='hidden',false);tog.onclick=()=>vis(fig.hidden,true);
@@ -109,17 +109,19 @@ const api={result,show,stateFor,STATES,ART,FUTURE,current:()=>cur,base:()=>base,
  setTour:on=>{touring=!!on;if(touring&&(over==='sleepy'||over==='tangled'||(over&&over.startsWith('hint')))){clearOver();show(base,null,false)}arm()},touring:()=>touring,
  hint:n=>{const S=STATES[n];if(!S||touring||over||quiet()||STATES[base].pri>CALM||!S.msg(lastR))return false;overlay(n,9000);arm();return true},
  errPose,
+ isHidden:()=>fig.hidden,
  // Brief decorative confirmation (wink + thumbs-up) next to the app's own status line, which is the one polite announcement.
  saved:(slot,text)=>{if(!slot||fig.hidden)return false;slot.querySelectorAll('.savedtoast').forEach(x=>x.remove());const t=document.createElement('span');t.className='savedtoast';t.setAttribute('aria-hidden','true');
   t.innerHTML=`<picture><source type="image/webp" srcset="assets/pip/pip-saved-160.webp"><img src="assets/pip/pip-saved-160.png" width="160" height="237" alt=""></picture>${text?`<span>${String(text).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`:''}`;slot.prepend(t);setTimeout(()=>t.remove(),T.toast);return true},
  // Tour finished: GOODBYE (walking off with a wave), a short calm overlay. Never over errors or busy states.
- bye:()=>{if(fig.hidden||STATES[base].pri>CALM)return false;overlay('goodbye',4000);arm();return true},
+ bye:()=>{if(fig.hidden||STATES[base].pri>CALM)return false;overlay('goodbye',3000);arm();return true},
  needlePose,
  _timing:o=>{Object.assign(T,o);arm();return{...T}}};
 /* global state */
 if(typeof state!=='undefined'&&(state.items.length||state.errs.length)){lastR=state;base=stateFor(state,true);show(base,state)}else{base=stateFor({items:[],errs:[]},false);show(base)}
 const warm=()=>{const w=img.currentSrc&&/-(\d+)\.(webp|png)/.exec(img.currentSrc);const size=w?w[1]:'320',ext=w?w[2]:'webp';
- Object.values(ART).forEach(a=>{if(a!=='greeting'&&!['peeking','pointing','thinking','face-icon','saved'].includes(a)){const i=new Image();i.decoding='async';i.src=`assets/pip/pip-${a}-${size}.${ext}`}})};
+ // Only warm the few poses the companion is likely to need next (after idle); everything else loads when its view or state appears.
+ ['neutral','curious','presenting','reassuring','puzzled'].forEach(a=>{if(img.currentSrc.indexOf('pip-'+a+'-')<0){const i=new Image();i.decoding='async';i.src=`assets/pip/pip-${a}-${size}.${ext}`}})};
 window.addEventListener('load',()=>(window.requestIdleCallback||setTimeout)(warm,{timeout:3000}));
 const inp=$('inp');inp.addEventListener('focus',()=>{if(['welcome','welcomeBack','idle'].includes(cur)&&!inp.value.trim())show('attentive')});
 // Leaving an empty box: settle to the calm idle companion (curious stays for focus/exploring).

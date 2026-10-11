@@ -4,7 +4,7 @@ Usage: python tests/regression.py [BASE_URL] [--chrome /path/to/chrome] [--shots
 Default BASE_URL: http://localhost:8765/ (serve the site folder with `python3 -m http.server 8765`).
 Needs: pip install playwright (uses an installed Chrome/Chromium; set --chrome if not at /usr/bin/google-chrome).
 """
-import sys, json, os, argparse, subprocess
+import sys, json, os, argparse, subprocess, re
 KEY = os.environ.get('FF_KEY', 'flossfox.v1')  # storage key; the dev preview build uses a different one
 from playwright.sync_api import sync_playwright
 
@@ -312,7 +312,7 @@ with sync_playwright() as p:
     ok('N10b jump links land below the sticky nav', rm.evaluate("document.getElementById('pReviewH').getBoundingClientRect().top") >= rm.evaluate("document.querySelector('.tabs').getBoundingClientRect().bottom") - 2)
     x = page(); x.goto(B); evil = '<img src=x onerror="window.__x=1">'; x.fill('#inp', '310\n' + evil); x.click('#go')
     x.fill('#newProjName', evil); x.click('#saveProj'); x.click('#openSaved'); expand(x, '310')
-    ok('N13 hostile text is shown as text, never run', x.evaluate('window.__x') is None and evil in x.inner_text('#errs') if False else (x.evaluate('window.__x') is None and x.input_value('#pName') == evil and x.locator('#projEdit img').count() == 0))
+    ok('N13 hostile text is shown as text, never run', x.evaluate('window.__x') is None and evil in x.inner_text('#errs') if False else (x.evaluate('window.__x') is None and x.input_value('#pName') == evil and x.locator('#projEdit img:not([src^="assets/pip/"])').count() == 0))
     # widths incl 320, all three main views
     badw = []
     for w in [320, 360, 412, 600, 700, 768, 880, 1024, 1280]:
@@ -512,8 +512,8 @@ with sync_playwright() as p:
         g = page(w, True); g.set_viewport_size({'width': w, 'height': 740 if w < 400 else 860}); g.goto(B)
         r = g.evaluate("""(()=>{const b=k=>document.querySelector(k).getBoundingClientRect(),t=b('#pipToggle'),f=b('#pipFig'),m=b('#pipMsg'),i=b('#inp'),go=b('#go');
           const ov=(a,c)=>!(a.right<=c.left||c.right<=a.left||a.bottom<=c.top||c.bottom<=a.top);
-          return {tw:t.width,th:t.height,near:Math.abs(t.top-f.bottom)<60,over:[ov(t,i),ov(t,go),ov(f,i),ov(m,i),ov(t,m),ov(t,f)].some(Boolean),goBottom:go.bottom,vh:innerHeight,inpTop:i.top}})()""")
-        ok(f'Q4 {w}px: toggle next to Pip, ≥44px, nothing overlaps; main button on first screen', r['tw'] >= 44 and r['th'] >= 44 and r['near'] and not r['over'] and r['goBottom'] <= r['vh'], r)
+          return {tw:t.width,th:t.height,near:Math.abs(t.top-f.bottom)<60,over:[ov(t,i),ov(t,go),ov(f,i),ov(m,i),ov(t,m),ov(t,f)].some(Boolean),goBottom:go.bottom,vh:innerHeight,banner:(document.querySelector('.devbanner')||{offsetHeight:0}).offsetHeight,inpTop:i.top}})()""")
+        ok(f'Q4 {w}px: toggle next to Pip, ≥44px, nothing overlaps; main button on first screen', r['tw'] >= 44 and r['th'] >= 44 and r['near'] and not r['over'] and r['goBottom'] - r['banner'] <= r['vh'], r)  # dev preview only: its intentional banner is excluded; production has no banner (banner == 0)
         g.context.close()
     # ---------- Retailer / affiliate links (1.3) ----------
     def rcfg(enabled, wrap='', aid='AFFILIATE_ID_PLACEHOLDER'):
@@ -595,7 +595,7 @@ with sync_playwright() as p:
     g.select_option('#dest', 'sullivans'); g.wait_for_timeout(80)
     ok('T4b S3 live text tells the true Sullivans match count', "Sullivans now: 2 colors of 2 have a chart match" in g.inner_text('#tourCard') and g.locator('#shop li').count() == 2, g.inner_text('#tourCard'))
     g.select_option('#dest', 'dmc'); nxt(g)
-    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and 'affiliate' not in g.inner_text('#tourCard').lower() and g.locator('#shopcard button:has-text("Print list")').count() == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
+    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and (('optional affiliate links' in g.inner_text('#tourCard').lower() and 'never need them' in g.inner_text('#tourCard')) if g.evaluate("!!window.FLOSS_FOX_TEST_LINKS") else 'affiliate' not in g.inner_text('#tourCard').lower()) and g.locator('#shopcard button:has-text("Print list")').count() == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
     g.click('#tourCard [data-t=back]'); g.wait_for_timeout(80); ok('T5 Back returns to step 3', step(g) == 2); nxt(g); nxt(g)
     ok('T4d step 5 finish: celebrating, both buttons', step(g) == 4 and "Yay! You've got it! You're ready to start stitching!" in g.inner_text('#tourCard') and cpose(g) == ['celebrating', 'celebrating'] and g.locator('#tourCard [data-t=start]').count() == 1 and g.locator('#tourCard [data-t=tips]').count() == 1, cpose(g))
     g.click('#tourCard [data-t=start]'); g.wait_for_timeout(80)
@@ -718,7 +718,7 @@ with sync_playwright() as p:
     ok('M7b desktop Ask Pip: no peeking, face-icon header', (pdm.click('#askPipBtn') or True) and not pdm.locator('#askPip .apeek img').is_visible() and pdm.evaluate("document.querySelector('#askPip .ahead').dataset.pose") == 'face-icon')
     bk = tp(412, fresh=False); bk.click('#tabProjects'); bk.click('#backupBox summary')
     bk.set_input_files('#restoreFile', {'name': 'b.json', 'mimeType': 'application/json', 'buffer': open(FIX, 'rb').read()}); bk.wait_for_timeout(300)
-    ok('M8 restoring a backup: thinking Pip with the real check result', bk.get_attribute('#restorePanel .rpip', 'data-pose') == 'thinking' and 'I checked it' in bk.inner_text('#restorePanel'))
+    ok('M8 restoring a backup: thinking only while really checking; the finished check shows presenting with the real result', bk.get_attribute('#restorePanel .rpip', 'data-pose') == 'presenting' and 'I checked it' in bk.inner_text('#restorePanel'))
     bk.set_input_files('#restoreFile', {'name': 'x.json', 'mimeType': 'application/json', 'buffer': b'not json'}); bk.wait_for_timeout(300)
     ok('M8b invalid backup -> puzzled, nothing changed', bk.get_attribute('#restorePanel .rpip', 'data-pose') == 'puzzled' and 'Nothing was changed' in bk.inner_text('#restorePanel'))
     pt = tp(412); pt.click('#tourYes'); poses = []
@@ -790,11 +790,55 @@ with sync_playwright() as p:
     c.goto(B); c.fill('#inp', '310 x2\n321'); c.click('#go'); c.wait_for_timeout(300); c.fill('#newProjName', 'Hoop'); c.click('#saveProj'); c.click('#tabProjects'); c.click('[data-open]'); c.wait_for_timeout(150)
     c.click('#pAllBuy'); c.wait_for_timeout(100)
     ok('C5 list still to buy -> no cross-stitch yet (only real events)', c.locator('img[data-pose=cross-stitch]').count() == 0)
-    for _ in range(6):
-        if c.locator('#pPlan input[data-bought]').count() == 0: break
-        c.locator('#pPlan input[data-bought]').first.click(); c.wait_for_timeout(120)
-    xs = c.evaluate("(()=>{const i=document.querySelector('#projectsView img[data-pose=cross-stitch]');return i?[i.naturalWidth>0,document.getElementById('projectsView').innerText.includes('Ready to start stitching?')]:null})()")
-    ok('C6 everything bought -> cross-stitch "Ready to start stitching?"', xs and all(xs), xs)
+    ok('C6 everything bought (not checked in) -> no cross-stitch', c.locator('img[data-pose=cross-stitch]').count() == 0)
+    # ---------- Release review: shopping completion ----------
+    DONE = "(()=>{const e=document.querySelector('#projEdit [data-done]');if(!e)return null;const i=e.querySelector('img');return [e.dataset.done,i?i.dataset.pose:null,e.innerText]})()"
+    STK = "JSON.stringify((JSON.parse(localStorage.getItem('%s'))||{}).projects.map(p=>[p.decisions,p.purchased,p.received]))" % KEY
+    sd = page(412, True, init=SEED); newproj(sd, '310 x1, 321 x1', 'Done'); sd.click('#pAllBuy'); sd.wait_for_timeout(80)
+    for code in ['310', '321']:
+        sd.locator('#pPlan input[data-bought]:not(:checked)').first.click(); sd.wait_for_timeout(100)
+    d1 = sd.evaluate(DONE)
+    ok('R1 all bought, awaiting check-in -> presenting "Shopping list done!" + check-in guidance, not ready to stitch', d1 and d1[0] == 'done' and d1[1] == 'presenting' and 'Shopping list done' in d1[2] and 'check' in d1[2].lower() and 'stitching' not in d1[2].lower(), d1)
+    sd.click('#pShop'); sd.wait_for_timeout(80); d2 = sd.evaluate(DONE)
+    ok('R1b Shop mode: same "Shopping list done" state, no cross-stitch', d2 and d2[0] == 'done' and sd.locator('img[data-pose=cross-stitch]').count() == 0, d2)
+    for code in ['310', '321']:
+        sd.click(f'#sr-dmc_{code}'); sd.fill(f'#sq-dmc_{code}', '1'); sd.click(f'#ss-dmc_{code}'); sd.wait_for_timeout(120)
+    d3 = sd.evaluate(DONE)
+    ok('R2 every color received in full -> cross-stitch "Ready to start stitching!"', d3 and d3[0] == 'stitch' and d3[1] == 'cross-stitch' and 'Ready to start stitching!' in d3[2], d3)
+    before = sd.evaluate(STK); sd.click('#shBack'); sd.wait_for_timeout(80); d4 = sd.evaluate(DONE)
+    ok('R2b project view agrees (cross-stitch)', d4 and d4[0] == 'stitch', d4)
+    sd.evaluate("document.getElementById('tabConvert').click()"); sd.wait_for_timeout(100); sd.evaluate("document.getElementById('pipToggle').click()"); sd.evaluate("document.getElementById('tabProjects').click()"); sd.wait_for_timeout(100); sd.click('[data-open]') if sd.locator('[data-open]:visible').count() else None; sd.wait_for_timeout(80); d5 = sd.evaluate(DONE)
+    ok('R3 Pip hidden: same completion state and text, no Pip images', d5 and d5[0] == 'stitch' and d5[1] is None and 'Ready to start stitching!' in d5[2] and sd.locator('#projectsView img[src*="assets/pip/"]:visible').count() == 0, d5)
+    ok('R3b Pip never changes Have/Check/Buy or bought/received records', sd.evaluate(STK) == before)
+    sa = page(412, True, init=SEED); newproj(sa, '310 x1\n321', 'Assumed'); sa.click('#pAllBuy'); sa.wait_for_timeout(80); sa.click('#pShop')
+    for code in ['310', '321']:
+        sa.click(f'#sb-dmc_{code}'); sa.click(f'#sw-dmc_{code}'); sa.fill(f'#sq-dmc_{code}', '1'); sa.click(f'#ss-dmc_{code}'); sa.wait_for_timeout(120)
+    d6 = sa.evaluate(DONE)
+    ok('R4 received but an amount was only assumed -> reassuring guidance, never cross-stitch', d6 and d6[0] == 'check' and d6[1] == 'reassuring' and sa.locator('img[data-pose=cross-stitch]').count() == 0, d6)
+    se = page(412, True, init=SEED); newproj(se, '310 x1', 'Empty'); se.click('#pShop') if se.locator('#pShop').count() else None; se.wait_for_timeout(80); d7 = se.evaluate(DONE)
+    ok('R5 nothing marked to buy -> organizing (or no completion block), never cross-stitch', (d7 is None or d7[1] in ('organizing', 'reassuring', None)) and se.locator('img[data-pose=cross-stitch]').count() == 0, d7)
+    # ---------- Release review: art delivery and usability ----------
+    ld = page(412, True, init=SEED); reqs = []; ld.on('request', lambda r: reqs.append(r.url) if '/assets/pip/' in r.url else None); ld.goto(B); ld.wait_for_timeout(600)
+    poses = sorted({re.sub(r'-(\d+)\.(webp|png)$', '', u.split('/pip-')[-1]) for u in reqs})
+    ok('A1 first screen loads only the Pip images it shows (current pose + Ask Pip face, one size each)', set(poses) - {'curious', 'presenting', 'reassuring', 'puzzled'} <= {'greeting', 'greeting-alt', 'neutral', 'face-icon'} and len([u for u in reqs if 'face-icon' in u]) == 1, reqs)  # returning visitors also fetch the HTML default greeting once (known, ~15 KB)
+    ld.wait_for_timeout(3600); poses = {re.sub(r'-(\d+)\.(webp|png)$', '', u.split('/pip-')[-1]) for u in reqs}
+    ok('A1c after idle only the 5 likely-next companion poses are warmed; tips, empty states, tour, goodbye, cross-stitch art wait for their view', poses <= {'greeting', 'greeting-alt', 'neutral', 'face-icon', 'curious', 'presenting', 'reassuring', 'puzzled'}, sorted(poses))
+    ld.click('#tabHelp') if ld.locator('#tabHelp').count() else None; ld.wait_for_timeout(300)
+    ok('A1b deferred images still load when their view opens (Help needle)', any('pip-needle' in u for u in reqs), reqs)
+    dist = []
+    for view in ['#tabConvert', '#tabProjects', '#tabHelp']:
+        if ld.locator(view).count(): ld.click(view); ld.wait_for_timeout(200)
+        dist += ld.evaluate("""[...document.querySelectorAll('img[src*="assets/pip/"]')].filter(i=>i.offsetWidth&&i.naturalWidth).map(i=>{const r=i.getBoundingClientRect(),cs=getComputedStyle(i);const a=r.width/r.height,n=i.naturalWidth/i.naturalHeight;return [i.currentSrc.split('/').pop(),cs.objectFit,Math.abs(a-n)/n]}).filter(x=>x[1]!=='contain'&&x[2]>0.03)""")
+    ok('A2 no stretched or squashed Pip anywhere (aspect kept or object-fit: contain)', not dist, dist)
+    big = page(320, True, init=SEED); big.goto(B); big.add_style_tag(content='html{font-size:200%!important}'); big.wait_for_timeout(200)
+    ok('U1 200% text at 320px: no horizontal overflow on Add colors', big.evaluate('document.documentElement.scrollWidth') <= 322, big.evaluate('document.documentElement.scrollWidth'))
+    big.click('#askPipBtn'); big.wait_for_timeout(100)
+    pk = big.evaluate("""(()=>{const p=document.querySelector('#askPip .apeek');if(!p)return 'none';const r=p.getBoundingClientRect();const hits=[...document.querySelectorAll('#askPip button')].filter(b=>{const q=b.getBoundingClientRect();return !(q.right<=r.left||q.left>=r.right||q.bottom<=r.top||q.top>=r.bottom)});return [getComputedStyle(p).pointerEvents,hits.length]})()""")
+    ok('U2 large text: peeking Pip covers no Ask Pip button and ignores taps', pk == 'none' or (pk[0] == 'none' and pk[1] == 0), pk)
+    big.set_viewport_size({'width': 320, 'height': 360}); big.wait_for_timeout(100)
+    ok('U2b keyboard-open height (360px): peeking still covers nothing', big.evaluate("""(()=>{const p=document.querySelector('#askPip .apeek');if(!p)return true;const r=p.getBoundingClientRect();return ![...document.querySelectorAll('#askPip button,#inp')].some(b=>{const q=b.getBoundingClientRect();return !(q.right<=r.left||q.left>=r.right||q.bottom<=r.top||q.top>=r.bottom)})})()"""))
+    rv2 = page(412, True, init=SEED); rv2.goto(B); rv2.wait_for_timeout(150)
+    ok('U3 Pip messages are not a live region (no chatty screen reader output); Pip art is alt=""', rv2.evaluate("!document.getElementById('pipMsg').hasAttribute('aria-live')&&[...document.querySelectorAll('img[src*=pip-]')].every(i=>i.alt==='')"))
     ok('C6b phone: no horizontal overflow with cross-stitch', c.evaluate('document.documentElement.scrollWidth') <= 412)
     ab = page(412, True, init=SEED); ab.goto(B + 'about.html'); ab.wait_for_timeout(150)
     ax = ab.evaluate("(()=>{const i=document.querySelector('img[data-pose=cross-stitch]');return i?[i.naturalWidth>0,Math.round(i.getBoundingClientRect().width),i.alt]:null})()")

@@ -166,6 +166,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);border-r
 .sw{border-radius:6px;border:1px solid rgba(0,0,0,.25)}
 /* projects list */
 .projlist li{padding:var(--s3) 0}.projlist .pname{font-weight:750;font-size:1.05rem}
+img[src*="assets/pip/"]{object-fit:contain}body.pip-hidden-all .orgpip,body.pip-hidden-all .helphead picture,body.pip-hidden-all .rpip{display:none}
 .orgpip{display:block;margin:0 auto var(--s2);width:200px;max-width:100%}.orgpip img{width:100%;height:auto;display:block}.shopdone{text-align:center;margin:var(--s3) 0}.shopdone b{display:block}.helphead{display:flex;align-items:center;gap:var(--s3)}.helphead img{width:96px;height:auto;flex:none}.helphead h2{margin:0}
 .empty{text-align:center;padding:var(--s5) var(--s3);color:var(--ink-2);list-style:none}.empty svg{width:72px;height:72px;display:block;margin:0 auto var(--s2)}.empty b{display:block;color:var(--ink);font-size:1.1rem;margin-bottom:4px}
 .storeline{font-size:.88rem;color:var(--ink-2);margin:var(--s2) 0 0}
@@ -241,9 +242,12 @@ code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);border-r
 .help p{max-width:44em}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}html{scroll-behavior:auto}}
 @media print{.tabs,#helpView{display:none!important}.psum{box-shadow:none;border:1px solid #000}.tcard,.scard{break-inside:avoid}}
+
+/* 1.4 release review: large text (200%) and narrow phones never scroll sideways */
+.tabs{flex-wrap:wrap}.tabs button{max-width:100%}.steps{grid-template-columns:repeat(3,minmax(0,1fr))}.steps li{min-width:0;overflow-wrap:anywhere}
 </style>
 </head><body><div class="wrap">
-<header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><p class="brand" id="appname"></p><p class="tagline">Thread lists for cross stitch</p></div><button type="button" class="askpipbtn noprint" id="askPipBtn" aria-expanded="false" aria-controls="askPip"><img src="assets/pip/pip-face-icon-64.png" srcset="assets/pip/pip-face-icon-64.png 1x, assets/pip/pip-face-icon-256.png 4x" width="64" height="64" alt="" decoding="async"> Ask Pip</button></header>
+<header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><p class="brand" id="appname"></p><p class="tagline">Thread lists for cross stitch</p></div><button type="button" class="askpipbtn noprint" id="askPipBtn" aria-expanded="false" aria-controls="askPip"><img src="assets/pip/pip-face-icon-64.png" srcset="assets/pip/pip-face-icon-64.png 1x" width="64" height="64" alt="" decoding="async"> Ask Pip</button></header>
 <nav class="tabs noprint" aria-label="Main"><button type="button" id="tabConvert" aria-pressed="true" aria-current="page"><span aria-hidden="true">🧵</span> Add colors</button><button type="button" id="tabProjects" aria-pressed="false"><span aria-hidden="true">📁</span> My projects <span id="projCount"></span></button><button type="button" id="tabHelp" aria-pressed="false"><span aria-hidden="true">💬</span> Help</button></nav>
 <section id="askPip" class="askpip noprint" hidden aria-labelledby="askPipH"></section>
 <div id="tourLive" class="sr" aria-live="polite"></div>
@@ -297,7 +301,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);border-r
 <p id="projStatus" class="hint" role="status" aria-live="polite"></p></div>
 <div class="card" id="projEdit" hidden></div>
 </div>
-<div id="helpView" hidden><div class="card help"><div class="helphead"><picture><source type="image/webp" srcset="assets/pip/pip-needle-160.webp"><img src="assets/pip/pip-needle-160.png" width="160" height="250" alt="" data-pose="needle" decoding="async"></picture><h2>How Floss Fox works</h2></div>
+<div id="helpView" hidden><div class="card help"><div class="helphead"><picture><source type="image/webp" srcset="assets/pip/pip-needle-160.webp"><img src="assets/pip/pip-needle-160.png" width="160" height="250" alt="" data-pose="needle" loading="lazy" decoding="async"></picture><h2>How Floss Fox works</h2></div>
 <ol class="steps vertical"><li><span class="num" aria-hidden="true">1</span><div><b>Add your colors.</b> Paste the DMC list from your pattern. Floss Fox shows what it recognized and anything it couldn't read.</div></li>
 <li><span class="num" aria-hidden="true">2</span><div><b>Check what you have.</b> Save the colors as a project and tap <i>Have enough</i>, <i>Need to buy</i> or <i>Not sure</i> for each one.</div></li>
 <li><span class="num" aria-hidden="true">3</span><div><b>Get your shopping list.</b> Open <i>Shop my list</i> in the store, or when you order online, then check each thread in when you have it.</div></li></ol>
