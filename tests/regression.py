@@ -324,6 +324,71 @@ with sync_playwright() as p:
       document.getElementById('tabProjects').click();const sb=document.getElementById('shBack');if(sb)sb.click();const i=document.querySelector('#pSearch');out.input_border=r(P(getComputedStyle(i).borderTopColor),[255,255,255]);
       const sg=document.querySelector('.seg');out.choice_border=r(P(getComputedStyle(sg).borderTopColor),[255,255,255]);return out})()""")
     print('NONTEXT', json.dumps(nt)); ok('N12b form-control borders >= 3:1 against white', min(nt.values()) >= 3, nt)
+    # ---------- Pip companion ----------
+    PK = os.environ.get('FF_PIP_KEY', 'flossfox.pip.v1')
+    pp = page(412, True); reqs = []; pp.on('request', lambda r: reqs.append(r.url)); pp.goto(B); pp.wait_for_load_state('networkidle')
+    pst = lambda g: g.evaluate("[FlossFoxPip.current(), document.getElementById('pip').dataset.pose, document.getElementById('pipMsg').textContent]")
+    ok('P1 Pip appears on load with welcome (greeting)', pp.locator('#pip').is_visible() and pst(pp) == ['welcome', 'greeting', "Hi! I'm Pip. Have some thread numbers? Let's get them sorted!"], pst(pp))
+    ok('P1b image loaded and decorative (alt=""), bubble not a live region', pp.evaluate("document.getElementById('pipImg').naturalWidth") > 0 and pp.get_attribute('#pipImg', 'alt') == '' and pp.get_attribute('#pipMsg', 'aria-live') is None)
+    from urllib.parse import urlparse
+    bad = []
+    for a in ['greeting', 'curious', 'puzzled', 'duplicates']:
+        for w in [160, 320, 480]:
+            for ext in ['webp', 'jpg']:
+                r = pp.request.get(B + f'assets/pip/pip-{a}-{w}.{ext}')
+                if r.status != 200 or len(r.body()) > 60000: bad.append((a, w, ext, r.status, len(r.body())))
+    ok('P2 all 24 Pip files load and are small (<60 KB)', not bad, bad)
+    pp.wait_for_timeout(800)
+    ok('P2b no requests outside the site origin', all(urlparse(u).netloc == urlparse(B).netloc for u in reqs if u.startswith('http')), [u for u in reqs if urlparse(u).netloc != urlparse(B).netloc][:5])
+    def sub(g, t): g.fill('#inp', t); g.click('#go'); return pst(g)
+    s1 = sub(pp, '310\n9999'); ok('P3 invalid number -> puzzled', s1 == ['error', 'puzzled', "Hmm, I couldn't recognize that number. Want to check it?"], s1)
+    s2 = sub(pp, '310\n310 x2'); ok('P3b duplicate -> duplicates, and the claim is true (one line, amounts summed)', s2[:2] == ['duplicate', 'duplicates'] and 'combined it into one line' in s2[2] and pp.evaluate("state.items.length") == 1 and pp.evaluate("state.items[0].qty") == 3, s2)
+    s3 = sub(pp, '310, 321'); ok('P3c valid list -> curious, honest next step', s3 == ['listReady', 'curious', 'I see 2 colors in your list. Next, check which ones you already have.'], s3)
+    s4 = sub(pp, '310\n310\nzzz'); ok('P3d priority: error beats duplicate', s4[0] == 'error', s4)
+    s5 = sub(pp, '   '); ok('P3e empty submit -> curious guidance', s5[:2] == ['empty', 'curious'], s5)
+    pp.click('#clear'); ok('P3f clear -> welcome', pst(pp)[0] == 'welcome')
+    pp.click('#tabHelp'); pp.click('#tabConvert'); pp.locator('#inp').focus(); ok('P3g focusing the empty box -> attentive (curious)', pst(pp)[:2] == ['attentive', 'curious'], pst(pp))
+    pp.click('#sample'); ok('P3h example list uses the same rules (duplicate/listReady)', pst(pp)[0] in ('duplicate', 'listReady', 'error'), pst(pp))
+    sub(pp, '310, 321'); before = pst(pp)
+    pp.select_option('#dest', 'sullivans'); pp.click('#tabHelp'); pp.click('#tabConvert'); pp.fill('#inp', '9999 typing not submitted')
+    ok('P4 unrelated actions and typing do not change Pip', pst(pp) == before, (before, pst(pp)))
+    pp.evaluate("""()=>{const i=document.getElementById('inp'),g=document.getElementById('go');for(const t of ['9999','310\\n310','zzz','310, 321, 666']){i.value=t;g.click()}}""")
+    pp.wait_for_timeout(600)
+    ok('P5 rapid changes leave no stale state (final state, image and text agree)', pst(pp) == ['listReady', 'curious', 'I see 3 colors in your list. Next, check which ones you already have.'] and 'curious' in pp.evaluate("document.getElementById('pipImg').currentSrc"), (pst(pp), pp.evaluate("document.getElementById('pipImg').currentSrc")))
+    # layout shift
+    tops = []
+    for t in ['', '9999', '310\n310', '310, 321']:
+        pp.fill('#inp', t); pp.click('#go'); pp.wait_for_timeout(50); tops.append(pp.evaluate("document.getElementById('inp').getBoundingClientRect().top+scrollY"))
+    ok('P11 Pip state changes cause no layout shift (412px)', len(set(tops)) == 1, tops)
+    pd = page(1280); pd.goto(B); t2 = []
+    for t in ['', '9999 x', '310\n310', '310, 321']:
+        pd.fill('#inp', t); pd.click('#go'); pd.wait_for_timeout(50); t2.append(pd.evaluate("[document.getElementById('inp').getBoundingClientRect().top+scrollY, document.getElementById('go').getBoundingClientRect().top+scrollY]"))
+    ok('P11b no layout shift on desktop side panel (1280px)', all(x == t2[0] for x in t2), t2)
+    ok('P11c desktop: Pip in a side panel, not over the input or buttons', pd.evaluate("(()=>{const p=document.getElementById('pip').getBoundingClientRect(),i=document.getElementById('inp').getBoundingClientRect(),g=document.querySelector('.hero .row').getBoundingClientRect();return p.left>=i.right&&p.left>=g.right})()"))
+    # hide / show
+    h2 = page(412, True); h2.goto(B); h2.click('#pipToggle')
+    ok('P6 Hide Pip hides it, button says Show Pip, preference stored', h2.locator('#pip').is_hidden() and h2.inner_text('#pipToggle') == 'Show Pip' and h2.get_attribute('#pipToggle', 'aria-expanded') == 'false' and h2.evaluate(f"localStorage.getItem('{PK}')") == 'hidden')
+    h2.reload(); ok('P6b hidden preference survives reload', h2.locator('#pip').is_hidden() and h2.inner_text('#pipToggle') == 'Show Pip')
+    h2.fill('#inp', '310 x2\n9999'); h2.click('#go')
+    ok('P6c app fully works with Pip hidden (results + errors in normal UI)', 'DMC 310' in h2.inner_text('#results') and '9999' in h2.inner_text('#errs'))
+    ok('P6d Pip preference never touches project storage', h2.evaluate(f"localStorage.getItem('{KEY}')") is None)
+    h2.locator('#pipToggle').focus(); h2.keyboard.press('Enter'); ok('P9 keyboard toggles Pip back on; state is current', h2.locator('#pip').is_visible() and h2.evaluate(f"localStorage.getItem('{PK}')") == 'shown' and pst(h2)[0] == 'error', pst(h2))
+    ok('P9b nothing focusable inside Pip (no focus trap)', h2.evaluate("document.querySelectorAll('#pip a,#pip button,#pip input,#pip [tabindex]').length") == 0)
+    rmp = br.new_context(viewport={'width': 412, 'height': 900}, reduced_motion='reduce').new_page(); rmp.goto(B); rmp.fill('#inp', '9999'); rmp.click('#go')
+    ok('P8 reduced motion: no Pip animation', rmp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
+    ok('P8b with motion: gentle whole-image animation only', pp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") in ('pippop', 'piptilt', 'pipfade', 'none'))
+    badp = []
+    for w in [320, 360, 412, 600, 768, 880, 1024, 1280]:
+        for hid in [False, True]:
+            g = page(w, w < 700); g.goto(B)
+            if hid: g.click('#pipToggle')
+            g.fill('#inp', '310\n310\n9999'); g.click('#go')
+            sw = g.evaluate('document.documentElement.scrollWidth')
+            if sw > w: badp.append((w, hid, sw))
+            g.context.close()
+    ok('P7 no overflow 320-1280 with Pip shown and hidden', not badp, badp)
+    pp.fill('#inp', '9999'); pp.click('#go'); pp.evaluate('scrollTo(0,0)'); cr = pp.evaluate(CJS)
+    ok('P10 contrast incl. Pip bubble (error state)', not cr['fails'], cr['fails'])
     # ---------- Phone layout ----------
     pm = page(412, True); pm.goto(B + '?sample'); pm.wait_for_timeout(200)
     ok('phone convert: no horizontal overflow', pm.evaluate('document.documentElement.scrollWidth') <= 412)
