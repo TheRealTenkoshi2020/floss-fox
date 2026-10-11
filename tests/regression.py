@@ -5,6 +5,7 @@ Default BASE_URL: http://localhost:8765/ (serve the site folder with `python3 -m
 Needs: pip install playwright (uses an installed Chrome/Chromium; set --chrome if not at /usr/bin/google-chrome).
 """
 import sys, json, os, argparse, subprocess
+KEY = os.environ.get('FF_KEY', 'flossfox.v1')  # storage key; the dev preview build uses a different one
 from playwright.sync_api import sync_playwright
 
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/')
@@ -126,8 +127,8 @@ with sync_playwright() as p:
     bad = dict(bj); bad['projects'] = bj['projects'] + [{'id': 'x1', 'items': [{'code': 'NOPE', 'qty': 1}]}, bj['projects'][0]]
     restore(json.dumps(bad).encode()); ok('damaged/duplicate entries skipped and counted', 'skipped' in pg.inner_text('#restorePanel'), pg.inner_text('#restorePanel')); pg.click('#rCancel')
     # Storage failure modes
-    pc = page(); pc.goto(B); pc.evaluate("localStorage.setItem('flossfox.v1','{bad json')"); pc.reload(); pc.click('#tabProjects')
-    ok('corrupt storage: warning, data untouched', "couldn't be read" in pc.inner_text('#storeMsg') and pc.evaluate("localStorage.getItem('flossfox.v1')") == '{bad json')
+    pc = page(); pc.goto(B); pc.evaluate("localStorage.setItem('"+KEY+"','{bad json')"); pc.reload(); pc.click('#tabProjects')
+    ok('corrupt storage: warning, data untouched', "couldn't be read" in pc.inner_text('#storeMsg') and pc.evaluate("localStorage.getItem('"+KEY+"')") == '{bad json')
     pu = page(init="Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError')}})"); pu.goto(B); pu.click('#tabProjects')
     ok('storage unavailable: clear message, app still works', 'Saving is unavailable' in pu.inner_text('#storeMsg'))
     pu.click('#tabConvert'); conv(pu, '310', 'dmc'); ok('convert works without storage', len(shop(pu)) == 1)
@@ -161,9 +162,9 @@ with sync_playwright() as p:
     newproj(m, '310 x2, 415 x1', 'Persist'); m.click('#pAllBuy'); m.check('#pb-dmc\\:310'); m.check('#pb-dmc\\:415'); m.click('#rb-dmc_415'); m.fill('#rq-dmc_415', '1'); m.click('#rc-dmc_415')
     m.reload(); m.click('#tabProjects'); m.locator('[data-open]').first.click()
     ok('T7 purchased + received persist after reload', summ(m)['sAw'] == '1' and summ(m)['sSuf'] == '1 of 2' and m.is_checked('#pb-dmc\\:310'), summ(m))
-    st = m.evaluate("JSON.parse(localStorage.getItem('flossfox.v1'))"); ok('T7b stored schema is 2 with recv record', st['schema'] == 2 and any(p['decisions'].get('415', {}).get('recv') for p in st['projects']), st['schema'])
+    st = m.evaluate("JSON.parse(localStorage.getItem('"+KEY+"'))"); ok('T7b stored schema is 2 with recv record', st['schema'] == 2 and any(p['decisions'].get('415', {}).get('recv') for p in st['projects']), st['schema'])
     # T8 migration
-    v1 = open(FIX, encoding='utf-8').read(); mg = page(); mg.goto(B); mg.evaluate("v=>localStorage.setItem('flossfox.v1',v)", v1); mg.reload(); mg.click('#tabProjects')
+    v1 = open(FIX, encoding='utf-8').read(); mg = page(); mg.goto(B); mg.evaluate("v=>localStorage.setItem('"+KEY+"',v)", v1); mg.reload(); mg.click('#tabProjects')
     ok('T8 v1 localStorage project loads', 'V1 fixture' in mg.inner_text('#projList') and not mg.locator('#storeMsg').is_visible())
     mg.click('[data-open]'); s8 = summ(mg)
     ok('T8b v1 data intact (Have counted, Check in review, bought awaiting)', s8 == {'sSuf': '1 of 3', 'sBuy': '0', 'sAw': '1', 'sRev': '1'}, s8)
@@ -234,12 +235,12 @@ with sync_playwright() as p:
     h.click('#emptyAdd'); ok('N1e empty-state action returns to paste box', h.locator('#convertView').is_visible() and h.evaluate('document.activeElement.id') == 'inp')
     h.fill('#inp', '699 x3'); h.click('#sample')
     ok('N2 example shows banner and keeps draft safe', h.locator('#exampleBanner').is_visible() and 'DMC 310 Black x2' in h.input_value('#inp') and h.inner_text('#exitExample') == 'Back to my list')
-    ok('N2b trying the example saves nothing', h.evaluate("localStorage.getItem('flossfox.v1')") is None)
+    ok('N2b trying the example saves nothing', h.evaluate("localStorage.getItem('"+KEY+"')") is None)
     h.click('#exitExample'); ok('N2c leaving example restores the draft', h.input_value('#inp') == '699 x3' and h.locator('#exampleBanner').is_hidden())
     h.click('#sample'); h.click('#saveProj'); h.click('#saveProj')
-    st12 = h.evaluate("JSON.parse(localStorage.getItem('flossfox.v1'))")
+    st12 = h.evaluate("JSON.parse(localStorage.getItem('"+KEY+"'))")
     ok('N2d explicit save of example creates exactly one labelled project (double tap safe)', len(st12['projects']) == 1 and st12['projects'][0]['name'] == 'Example project', [x['name'] for x in st12['projects']])
-    h.click('#sample'); ok('N2e trying example again does not change saved projects', len(h.evaluate("JSON.parse(localStorage.getItem('flossfox.v1'))")['projects']) == 1)
+    h.click('#sample'); ok('N2e trying example again does not change saved projects', len(h.evaluate("JSON.parse(localStorage.getItem('"+KEY+"'))")['projects']) == 1)
     h.fill('#inp', '310, 321 x2, hello'); h.click('#go'); sm = h.inner_text('#summary')
     ok('N3 plain parse feedback (found + needs a fix)', 'Found 2 colors' in sm and '1 line needs a fix' in sm and "couldn't be read" in h.inner_text('#errs'), sm)
     h.click('#openSaved') if h.locator('#openSaved').count() else None
