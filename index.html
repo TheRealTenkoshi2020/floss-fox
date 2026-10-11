@@ -66,26 +66,166 @@ input[type=text],input[type=number],.pnotes{font:inherit;border:1px solid var(--
 .jump{display:flex;flex-wrap:wrap;gap:8px}.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border:1.5px solid var(--line);border-radius:999px;font-weight:600;text-decoration:none;color:#8f3d1c}
 .pmore summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
 @media (min-width:700px){.thead{grid-template-columns:minmax(0,1fr) auto auto auto}.thead .seg{grid-column:auto}.thead .exp{grid-column:auto}.ind{text-align:left;min-width:12ch}}
-@media (max-width:420px){.sumgrid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.sumgrid{grid-template-columns:repeat(2,1fr)}.stats li{padding:var(--s2);font-size:.82rem}.stats b{font-size:1.2rem}}
 @media print{.tcard{break-inside:avoid}}
-</style></head><body><div class="wrap">
-<header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><h1 id="appname"></h1><p>Paste a DMC thread list → see chart-listed Anchor and Sullivans equivalents, then build a printable shopping list in the brand you choose. Runs in your browser; once loaded it keeps working without a connection.</p></div></header>
-<nav class="tabs noprint" aria-label="Sections"><button type="button" id="tabConvert" aria-pressed="true">Quick convert</button><button type="button" id="tabProjects" aria-pressed="false">My projects <span id="projCount"></span></button></nav>
+/* ===== Floss Fox design system (Milestone 1.2) ===== */
+[hidden]{display:none!important}
+details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}details>summary::before{content:'▸';display:inline-block;width:1.2em;transition:transform var(--t)}details[open]>summary::before{transform:rotate(90deg)}
+@media(max-width:600px){textarea#inp{min-height:108px}.hero .lead{margin-bottom:var(--s3)}.steps{margin-bottom:var(--s4)}}
+:root{--canvas:#F8F4EB;--surface:#FFFDF8;--surface-2:#F3EEE3;--sage-50:#E3ECE1;--sage-100:#DDE8DB;--sage:#678A75;--sage-ink:#3D5C48;--sage-ink-2:#314B3B;--coral:#C77868;--fox:#B4532A;--fox-ink:#94401D;
+--ink:#343B39;--ink-2:#535B58;--line:#DDD4C4;--line-2:#A99E8C;--focus:#1E5FA8;
+--ok-bg:#E5EFE3;--ok-ink:#2D5838;--ok-line:#7FA486;--wait-bg:#FBF1DE;--wait-ink:#73500F;--wait-line:#C9A25A;--att-bg:#FBEDE6;--att-ink:#8A3A1F;--att-line:#D79A82;--buy-bg:#F6ECE6;--buy-ink:#7E3B1D;--buy-line:#C27A55;
+--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--r1:8px;--r2:12px;--r3:18px;--pill:999px;
+--shadow:0 1px 2px rgba(52,59,57,.06),0 6px 18px rgba(52,59,57,.07);--shadow-2:0 2px 4px rgba(52,59,57,.08),0 10px 28px rgba(52,59,57,.10);--t:180ms cubic-bezier(.2,.7,.3,1);
+--font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+--bg:var(--canvas);--card:var(--surface);--txt:var(--ink);--mut:var(--ink-2);--lime:var(--sage-ink);--pink:var(--sage-ink);--blush:var(--sage-100)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--canvas);color:var(--ink);font:16px/1.55 var(--font)}
+.wrap{max-width:1040px;padding:var(--s4) var(--s4) var(--s6)}
+a{color:var(--fox-ink)}a:hover{color:var(--fox)}
+:focus-visible{outline:3px solid var(--focus)!important;outline-offset:2px}
+h1,h2,h3{color:var(--ink);letter-spacing:-.01em;line-height:1.2}
+h2{font-size:1.25rem;margin:0 0 var(--s3)}h2::before{content:none}h3{font-size:1.05rem;margin:var(--s5) 0 var(--s2)}
+header{gap:var(--s3);margin-bottom:var(--s3)}header .logo{width:44px;height:44px}header .t{min-width:0}
+.brand{margin:0;font-weight:800;font-size:1.3rem;letter-spacing:-.01em}.brand span{color:var(--fox)}.tagline{margin:0!important;color:var(--ink-2);font-size:.88rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r3);box-shadow:var(--shadow);padding:var(--s5);margin-bottom:var(--s4)}
+@media(max-width:600px){.card{padding:var(--s4);border-radius:var(--r2)}}
+/* nav */
+.tabs{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--canvas) 92%,transparent);backdrop-filter:blur(6px);margin:0 calc(-1*var(--s4)) var(--s4);padding:var(--s2) var(--s4);gap:var(--s2);border-bottom:1px solid var(--line)}
+.tabs button{flex:1 1 0;background:transparent;border:1.5px solid transparent;color:var(--ink);border-radius:var(--pill);padding:0 var(--s3);font-weight:650;white-space:nowrap;transition:background var(--t),color var(--t)}
+.tabs button:hover{background:var(--surface-2)}.tabs button[aria-pressed=true]{background:var(--sage-ink);color:#fff;border-color:var(--sage-ink)}
+@media(min-width:700px){.tabs button{flex:0 0 auto;padding:0 var(--s4)}}
+@media(max-width:380px){.tabs button{font-size:.86rem;padding:0 6px}.tabs button span[aria-hidden]{display:none}}
+[id]{scroll-margin-top:76px}
+/* buttons */
+button,.btnlink,.filebtn{font:inherit;font-weight:650;font-size:.98rem;border-radius:var(--pill);min-height:44px;padding:0 var(--s4);transition:background var(--t),border-color var(--t),color var(--t),transform var(--t)}
+button:active{transform:translateY(1px)}
+.pri,.btnlink.pri{background:var(--sage-ink);color:#fff;border:1.5px solid var(--sage-ink)}.pri:hover{background:var(--sage-ink-2)}
+.sec,.btnlink.sec{background:var(--surface);color:var(--sage-ink);border:1.5px solid var(--sage)}.sec:hover{background:var(--sage-50)}
+.ghost{background:transparent;color:var(--ink-2);border:1.5px solid transparent;text-decoration:underline;text-underline-offset:3px}.ghost:hover{color:var(--ink);background:var(--surface-2)}
+.btnlink{display:inline-flex;align-items:center;text-decoration:none}
+button:disabled{opacity:.55;cursor:not-allowed}
+.small{min-height:44px;font-size:.9rem}
+input[type=text],input[type=number],input[type=search],select,textarea,.pnotes{font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1.5px solid var(--line-2);border-radius:var(--r1);min-height:44px;padding:8px 12px;max-width:100%}
+textarea{font-family:var(--mono);font-size:16px;min-height:132px;line-height:1.5}textarea:focus,input:focus,select:focus{border-color:var(--sage-ink)}
+.hint{color:var(--ink-2);font-size:.92rem;margin:var(--s2) 0 0}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);border-radius:6px;padding:1px 5px}
+/* hero */
+.hero h1{font-size:clamp(1.6rem,4.6vw,2.2rem);margin:0 0 var(--s2);font-weight:800}
+.hero .lead{font-size:1.06rem;margin:0 0 var(--s4);color:var(--ink-2);max-width:40em}
+.steps{list-style:none;display:flex;gap:var(--s2);padding:0;margin:0 0 var(--s5);flex-wrap:wrap}
+.steps li{display:flex;align-items:center;gap:var(--s2);background:var(--sage-50);color:var(--ink);border-radius:var(--pill);padding:6px 14px 6px 6px;font-weight:600;font-size:.92rem}
+.num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sage-ink);color:#fff;font-weight:800;font-size:.85rem;flex:none}
+@media(max-width:520px){.steps{display:grid;grid-template-columns:repeat(3,1fr)}.steps li{flex-direction:column;text-align:center;border-radius:var(--r2);padding:8px 6px;font-size:.82rem;line-height:1.25}}
+.steps.vertical{display:block}.steps.vertical li{display:flex;align-items:flex-start;flex-direction:row;text-align:left;background:none;padding:var(--s2) 0;font-weight:400;font-size:1rem;border-radius:0}
+.biglabel{display:block;font-weight:750;font-size:1.05rem;margin-bottom:var(--s2)}
+.pastehelp{margin-top:var(--s2)}.pastehelp summary,.backup summary,.pmore summary,.shopextra summary,.donebox summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:650;color:var(--sage-ink)}
+.pastehelp ul{margin:0 0 var(--s2);padding-left:20px;color:var(--ink-2);font-size:.95rem}.pastehelp li{margin:4px 0}
+.banner{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s3);align-items:center;justify-content:space-between;background:var(--wait-bg);border:1px solid var(--wait-line);border-radius:var(--r2);padding:var(--s3);margin:0 0 var(--s4);color:var(--wait-ink)}
+/* results */
+.summary{color:var(--ink);font-size:1rem;display:flex;flex-direction:column;gap:var(--s2)}
+.found{font-size:1.05rem}.found [aria-hidden]{color:var(--ok-ink);font-weight:800}.fixme{color:var(--att-ink);font-weight:600}
+.nextacts{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.errbox{background:var(--att-bg);border:1px solid var(--att-line);color:var(--ink);border-radius:var(--r2);padding:var(--s3) var(--s4)}
+.notes{background:var(--surface-2);border:0;border-radius:var(--r2);color:var(--ink-2)}
+.warn{color:var(--att-ink)}.unk{color:var(--att-ink)}
+.saveproj{margin-top:var(--s5);border-top:1px solid var(--line);padding-top:var(--s4)}.saveproj h3{display:flex;align-items:center;gap:var(--s2);margin:0 0 var(--s1)}.saveproj label{display:block;font-weight:650;margin-top:var(--s3)}
+.bagwarn{background:var(--wait-bg);color:var(--wait-ink)}
+.tag{background:var(--wait-bg);color:var(--wait-ink)}
+.totals{background:var(--surface-2);border:0}
+.sw{border-radius:6px;border:1px solid rgba(0,0,0,.25)}
+/* projects list */
+.projlist li{padding:var(--s3) 0}.projlist .pname{font-weight:750;font-size:1.05rem}
+.empty{text-align:center;padding:var(--s5) var(--s3);color:var(--ink-2);list-style:none}.empty svg{width:72px;height:72px;display:block;margin:0 auto var(--s2)}.empty b{display:block;color:var(--ink);font-size:1.1rem;margin-bottom:4px}
+.storeline{font-size:.88rem;color:var(--ink-2);margin:var(--s2) 0 0}
+/* project editor */
+.ptitle{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.psum{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r3);padding:var(--s4);margin:var(--s4) 0;box-shadow:var(--shadow)}
+.psum .headline{font-size:1.25rem;font-weight:800;margin:0 0 var(--s2);display:flex;align-items:center;gap:var(--s2)}
+.psum[data-ready=true]{background:var(--ok-bg);border-color:var(--ok-line)}
+.psum .fox{width:40px;height:40px;flex:none}
+.bar{height:10px;background:var(--surface-2);border-radius:var(--pill);overflow:hidden;border:1px solid var(--line)}.bar span{display:block;height:100%;background:var(--sage-ink);border-radius:var(--pill);transition:width var(--t)}
+.stats{list-style:none;padding:0;margin:var(--s3) 0;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
+.stats li{background:var(--surface-2);border-radius:var(--r2);padding:var(--s2) var(--s3);font-size:.9rem;color:var(--ink-2)}.stats b{display:block;font-size:1.35rem;color:var(--ink)}
+.skeins{font-size:.95rem;margin:0 0 var(--s2)}
+.next{list-style:none;padding:0;margin:var(--s3) 0 0;display:flex;flex-direction:column;gap:var(--s2)}
+.next li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--s2);background:var(--wait-bg);border-radius:var(--r2);padding:var(--s2) var(--s3);color:var(--ink)}
+.next li.att{background:var(--att-bg)}.next li.buy{background:var(--buy-bg)}
+.psum .row{margin-top:var(--s3)}
+.toolbar{display:flex;flex-direction:column;gap:var(--s2);margin:var(--s3) 0}
+.searchrow{display:flex;gap:var(--s2)}.searchrow input{flex:1;min-width:0}
+.chipsf{display:flex;gap:var(--s2);flex-wrap:wrap}.chipsf button{background:var(--surface);border:1.5px solid var(--line-2);color:var(--ink);font-size:.9rem;padding:0 14px}
+.chipsf button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chipsf button[aria-pressed=true]::before{content:'✓ '}
+.cards{list-style:none;padding:0;margin:var(--s3) 0}
+.tcard{background:#fff;border:1.5px solid var(--line);border-left:6px solid var(--line-2);border-radius:var(--r2);padding:var(--s3);margin:0 0 var(--s2);box-shadow:0 1px 2px rgba(52,59,57,.05)}
+.tcard.st-have,.tcard.st-received{border-left-color:var(--ok-line)}.tcard.st-buy{border-left-color:var(--buy-line)}.tcard.st-awaiting{border-left-color:var(--wait-line);border-left-style:dashed}.tcard.st-review{border-left-color:var(--att-line);border-left-style:double;border-left-width:7px}
+.tcard .top{display:flex;align-items:flex-start;gap:var(--s3)}
+.tcard .bigsw{width:40px;height:40px;border-radius:10px;border:1px solid rgba(0,0,0,.25);flex:none}
+.tcard .ident{flex:1;min-width:0}.tcard .code{font-size:1.2rem;font-weight:800;line-height:1.2}.tcard .cname{color:var(--ink-2);font-size:.9rem}.tcard .need{font-size:.92rem;margin-top:2px}
+.tcard .exp{flex:none;padding:0 12px;font-size:.88rem}
+.stat{display:inline-flex;align-items:center;gap:6px;margin:var(--s2) 0 0;padding:4px 10px;border-radius:var(--pill);font-size:.9rem;font-weight:650;border:1px solid transparent}
+.stat.have,.stat.received{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-line)}.stat.buy{background:var(--buy-bg);color:var(--buy-ink);border-color:var(--buy-line)}.stat.awaiting{background:var(--wait-bg);color:var(--wait-ink);border-color:var(--wait-line)}.stat.review{background:var(--att-bg);color:var(--att-ink);border-color:var(--att-line)}
+.why{font-size:.9rem;color:var(--ink);margin-top:var(--s2)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);width:100%;margin-top:var(--s3);border:1.5px solid var(--line-2);border-radius:var(--r2);overflow:hidden;background:#fff}
+.seg label{min-height:46px;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px 6px;font-weight:650;font-size:.92rem;line-height:1.15;border-left:1px solid var(--line);cursor:pointer;transition:background var(--t),color var(--t)}
+.seg label:first-child{border-left:0}.seg label:hover{background:var(--surface-2)}
+.seg label:has(input:checked){background:var(--sage-ink);color:#fff}.seg input:checked+span{text-decoration:none}.seg label:has(input:checked) span::before{content:'✓ '}
+.seg label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:-3px}
+.tdet{border-top:1px solid var(--line);margin-top:var(--s3);padding-top:var(--s3);display:grid;gap:var(--s3)}.tdet.anim{animation:ffin var(--t)}
+.fld{margin:0}.fld>label:first-child,.flbl{display:block;font-size:.88rem;font-weight:650;color:var(--ink-2);margin-bottom:4px}
+.fldrow{display:flex;flex-wrap:wrap;gap:var(--s3)}
+.inl{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin-left:var(--s2)}.inl input{width:20px;height:20px}
+@keyframes ffin{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media(min-width:880px){.tcard .top{align-items:center}.tcard .main{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,380px);gap:var(--s4);align-items:center}.tcard .seg{margin-top:0}}
+.noresults{list-style:none;text-align:center;padding:var(--s5);color:var(--ink-2)}
+/* plan/shopping */
+.plan h3{font-size:1.1rem}.plan h4{margin:var(--s4) 0 var(--s2);font-size:1rem}
+.plan li{padding:var(--s2) 0;border-bottom:1px solid var(--line)}.plan li:last-child{border-bottom:0}
+.plan input[type=checkbox],.shop input[type=checkbox]{width:22px;height:22px;accent-color:var(--sage-ink);vertical-align:middle}
+.shophead{display:flex;flex-direction:column;gap:var(--s2)}
+.shopsum{font-size:1.15rem;font-weight:750;margin:0}
+.scard{background:#fff;border:1.5px solid var(--line);border-radius:var(--r2);padding:var(--s3);margin:0 0 var(--s2);list-style:none}
+.scard .top{display:flex;gap:var(--s3);align-items:center}.scard .bigsw{width:44px;height:44px;border-radius:10px;border:1px solid rgba(0,0,0,.25);flex:none}
+.scard .code{font-size:1.35rem;font-weight:800;line-height:1.15}.scard .for{color:var(--ink-2);font-size:.9rem}.scard .qty{font-weight:750;font-size:1.05rem;margin-left:auto;text-align:right;white-space:nowrap}
+.scard .acts{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)}.scard .acts button{flex:1 1 140px}
+.scard .panel{margin-top:var(--s3);background:var(--surface-2);border-radius:var(--r2);padding:var(--s3);animation:ffin var(--t)}
+.scard .panel p{margin:0 0 var(--s2)}
+.shoplist{padding:0;margin:var(--s3) 0}
+.donebox,.shopextra{margin-top:var(--s4);border-top:1px solid var(--line);padding-top:var(--s2)}
+.ok-msg{color:var(--ok-ink);font-weight:650}
+.gloss dt{font-weight:750;margin-top:var(--s2)}.gloss dd{margin:2px 0 0;color:var(--ink-2)}
+.help p{max-width:44em}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}html{scroll-behavior:auto}}
+@media print{.tabs,#helpView{display:none!important}.psum{box-shadow:none;border:1px solid #000}.tcard,.scard{break-inside:avoid}}
+</style>
+</head><body><div class="wrap">
+<header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><p class="brand" id="appname"></p><p class="tagline">Thread lists for cross stitch</p></div></header>
+<nav class="tabs noprint" aria-label="Main"><button type="button" id="tabConvert" aria-pressed="true" aria-current="page"><span aria-hidden="true">🧵</span> Add colors</button><button type="button" id="tabProjects" aria-pressed="false"><span aria-hidden="true">📁</span> My projects <span id="projCount"></span></button><button type="button" id="tabHelp" aria-pressed="false"><span aria-hidden="true">💬</span> Help</button></nav>
 <div id="convertView">
-<div class="card noprint">
-<label for="inp"><b>Your DMC list</b></label>
-<textarea id="inp" placeholder="310&#10;DMC 321 Red x2&#10;3865, 762, B5200"></textarea>
-<p class="hint">One colour per line, or separate with commas/semicolons. Quantity (whole skeins, 1 or more): "x2", "×2", "310x2", "2 skeins" or "(2)". Don't know? Write "x?". No quantity is treated as 1 and marked "(assumed)".</p>
-<div class="row"><button class="pri" id="go">Convert</button><button class="sec" id="sample">Try a sample</button><button class="sec" id="clear">Clear</button></div>
-</div>
+<section class="card hero noprint" aria-labelledby="heroH">
+<h1 id="heroH">Your thread list, made simple.</h1>
+<p class="lead">Paste your DMC colors, see what you need, and make a shopping list in seconds.</p>
+<ol class="steps" aria-label="How it works"><li><span class="num" aria-hidden="true">1</span> Add your colors</li><li><span class="num" aria-hidden="true">2</span> Check what you have</li><li><span class="num" aria-hidden="true">3</span> Get your shopping list</li></ol>
+<div id="exampleBanner" class="banner" role="status" hidden><span><b>You're trying an example.</b> These colors are a sample, not your thread. Nothing is saved unless you choose to.</span> <button type="button" class="sec small" id="exitExample">Back to my list</button></div>
+<label for="inp" class="biglabel">Paste your DMC color list</label>
+<textarea id="inp" placeholder="310, 321, 666, 823" aria-describedby="inpHint"></textarea>
+<p class="hint" id="inpHint">One color per line, or separated by commas. Know how many skeins? Add it like <code>310 x2</code>.</p>
+<details class="pastehelp"><summary>What can I paste?</summary>
+<ul><li>DMC numbers: <code>310</code>, <code>DMC 321 Red</code>, plus <code>Blanc</code>, <code>Ecru</code> and <code>B5200</code></li>
+<li>Skein amounts: <code>310 x2</code>, <code>310 ×2</code>, <code>310x2</code>, <code>310 (2)</code> or <code>310 2 skeins</code></li>
+<li>Don't know the amount? Write <code>310 x?</code>. If you leave the amount off, Floss Fox counts 1 skein and marks it "assumed".</li>
+<li>Not supported yet: other brands' numbers, PDFs and photos. Paste DMC numbers only.</li></ul></details>
+<div class="row"><button class="pri" id="go">Add my colors</button><button class="sec" id="sample">Try an example</button><button class="ghost" id="clear">Clear</button><button class="ghost" id="openProj" type="button">Open my projects</button></div>
+</section>
 <div id="status" class="sr" role="status" aria-live="polite"></div>
-<div id="results" class="card" hidden><h2>Matches</h2><p id="summary" class="summary"></p><div id="errs"></div><div id="tbl"></div>
+<div id="results" class="card" hidden><h2>Your colors</h2><p id="summary" class="summary"></p><div id="errs"></div><div id="tbl"></div>
 <div class="notes"><b>About the brands</b>
 <p><b>Sullivans</b> (cotton alternative): numbers from Sullivans' official DMC chart; 100% cotton and the DMC number is printed on the label. Stitchers say it holds up well, though a few shades differ.</p>
 <p><b>CXC</b> (budget brand): sold mainly as full sets. Reviewers say it uses DMC-style numbers, but Floss Fox has no verified per-colour data or set contents, so it isn't offered per colour. Poly-cotton and a bit fluffier.</p>
 <p>Metallic and variegated threads aren't substituted automatically. Colour swatches show the <i>DMC</i> colour only.</p></div></div>
 <div id="shopcard" class="card" hidden><h2><span id="shoptitle"></span> shopping list</h2>
-<div class="toggle noprint"><label for="dest"><b>Buy in:</b></label> <select id="dest"><option value="dmc" selected>DMC (original, no substitution)</option><option value="sullivans">Sullivans</option><option value="anchor">Anchor</option></select></div>
+<div class="toggle noprint"><label for="dest"><b>Brand to buy:</b></label> <select id="dest"><option value="dmc" selected>DMC (same as your pattern)</option><option value="sullivans">Sullivans</option><option value="anchor">Anchor</option></select></div>
 <p class="printonly" id="destprint"></p>
 <p id="affdisc" class="hint" hidden>🦊 Heads up: some store links here are affiliate links. If you buy through them, Floss Fox may earn a small commission at no extra cost to you. <a href="about.html#affiliates">More info</a></p>
 <ul class="shop" id="shop"></ul>
@@ -93,20 +233,30 @@ input[type=text],input[type=number],.pnotes{font:inherit;border:1px solid var(--
 <div class="totals" id="totals"></div>
 <p class="bagwarn">⚠️ Avoid unbranded "DMC-compatible" bags of floss. In one stitcher's wash test a no-name brand bled. Test a skein before a big project.</p>
 <div class="row noprint"><button class="pri" onclick="print()">Print list</button><button class="sec" id="copy">Copy as text</button></div>
-<div class="saveproj noprint"><label for="newProjName"><b>Save as a project</b> <small class="mut">(to mark Have / Check / Buy and keep a shopping list)</small></label><div class="row"><input id="newProjName" type="text" maxlength="100" placeholder="Project name, e.g. Fox sampler"><button class="sec" id="saveProj" type="button">Save project</button></div></div>
+<div class="saveproj noprint" id="saveBox"><h3><span class="num" aria-hidden="true">2</span> Check what you have</h3><p class="hint">Save these colors as a project, then mark what you already have. It stays in this browser and is never uploaded.</p><label for="newProjName">Project name</label><div class="row"><input id="newProjName" type="text" maxlength="100" placeholder="e.g. Fox sampler"><button class="pri" id="saveProj" type="button">Save project</button></div></div>
 <p id="copymsg" class="hint" role="status" aria-live="polite"></p><textarea id="copyfallback" class="noprint" hidden readonly aria-label="Shopping list text to copy"></textarea>
 </div>
 </div>
 <div id="projectsView" hidden>
 <div id="storeMsg" class="errbox" role="alert" hidden></div>
 <div class="card noprint" id="projListCard"><h2>My projects</h2>
-<p class="hint">Projects are saved only in this browser on this device. They aren't synced or backed up, and clearing browser data (or the browser itself) can remove them. Download a backup now and then; keeping it is up to you.</p>
 <ul id="projList" class="projlist"></ul>
-<div class="row"><button class="sec" type="button" id="newEmpty">New empty project</button><button class="sec" type="button" id="backupBtn">Download backup (JSON)</button><label class="sec filebtn" for="restoreFile">Restore backup…</label><input type="file" id="restoreFile" accept=".json,application/json" class="sr"></div>
-<div id="restorePanel" class="notes" hidden></div>
+<div class="row"><button class="sec" type="button" id="newEmpty">Start an empty project</button></div>
+<details class="backup" id="backupBox"><summary>Back up my projects</summary>
+<p class="hint">Your projects are saved in this browser, on this device. They aren't synced, and clearing browser data can remove them. Download a backup now and then and keep the file somewhere safe.</p>
+<div class="row"><button class="sec" type="button" id="backupBtn">Download a backup</button><label class="sec filebtn" for="restoreFile">Restore from a backup…</label><input type="file" id="restoreFile" accept=".json,application/json" class="sr"></div>
+<div id="restorePanel" class="notes" hidden></div></details>
 <p id="projStatus" class="hint" role="status" aria-live="polite"></p></div>
 <div class="card" id="projEdit" hidden></div>
 </div>
+<div id="helpView" hidden><div class="card help"><h2>How Floss Fox works</h2>
+<ol class="steps vertical"><li><span class="num" aria-hidden="true">1</span><div><b>Add your colors.</b> Paste the DMC list from your pattern. Floss Fox shows what it recognized and anything it couldn't read.</div></li>
+<li><span class="num" aria-hidden="true">2</span><div><b>Check what you have.</b> Save the colors as a project and tap <i>Have enough</i>, <i>Need to buy</i> or <i>Not sure</i> for each one.</div></li>
+<li><span class="num" aria-hidden="true">3</span><div><b>Get your shopping list.</b> Open <i>Shop my list</i> in the store, or when you order online, then check each thread in when you have it.</div></li></ol>
+<h3>What the words mean</h3><dl class="gloss"><dt>Have enough</dt><dd>You've checked and have enough for this pattern.</dd><dt>Need to buy</dt><dd>It goes on your shopping list.</dd><dt>Not sure</dt><dd>Check your stash later. It stays on your to-do list until you decide.</dd><dt>Bought</dt><dd>You paid for it, but it isn't counted until you check it in.</dd><dt>Received</dt><dd>You have it and entered how many skeins arrived.</dd><dt>Ready to stitch</dt><dd>Every color has enough thread, every amount is known, and every brand match is confirmed.</dd></dl>
+<h3>About colors and brands</h3><p>Color swatches are screen approximations, not thread proofs. Other brands come from published conversion charts. When a chart gives more than one match, or the sources disagree, you choose. Compare real thread before swapping it into a stitched piece.</p>
+<h3>Your data</h3><p>Everything stays in this browser on this device. Nothing is uploaded, and there are no accounts or tracking. Use <i>Back up my projects</i> in My projects to keep a copy.</p>
+<p><a href="about.html">About Floss Fox</a> · <a href="privacy.html">Privacy</a></p></div></div>
 <footer><p><b>Data:</b> DMC→Anchor pairings from the <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_anchor">Cyberstitchers DMC to Anchor chart</a> (downloaded 10 Oct 2026): <span id="cov"></span>. Cyberstitchers notes pairings "may not be an exact match", and its swatches are DMC colours, so Floss Fox shows DMC swatches only and no longer computes colour-distance alternates. Sullivans numbers come from <a href="https://www.sullivansusa.net/wp-content/uploads/2021/09/Conversion-Chart-from-DMC.pdf">Sullivans USA's official DMC conversion chart</a>, cross-checked against <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_sullivans">Cyberstitchers</a> (all 454 overlapping codes agree): <span id="sullcov"></span>. Brand notes summarise stitcher reviews and tests (<a href="https://sirithre.com/cxc-floss-how-does-it-compare-to-dmc/">Sirithre</a>, <a href="https://lordlibidan.com/are-cheap-embroidery-threads-worth-it/">Lord Libidan</a>, <a href="https://www.thread-bare.com/blog/5-cross-stitch-floss-brands-compared">Thread Bare</a>, <a href="https://stitchmate.app/tools/sullivans-color-chart">Stitchmate</a>). Check real skeins or a shade card before buying. Unofficial; not affiliated with DMC, Anchor, Sullivans or CXC.</p>
 <p><b>Prices</b> (USD estimates, checked <span id="pdate"></span>): <span id="psrc"></span>. Sources: <a href="https://business.walmart.com/browse/arts-crafts/embroidery-floss/2809790_6337649_8167029">Walmart Business</a>, <a href="https://herrschners.com/dmc-6-strand-embroidery-floss/">Herrschners</a>, <a href="https://www.lovecrafts.com/en-us/p/dmc-6-strand-embroidery-floss?sku=10185707">LoveCrafts</a>, <a href="https://artpatt.com/blog/dmc-vs-anchor-floss-comparison">ArtPatt</a>, <a href="https://www.amazon.com/dp/B0036ZWESW">Amazon (Sullivans)</a>.</p>
 <p><a href="about.html">About</a> · <a href="privacy.html">Privacy</a></p><p><span class="paw">🐾</span> Conversion data credit: <a href="https://www.cyberstitchers.com/">Cyberstitchers</a>. Thank you for maintaining these charts!</p></footer>
@@ -170,13 +320,13 @@ function anchorCell(it){const c=it.code,o=DMC[c].anchor,f=fam(c);
  const opts=(disputed?['<option value="">Choose…</option>']:[]).concat(o.map(a=>`<option value="${esc(a)}"${(choice[c]||(!disputed&&o[0]))===a?' selected':''}>Anchor ${esc(a)}</option>`));
  return `<select class="pick" data-code="${esc(c)}" aria-label="Anchor choice for DMC ${esc(c)}">${opts.join('')}</select> <span class="tag">${disputed?'needs review':o.length+' chart options'}</span>`+(disputed?`<br><small class="warn">${esc(WHITE_DISPUTE)}</small>`:'')}
 function renderTable(){const {items,errs}=state;
- $('errs').innerHTML=errs.length?`<div class="errbox"><b>Couldn't use ${errs.length} entr${errs.length>1?'ies':'y'}:</b><ul>${errs.map(e=>`<li>"${esc(e.t)}": ${esc(e.why)}</li>`).join('')}</ul></div>`:'';
+ $('errs').innerHTML=errs.length?`<div class="errbox"><b>${errs.length} line${errs.length>1?'s':''} couldn't be read.</b> Fix ${errs.length>1?'them':'it'} in the box above, then tap <i>Add my colors</i> again.<ul>${errs.map(e=>`<li>"${esc(e.t)}": ${esc(e.why)}</li>`).join('')}</ul></div>`:'';
  $('tbl').innerHTML=items.length?`<table><thead><tr><th>DMC</th><th>Anchor (chart)</th><th>Sullivans (official chart)</th></tr></thead><tbody>${items.map(it=>{const e=DMC[it.code],f=fam(it.code);
   return `<tr><td>${sw(e.hex)}<b>DMC ${esc(lab(it.code))}</b> ${f!=='solid'?`<span class="tag">${f}</span>`:''}<br><small class="mut">${esc(e.name)} · ×${qtxt(it)} · from "${it.src.map(esc).join('", "')}"</small></td>
   <td><span class="lbl">Anchor (chart)</span>${anchorCell(it)}</td><td><span class="lbl">Sullivans (official chart)</span>${f!=='solid'?`<span class="warn">${f}: not substituted</span>`:SULL[it.code]?`<b>${SULL[it.code]}</b>`:'<span class="warn">No match</span>'}</td></tr>`}).join('')}</tbody></table>`:'';
  document.querySelectorAll('.pick').forEach(s=>s.onchange=()=>{choice[s.dataset.code]=s.value||undefined;renderList()});
  const sk=items.reduce((a,i)=>a+(i.qty||0),0)+(items.some(i=>i.qty===null)?' + unknown':'');
- $('summary').innerHTML=items.length||errs.length?`Recognised <b>${items.length}</b> colour${items.length===1?'':'s'} (${sk} skein${sk===1?'':'s'}) · <b>${errs.length}</b> input problem${errs.length===1?'':'s'}${items.length?' · <a href="#shopcard">Jump to shopping list ↓</a>':''}`:'';
+ $('summary').innerHTML=items.length||errs.length?`${items.length?`<span class="found"><span aria-hidden="true">✓</span> Found <b>${items.length}</b> color${items.length===1?'':'s'} (${sk} skein${sk===1?'':'s'}). Let's see which ones you still need.</span>`:'<span class="found">No colors recognized yet.</span>'}${errs.length?` <span class="fixme">${errs.length} line${errs.length===1?'':'s'} need${errs.length===1?'s':''} a fix (see below).</span>`:''}${items.length?'<span class="nextacts"><a href="#saveBox" class="btnlink pri">Check what you have</a><a href="#shopcard" class="btnlink sec">Shopping list ↓</a></span>':''}`:'';
  $('results').hidden=!(items.length||errs.length);$('shopcard').hidden=!items.length}
 function buildList(){const dest=$('dest').value,groups={},review=[];
  state.items.forEach(it=>{const r=resolve(it,dest);if(!r.ok){review.push({it,r});return}
@@ -191,16 +341,20 @@ function renderList(){const L=buildList();$('destprint').textContent='Buying in:
  $('shop').innerHTML=L.lines.map(g=>{const key=L.dest+':'+g.to;const merge=g.from.length>1;
   return `<li><label><input type="checkbox" data-key="${esc(key)}"${checked.has(key)?' checked':''}><b>${BRAND[L.dest]} ${esc(disp(L.dest,g.to))}</b> × ${qn(g.qty)} <small>(for DMC ${g.from.map(c=>esc(lab(c))).join(', ')} · ${[...g.prov].map(esc).join('; ')})</small></label>${merge?`<div class="warn small">⚠ ${g.from.length} different pattern colours map to this one thread. Check that's what you want.</div>`:''}</li>`}).join('')||'<li class="mut">Nothing ready to buy yet. See "Needs review".</li>';
  document.querySelectorAll('#shop input[type=checkbox]').forEach(cb=>cb.onchange=()=>{cb.checked?checked.add(cb.dataset.key):checked.delete(cb.dataset.key)});
- $('review').innerHTML=L.review.length?`<div class="errbox"><b>Needs review (not on the list):</b><ul>${L.review.map(({it,r})=>`<li>DMC ${esc(lab(it.code))} × ${qn(it.qty)}: ${esc(r.why)}</li>`).join('')}</ul></div>`:'';
+ $('review').innerHTML=L.review.length?`<div class="errbox"><b>Needs your attention (not on the list yet):</b><ul>${L.review.map(({it,r})=>`<li>DMC ${esc(lab(it.code))} × ${qn(it.qty)}: ${esc(r.why)}</li>`).join('')}</ul></div>`:'';
  const rows=costRows();$('totals').innerHTML=`<b>Estimated costs for this list</b><table>${rows.map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</table><small>Rough estimates (prices checked ${PRICES.checked}), before shipping. Metallic/variegated threads aren't priced. Check the store.</small>`}
 function listText(){const L=buildList(),out=[`${APP_NAME} shopping list: buying in ${BRAND[L.dest]}`];
  L.lines.forEach(g=>{const key=L.dest+':'+g.to;out.push(`[${checked.has(key)?'x':' '}] ${BRAND[L.dest]} ${disp(L.dest,g.to)} x${qn(g.qty)} (DMC ${g.from.map(lab).join(', ')}; ${[...g.prov].join('; ')})`+(g.from.length>1?' ⚠ several pattern colours share this thread':''))});
  if(L.review.length){out.push('','Needs review (not included):');L.review.forEach(({it,r})=>out.push(`- DMC ${lab(it.code)} x${qn(it.qty)}: ${r.why}`))}
  if(state.errs.length){out.push('','Input problems:');state.errs.forEach(e=>out.push(`- "${e.t}": ${e.why}`))}
  out.push('','Estimated costs:');costRows().forEach(([a,b])=>out.push(`- ${a}: ${b}`));out.push(`(Prices checked ${PRICES.checked}; estimates only.)`);return out.join('\n')}
-function run(){state=parse($('inp').value);renderTable();renderList();$('status').textContent=state.items.length?`${state.items.length} colours recognised, ${state.errs.length} problems`:''}
+function run(){state=parse($('inp').value);renderTable();renderList();$('status').textContent=state.items.length?`Found ${state.items.length} colors${state.errs.length?`, ${state.errs.length} need a fix`:''}`:''}
 $('go').onclick=run;$('dest').onchange=()=>{renderTable();renderList()};$('clear').onclick=()=>{$('inp').value='';run()};
-$('sample').onclick=()=>{$('inp').value="DMC 310 Black x2\n321 Red\n3865 (2)\n blanc, 3799, 415, 762\nDMC 699 Green 3 skeins\n740, 742, 798, 813\n3354\n01";run()};
+const SAMPLE="DMC 310 Black x2\n321 Red\n3865 (2)\n blanc, 3799, 415, 762\nDMC 699 Green 3 skeins\n740, 742, 798, 813\n3354\n01";let exampleOn=false,draft='';
+$('sample').onclick=()=>{if(!exampleOn){draft=$('inp').value;exampleOn=true}$('inp').value=SAMPLE;$('exampleBanner').hidden=false;$('exitExample').textContent=draft.trim()?'Back to my list':'Close example';run()};
+$('exitExample').onclick=()=>{exampleOn=false;$('exampleBanner').hidden=true;$('inp').value=draft;draft='';run();$('inp').focus()};
+window.isExample=()=>exampleOn&&$('inp').value===SAMPLE;
+$('openProj').onclick=()=>$('tabProjects').click();
 $('copy').onclick=async()=>{const t=listText(),msg=$('copymsg'),fb=$('copyfallback');
  try{if(!navigator.clipboard)throw 0;await navigator.clipboard.writeText(t);msg.textContent='✓ Copied to clipboard.';fb.hidden=true}
  catch(e){msg.textContent="Couldn't copy automatically. Select the text below and copy it.";fb.value=t;fb.hidden=false;fb.focus();fb.select()}};
