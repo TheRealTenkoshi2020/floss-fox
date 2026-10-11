@@ -6,13 +6,18 @@ const returning=(()=>{try{const t=JSON.parse(localStorage.getItem(PIP_KEY.replac
 const SIZES=[160,320,480];
 // Poses with real (transparent) artwork. 'thinking' is used only for real checks (Ask Pip answers, backup check); the 'processing' state stays unused (no fake delays).
 const ART={greeting:'greeting',curious:'curious',puzzled:'puzzled',duplicates:'duplicates',helpful:'helpful',tangled:'tangled',celebrating:'celebrating',sleepy:'sleepy',
- thinking:'thinking',pointing:'pointing',peeking:'peeking',neutral:'neutral','greeting-alt':'greeting-alt'};
+ thinking:'thinking',pointing:'pointing',peeking:'peeking',neutral:'neutral','greeting-alt':'greeting-alt',
+ reassuring:'reassuring',presenting:'presenting',discovery:'discovery',saved:'saved','face-icon':'face-icon',
+ needle:'needle','needle-alt':'needle-alt',organizing:'organizing',goodbye:'goodbye','cross-stitch':'cross-stitch'};
 const FUTURE={proud:'greeting',teaching:'curious'};
 const poseArt=p=>ART[p]||ART[FUTURE[p]]||'greeting';
 const short=t=>{t=String(t).replace(/\s+/g,' ').trim();return t.length>24?t.slice(0,23)+'…':t};
-function errMsg(r){if(r.errs.length>1)return`${r.errs.length} entries need a look. Check the highlighted lines below.`;const e=r.errs[0],x=short(e.t);
- if(e.kind==='code')return`I couldn't read “${x}” as a DMC number. Check the highlighted line below.`;
- if(e.kind==='qty')return`I couldn't read the amount in “${x}”. Check the highlighted line below.`;
+/* Error poses: REASSURING for plain fixable errors (unknown DMC number, unreadable amount): "let's fix that".
+   PUZZLED for clarification ("did you mean?"): a line with more than one number, where Pip can't tell what was meant. Tangled is never used for errors. */
+const errPose=r=>r.errs.some(e=>e.kind==='multi'||!['code','qty'].includes(e.kind))?'puzzled':'reassuring';
+function errMsg(r){if(r.errs.length>1)return errPose(r)==='reassuring'?`Let's fix that! ${r.errs.length} entries need a look. Check the highlighted lines below.`:`${r.errs.length} entries need a look. Check the highlighted lines below.`;const e=r.errs[0],x=short(e.t);
+ if(e.kind==='code')return`Let's fix that! I couldn't read “${x}” as a DMC number. Check the highlighted line below.`;
+ if(e.kind==='qty')return`Let's fix that! I couldn't read the amount in “${x}”. Check the highlighted line below.`;
  if(e.kind==='multi')return`“${x}” has more than one number in it. Check the highlighted line below.`;
  return"I couldn't read that entry. Check the highlighted line below."}
 const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
@@ -27,18 +32,22 @@ const STATES={
  idle:       {pose:'neutral',    pri:12, anim:'fade',  msg:()=>'Paste a list whenever you\'re ready.'},
  attentive:  {pose:'curious',    pri:20, anim:'tilt',  msg:()=>'Ready when you are!'},
  empty:      {pose:'curious',    pri:20, anim:'tilt',  msg:()=>'Add a few thread numbers to get started.'},
- listReady:  {pose:'curious',    pri:20, anim:'tilt',  msg:()=>"Your colors are ready! Let's see what you have."},
- helpful:    {pose:'helpful',    pri:25, anim:'pop',   msg:()=>{const a=alt();return a&&a.matched?`Look! I found ${a.brand} options for ${a.matched} of your ${plural(a.total,'color')}.`:''}},
+ listReady:  {pose:'presenting', pri:20, anim:'pop',   msg:()=>"Your colors are ready! Let's see what you have."},
+ recovered:  {pose:'reassuring', pri:21, anim:'fade',  msg:()=>'All fixed! Every line reads cleanly now.'},
+ helpful:    {pose:'discovery',  pri:25, anim:'pop',   msg:()=>{const a=alt();return a&&a.matched?`Look! I found ${a.brand} options for ${a.matched} of your ${plural(a.total,'color')}.`:''}},
  processing: {pose:'thinking',   pri:30, anim:'fade',  msg:()=>'Let me look at your list…'}, // reserved: parsing is instant, so never shown (no fake delays)
  celebrating:{pose:'celebrating',pri:35, anim:'cheer', msg:()=>'Yay! Your list is ready!'},
  duplicate:  {pose:'duplicates', pri:40, anim:'pop',   msg:r=>r.items.filter(i=>i.src.length>1).length===1?"Found a repeat! I've combined it for you.":"Found some repeats! I've combined them for you."},
- error:      {pose:'puzzled',    pri:50, anim:'tilt',  msg:errMsg},
+ goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"That's the tour! Have fun stitching. I'm here if you need me."},
+ error:      {pose:errPose,      pri:50, anim:'tilt',  msg:errMsg},
  tangled:    {pose:'tangled',    pri:8,  anim:'wiggle',msg:()=>TANGLE[tn%2]},
  sleepy:     {pose:'sleepy',     pri:5,  anim:'doze',  msg:()=>''},
  // Contextual tips (overlays, at most once per session each, only over a calm state; see tour.js)
- hintStart:  {pose:'curious',    pri:22, anim:'tilt',  msg:()=>'Not sure where to start? Try typing a DMC number, like 310!'},
- hintCompare:{pose:'helpful',    pri:22, anim:'pop',   msg:()=>{const n=window.FlossFoxAltFor?Math.max(FlossFoxAltFor('sullivans'),FlossFoxAltFor('anchor')):0;return n?'Want to compare another thread brand? Try "Brand to buy" in your shopping list.':''}}
+ hintStart:  {pose:()=>needlePose(),    pri:22, anim:'tilt',  msg:()=>'Not sure where to start? Try typing a DMC number, like 310!'},
+ hintCompare:{pose:'discovery',    pri:22, anim:'pop',   msg:()=>{const n=window.FlossFoxAltFor?Math.max(FlossFoxAltFor('sullivans'),FlossFoxAltFor('anchor')):0;return n?'Want to compare another thread brand? Try "Brand to buy" in your shopping list.':''}}
 };
+// Needle tips rotate between NEEDLE (happy) and NEEDLE-ALT (calm closed smile) for variety.
+let needleN=0;const needlePose=()=>(needleN++%2)?'needle-alt':'needle';
 const CALM=25; // overlays (tangled, sleepy) only sit on a base at or below this priority
 function stateFor(r,submitted){const c=[greeted?'idle':returning?'welcomeBack':'welcome'];
  if(r.errs.length)c.push('error');if(r.items.some(i=>i.src.length>1))c.push('duplicate');
@@ -48,11 +57,11 @@ const $=id=>document.getElementById(id);
 const el=$('pip');if(!el)return;
 const img=$('pipImg'),src=$('pipSrc'),msg=$('pipMsg'),fig=$('pipFig'),tog=$('pipToggle'),hi=$('pipHi');
 let greeted=false,touring=false,cur=null,base='welcome',lastR={items:[],errs:[]},over=null,overT=0,celebrated=false;
-const T={celebrate:4000,tangle:2600,tangleGap:60000,idle:90000,minSleep:4000,throttle:1000};
+const T={toast:3500,celebrate:4000,tangle:2600,tangleGap:60000,idle:90000,minSleep:4000,throttle:1000};
 const set=(a,ext)=>SIZES.map(w=>`assets/pip/pip-${a}-${w}.${ext} ${w}w`).join(', ');
-function show(name,r,anim=true){const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);
- if(cur===name&&msg.textContent===text)return; // nothing meaningful changed
- const a=poseArt(S.pose);cur=name;el.dataset.state=name;el.dataset.pose=a;
+function show(name,r,anim=true){const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);const pz=typeof S.pose==='function'?S.pose(lastR):S.pose;
+ if(cur===name&&msg.textContent===text&&el.dataset.pose===poseArt(pz))return; // nothing meaningful changed
+ const a=poseArt(pz);cur=name;el.dataset.state=name;el.dataset.pose=a;
  if(img.dataset.art!==a){src.srcset=set(a,'webp');img.srcset=set(a,'png');img.src=`assets/pip/pip-${a}-320.png`;img.dataset.art=a}
  msg.textContent=text;msg.classList.toggle('quiet',!text);
  fig.classList.remove('pip-pop','pip-tilt','pip-fade','pip-cheer','pip-wiggle','pip-doze');if(anim){void fig.offsetWidth;fig.classList.add('pip-'+S.anim)}}
@@ -60,7 +69,8 @@ const clearOver=()=>{clearTimeout(overT);over=null};
 function overlay(name,ms){clearOver();over=name;show(name);if(ms)overT=setTimeout(()=>{over=null;show(base,null,false)},ms)} // settle quietly: no new animation
 const quiet=()=>fig.hidden||document.hidden;
 // Called by the converter on every recalculation.
-function result(r,submitted){greeted=true;lastR=r;base=stateFor(r,submitted);
+function result(r,submitted){greeted=true;const prev=base;lastR=r;base=stateFor(r,submitted);
+ if(prev==='error'&&['listReady','helpful'].includes(base)&&submitted)base=base==='helpful'?base:'recovered'; // real recovery: the list that had errors now reads cleanly
  if(STATES[base].pri>STATES.celebrating.pri)clearOver();          // errors/duplicates interrupt anything
  else if(over==='sleepy'||over==='tangled'||(over&&over.startsWith('hint')))clearOver();            // real input ends play and sleep
  const ex=typeof window.isExample==='function'&&window.isExample();
@@ -98,11 +108,18 @@ const api={result,show,stateFor,STATES,ART,FUTURE,current:()=>cur,base:()=>base,
  // test hook: shorten timers (dev/testing only; no effect unless called)
  setTour:on=>{touring=!!on;if(touring&&(over==='sleepy'||over==='tangled'||(over&&over.startsWith('hint')))){clearOver();show(base,null,false)}arm()},touring:()=>touring,
  hint:n=>{const S=STATES[n];if(!S||touring||over||quiet()||STATES[base].pri>CALM||!S.msg(lastR))return false;overlay(n,9000);arm();return true},
+ errPose,
+ // Brief decorative confirmation (wink + thumbs-up) next to the app's own status line, which is the one polite announcement.
+ saved:(slot,text)=>{if(!slot||fig.hidden)return false;slot.querySelectorAll('.savedtoast').forEach(x=>x.remove());const t=document.createElement('span');t.className='savedtoast';t.setAttribute('aria-hidden','true');
+  t.innerHTML=`<picture><source type="image/webp" srcset="assets/pip/pip-saved-160.webp"><img src="assets/pip/pip-saved-160.png" width="160" height="237" alt=""></picture>${text?`<span>${String(text).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`:''}`;slot.prepend(t);setTimeout(()=>t.remove(),T.toast);return true},
+ // Tour finished: GOODBYE (walking off with a wave), a short calm overlay. Never over errors or busy states.
+ bye:()=>{if(fig.hidden||STATES[base].pri>CALM)return false;overlay('goodbye',4000);arm();return true},
+ needlePose,
  _timing:o=>{Object.assign(T,o);arm();return{...T}}};
 /* global state */
 if(typeof state!=='undefined'&&(state.items.length||state.errs.length)){lastR=state;base=stateFor(state,true);show(base,state)}else{base=stateFor({items:[],errs:[]},false);show(base)}
 const warm=()=>{const w=img.currentSrc&&/-(\d+)\.(webp|png)/.exec(img.currentSrc);const size=w?w[1]:'320',ext=w?w[2]:'webp';
- Object.values(ART).forEach(a=>{if(a!=='greeting'&&!['peeking','pointing','thinking'].includes(a)){const i=new Image();i.decoding='async';i.src=`assets/pip/pip-${a}-${size}.${ext}`}})};
+ Object.values(ART).forEach(a=>{if(a!=='greeting'&&!['peeking','pointing','thinking','face-icon','saved'].includes(a)){const i=new Image();i.decoding='async';i.src=`assets/pip/pip-${a}-${size}.${ext}`}})};
 window.addEventListener('load',()=>(window.requestIdleCallback||setTimeout)(warm,{timeout:3000}));
 const inp=$('inp');inp.addEventListener('focus',()=>{if(['welcome','welcomeBack','idle'].includes(cur)&&!inp.value.trim())show('attentive')});
 // Leaving an empty box: settle to the calm idle companion (curious stays for focus/exploring).

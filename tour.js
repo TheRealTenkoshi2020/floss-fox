@@ -25,14 +25,14 @@ const toConvert=()=>{if(!inView('convertView'))$('tabConvert').click()};
 /* ---------- Step configuration (single source of truth) ---------- */
 const STEPS=[
  {id:'enter',title:'Add your colors',target:()=>$('inp'),anchor:()=>document.querySelector('.hero .row'),
-  pose:()=>st().errs.length?'puzzled':'pointing',
+  pose:()=>st().errs.length?PIP().errPose(st()):'pointing',
   msg:()=>"First, pop your DMC thread numbers in here! You can type them or paste your whole list.",
   more:()=>st().errs.length?`${plural(st().errs.length,'line')} couldn't be read yet. They're listed in red under Your colors.`:st().items.length?`You've added ${plural(st().items.length,'color')}. Tap Next when you're ready.`:"Then tap Add my colors. Want to practise first? I can fill in a short sample list.",
   extra:()=>st().items.length?'':`<button type="button" class="sec" data-t="example">Try an example (310, 321, 666, 699)</button>`,
   done:()=>st().items.length>0,
   help:'Each line or comma-separated entry is one DMC color. Add amounts like 310 x2.'},
  {id:'results',title:'Check your results',target:()=>$('results').hidden?null:$('results'),anchor:()=>$('summary'),
-  pose:()=>st().errs.length?'puzzled':dupN()?'duplicates':'helpful',
+  pose:()=>st().errs.length?PIP().errPose(st()):dupN()?'duplicates':'presenting',
   msg:()=>"Here's what I found! You can check your colors and see if anything needs attention.",
   more:()=>{const s=st();if(!s.items.length&&!s.errs.length)return'No results yet. Go back and add your colors, or skip this step.';const b=[];
    if(s.items.length)b.push(`I recognized ${plural(s.items.length,'color')}; each row shows the DMC color and its chart matches.`);
@@ -83,7 +83,7 @@ function render(focus){const S=STEPS[idx];if(!S)return;toConvert();removeCard();
  setTourPref({status:'active',step:idx});if(PIP())PIP().setTour(true)}
 function go(i,announce=true){idx=Math.max(0,Math.min(STEPS.length-1,i));render(true);if(announce)live(`Pip's tour, step ${idx+1} of ${STEPS.length}: ${STEPS[idx].title}`)}
 function start(){closeAsk(false);removeInvite();returnFocus=document.activeElement&&document.activeElement!==document.body?document.activeElement:$('askPipBtn');toConvert();go(0)}
-function end(status){const was=idx>=0;removeCard();idx=-1;if(PIP())PIP().setTour(false);setTourPref({status});
+function end(status){const was=idx>=0;removeCard();idx=-1;if(PIP())PIP().setTour(false);setTourPref({status});if(status==='done'&&was&&PIP()&&PIP().bye)setTimeout(()=>PIP().bye(),50);
  if(was){live('Tour closed.');const f=returnFocus&&returnFocus.isConnected&&returnFocus.offsetParent!==null?returnFocus:$('inp');if(f)f.focus()}}
 document.addEventListener('click',e=>{const b=e.target.closest('#tourCard [data-t]');if(!b)return;const a=b.dataset.t;
  if(a==='next')go(idx+1);else if(a==='back')go(idx-1);else if(a==='skip')end('dismissed');else if(a==='close')end(idx===STEPS.length-1?'done':'dismissed');
@@ -126,8 +126,9 @@ const TOPICS=[
  ['shop','How do I use my shopping list?','Tick colors as you shop, or Print or Copy the list. Save it as a project to mark what you already have; then Shop my list in My projects gives you a store checklist, and you can download a spreadsheet (CSV).'],
  ['tour','Start the tour again','']];
 let lastTopic=null;
+const poseFor=k=>k==='enter'?(PIP()&&PIP().needlePose?PIP().needlePose():'needle'):k==='shop'?'organizing':'thinking';
 function renderAsk(){const c=context();const a=TOPICS.find(t=>t[0]===lastTopic);
- ask.innerHTML=`${a?'':`<span class="apeek" aria-hidden="true">${pipImg('peeking','')}</span>`}<div class="ahead${a?'':' peek'}" data-pose="${a?'thinking':'helpful'}">${pipImg(a?'thinking':'helpful','')}<div><h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}">${esc(c.text)}</p></div></div>
+ ask.innerHTML=`${a?'':`<span class="apeek" aria-hidden="true">${pipImg('peeking','')}</span>`}<div class="ahead${a?'':' peek'}" data-pose="${a?(a.pose=a.pose||poseFor(a[0])):'face-icon'}">${pipImg(a?a.pose:'face-icon','')}<div><h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}">${esc(c.text)}</p></div></div>
  ${idx>=0?'<div class="row"><button type="button" class="pri" data-a="resume">Back to the tour</button></div>':''}
  <div class="atopics" role="group" aria-label="Help topics">${TOPICS.map(t=>`<button type="button" class="sec" data-a="${t[0]}"${t[0]===lastTopic?' aria-pressed="true"':''}>${esc(t[1])}</button>`).join('')}</div>
  ${a?`<div class="aans" id="askAns" tabindex="-1"><b>${esc(a[1])}</b><p>${esc(a[2])}</p></div>`:''}
@@ -138,7 +139,7 @@ function closeAsk(focus){if(ask.hidden)return;ask.hidden=true;askBtn.setAttribut
 askBtn.onclick=()=>ask.hidden?openAsk():closeAsk(true);
 ask.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
  if(a==='close')closeAsk(true);else if(a==='tour')start();else if(a==='resume'){closeAsk(false);go(idx)}
- else{lastTopic=a;renderAsk();$('askAns').focus()}});
+ else{lastTopic=a;const t=TOPICS.find(x=>x[0]===a);if(t)delete t.pose;renderAsk();$('askAns').focus()}});
 ['tabConvert','tabProjects','tabHelp'].forEach(id=>$(id).addEventListener('click',()=>{if(!ask.hidden)renderAsk()}));
 $('helpTour').onclick=start;
 
