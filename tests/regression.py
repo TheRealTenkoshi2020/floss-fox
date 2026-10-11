@@ -31,6 +31,16 @@ def conv(pg, text, dest=None):
 
 with sync_playwright() as p:
     br = p.chromium.launch(executable_path=A.chrome, args=['--no-sandbox'])
+    # Legacy checks run as a returning visitor (tour already dismissed, tips off). Tour tests opt out with fresh=True.
+    PFX = os.environ.get('FF_PIP_KEY', 'flossfox.pip.v1').replace('.pip.v1', '')
+    TK, HK = PFX + '.tour.v1', PFX + '.hints.v1'
+    SEED = "try{if(!localStorage.getItem('%s'))localStorage.setItem('%s','{\"status\":\"dismissed\"}');if(!localStorage.getItem('%s'))localStorage.setItem('%s','off')}catch(e){}" % (TK, TK, HK, HK)
+    _nc = br.new_context
+    def _new_context(*a, fresh=False, **k):
+        c = _nc(*a, **k)
+        if not fresh: c.add_init_script(SEED)
+        return c
+    br.new_context = _new_context
     errs = []
     def page(w=1280, mobile=False, init=None):
         ctx = br.new_context(viewport={'width': w, 'height': 900}, is_mobile=mobile, device_scale_factor=2 if mobile else 1, accept_downloads=True)
@@ -556,6 +566,125 @@ with sync_playwright() as p:
         g.context.close()
     ok('A10 no overflow 320-1280 with links on; link targets >= 44px', not ow, ow)
     cl = rpage(rcfg(True)); cl.goto(B + '?sample'); cr2 = cl.evaluate(CJS); ok('A11 contrast with links + disclosure', not cr2['fails'], cr2['fails'])
+    # ---------- Pip guided tour + Ask Pip ----------
+    from urllib.parse import urlparse as _up
+    def tp(w=412, fresh=True, rm=False, init=None):
+        c = br.new_context(viewport={'width': w, 'height': 860 if w < 700 else 900}, is_mobile=w < 700, has_touch=w < 700, reduced_motion='reduce' if rm else 'no-preference', fresh=fresh)
+        if init: c.add_init_script(init)
+        g = c.new_page(); g.rq = []; g.on('request', lambda r: g.rq.append(r.url)); g.on('pageerror', lambda e: errs.append('tour: ' + str(e)))
+        g.goto(B); g.wait_for_load_state('networkidle'); return g
+    step = lambda g: g.evaluate("FlossFoxTour.step()")
+    cpose = lambda g: g.evaluate("(()=>{const c=document.getElementById('tourCard');if(!c)return null;const i=c.querySelector('img');return [c.dataset.pose,/pip-([a-z]+)-160/.exec(i.currentSrc||i.src)[1]]})()")
+    def addlist(g, t): g.fill('#inp', t); g.click('#go'); g.wait_for_timeout(80)
+    def nxt(g): g.click('#tourCard [data-t=next]'); g.wait_for_timeout(80)
+    g = tp()
+    ok('T1 first visit: inline invite with the exact words and two choices', g.locator('#tourInvite').is_visible() and "Hi! I'm Pip! Want me to show you around? It'll be quick!" in g.inner_text('#tourInvite') and g.inner_text('#tourYes') == 'Show me around' and g.inner_text('#tourNo') == "I'll explore myself")
+    ok('T1b invite is not a modal (no dialog, page stays usable) and Add my colors stays on the first screen', g.locator('[role=dialog],dialog[open]').count() == 0 and g.evaluate("document.getElementById('go').getBoundingClientRect().bottom") <= 860)
+    ok('T1c invite carries greeting Pip', 'pip-greeting-160' in g.evaluate("document.querySelector('#tourInvite img').currentSrc"))
+    g.click('#tourYes')
+    ok('T2 start: step 1 of 5, heading focused, real input highlighted', step(g) == 0 and 'Step 1 of 5' in g.inner_text('#tourCard') and g.evaluate("document.activeElement.id") == 'tourH' and g.evaluate("document.getElementById('inp').classList.contains('tour-target')") and g.locator('#tourInvite').count() == 0)
+    g.wait_for_timeout(120); ok('T2b step change announced politely', 'step 1 of 5' in g.inner_text('#tourLive') and g.get_attribute('#tourLive', 'aria-live') == 'polite')
+    ok('T2c S1 words and example offer', 'First, pop your DMC thread numbers in here! You can type them or paste your whole list.' in g.inner_text('#tourCard') and g.locator('#tourCard [data-t=example]').count() == 1 and g.input_value('#inp') == '')
+    ok('T15 S1 pose curious (right image)', cpose(g) == ['curious', 'curious'], cpose(g))
+    ok('T2d the highlighted input stays usable', (g.fill('#inp', '310 x2\n321') or True) and g.input_value('#inp') == '310 x2\n321')
+    g.click('#go'); g.wait_for_timeout(100)
+    ok('T6 real list advances to step 2, card inside results', step(g) == 1 and g.evaluate("!!document.querySelector('#results #tourCard')") and "Here's what I found!" in g.inner_text('#tourCard') and 'recognized 2 colors' in g.inner_text('#tourCard'), g.inner_text('#tourCard'))
+    ok('T15b S2 pose helpful on a clean list', cpose(g) == ['helpful', 'helpful'], cpose(g))
+    nxt(g); ok('T4 step 3 points at the real Buy in selector and says charts may not be exact', step(g) == 2 and g.evaluate("document.getElementById('dest').classList.contains('tour-target')") and 'may not be exact' in g.inner_text('#tourCard') and 'cheaper' not in g.inner_text('#tourCard').lower() and 'estimates' in g.inner_text('#tourCard'))
+    g.select_option('#dest', 'sullivans'); g.wait_for_timeout(80)
+    ok('T4b S3 live text tells the true Sullivans match count', "Sullivans now: 2 colors of 2 have a chart match" in g.inner_text('#tourCard') and g.locator('#shop li').count() == 2, g.inner_text('#tourCard'))
+    g.select_option('#dest', 'dmc'); nxt(g)
+    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and 'affiliate' not in g.inner_text('#tourCard').lower() and g.locator('#shopcard button:has-text("Print list")').count() == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
+    g.click('#tourCard [data-t=back]'); g.wait_for_timeout(80); ok('T5 Back returns to step 3', step(g) == 2); nxt(g); nxt(g)
+    ok('T4d step 5 finish: celebrating, both buttons', step(g) == 4 and "Yay! You've got it! You're ready to start stitching!" in g.inner_text('#tourCard') and cpose(g) == ['celebrating', 'celebrating'] and g.locator('#tourCard [data-t=start]').count() == 1 and g.locator('#tourCard [data-t=tips]').count() == 1, cpose(g))
+    g.click('#tourCard [data-t=start]'); g.wait_for_timeout(80)
+    ok('T4e Start using: card gone, data kept, user on results, marked done', g.locator('#tourCard').count() == 0 and g.input_value('#inp') == '310 x2\n321' and not g.locator('#results').is_hidden() and g.evaluate("document.activeElement.closest('#results')!==null") and json.loads(g.evaluate(f"localStorage.getItem('{TK}')"))['status'] == 'done')
+    ok('T4f no highlight left behind', g.locator('.tour-target').count() == 0)
+    st_keys = g.evaluate("Object.keys(localStorage).map(k=>[k,localStorage.getItem(k)])")
+    ok('T16 storage: only small prefs, never the thread list', all(k in (TK, HK, PFX + '.pip.v1') for k, v in st_keys) and not any('321' in v for k, v in st_keys), st_keys)
+    g.reload(); ok('T4g after finishing, no re-ask on reload', g.locator('#tourInvite').count() == 0)
+    # decline / skip
+    d = tp(); d.click('#tourNo'); ok('T3 decline: invite gone, stored', d.locator('#tourInvite').count() == 0 and json.loads(d.evaluate(f"localStorage.getItem('{TK}')"))['status'] == 'dismissed'); d.reload(); ok('T3b no re-ask after reload', d.locator('#tourInvite').count() == 0 and d.locator('#tourCard').count() == 0)
+    k = tp(); k.fill('#inp', '3865 x3'); k.click('#tourYes'); k.click('#tourCard [data-t=skip]')
+    ok('T3c Skip tour keeps the typed list; no re-ask', k.locator('#tourCard').count() == 0 and k.input_value('#inp') == '3865 x3' and (k.reload() or True) and k.locator('#tourInvite').count() == 0)
+    # example
+    e = tp(); e.fill('#inp', '3865 x3'); e.click('#tourYes')
+    ok('T7 example only on explicit click (input untouched until then)', e.input_value('#inp') == '3865 x3')
+    e.click('#tourCard [data-t=example]'); e.wait_for_timeout(80)
+    ok('T7b example uses 310, 321, 666, 699 only and is labelled as sample', e.input_value('#inp') == '310\n321\n666\n699' and e.locator('#exampleBanner').is_visible() and 'sample' in e.inner_text('#exampleBanner') and e.evaluate("state.items.map(i=>i.code).join()") == '310,321,666,699')
+    ok('T7c example never celebrates', e.evaluate("FlossFoxPip.current()") != 'celebrating')
+    e.click('#exitExample'); ok('T7d leaving the example restores my own list', e.input_value('#inp') == '3865 x3')
+    # invalid / duplicates
+    v = tp(); v.click('#tourYes'); addlist(v, '310\n9999')
+    ok('T8 invalid list: stays on step 1, puzzled, explains, Pip shows the error', step(v) == 0 and cpose(v) == ['puzzled', 'puzzled'] and "couldn't be read" in v.inner_text('#tourCard') and v.evaluate("FlossFoxPip.current()") == 'error', (step(v), cpose(v)))
+    nxt(v); ok('T8b results step with an error: puzzled + honest text', step(v) == 1 and cpose(v)[0] == 'puzzled' and "couldn't be read" in v.inner_text('#tourCard'))
+    addlist(v, '310\n310 x2'); ok('T8c duplicates during the tour: duplicates pose, true claim', cpose(v) == ['duplicates', 'duplicates'] and 'appeared more than once' in v.inner_text('#tourCard') and v.evaluate("state.items[0].qty") == 3, cpose(v))
+    v.evaluate("FlossFoxPip._timing({idle:300,tangleGap:0})"); addlist(v, '310, 321'); v.wait_for_timeout(5000)
+    ok('T17 sleepy never interrupts a tour step', v.evaluate("FlossFoxPip.overlay()") != 'sleepy' and step(v) == 1, v.evaluate("FlossFoxPip.overlay()"))
+    v.click('#pipHi'); ok('T17b tangled never interrupts a tour step', v.evaluate("FlossFoxPip.current()") != 'tangled')
+    # switching views mid-tour
+    v.click('#tabProjects'); ok('T18 switching views mid-tour: card stays with Add colors, page fine', v.locator('#tourCard').is_hidden() and step(v) == 1)
+    v.click('#askPipBtn'); ok('T18b Ask Pip offers Back to the tour', v.locator('#askPip [data-a=resume]').count() == 1 and 'step 2 of 5' in v.inner_text('#askPip'))
+    v.click('#askPip [data-a=resume]'); ok('T18c back to the tour returns to the same step on Add colors', not v.locator('#convertView').is_hidden() and v.locator('#tourCard').is_visible() and step(v) == 1)
+    # refresh mid-tour
+    v.reload(); v.wait_for_timeout(100)
+    ok('T19 refresh mid-tour: offers a clean restart (list isn\'t kept for the tour)', v.locator('#tourInvite').is_visible() and 'Restart the tour' in v.inner_text('#tourInvite') and v.locator('#tourCard').count() == 0)
+    v.click('#tourYes'); ok('T19b restart works', step(v) == 0)
+    v.keyboard.press('Escape'); ok('T20 Esc closes halfway; dismissed', v.locator('#tourCard').count() == 0 and json.loads(v.evaluate(f"localStorage.getItem('{TK}')"))['status'] == 'dismissed')
+    # Ask Pip contexts
+    a = tp(fresh=False); ctx = lambda: a.get_attribute('#askPip .actx', 'data-ctx')
+    a.click('#askPipBtn'); ok('T9 Ask Pip opens, focused, no free-text input', a.locator('#askPip').is_visible() and a.evaluate("document.activeElement.id") == 'askPipH' and a.locator('#askPip textarea, #askPip input[type=text], #askPip input:not([type])').count() == 0 and a.get_attribute('#askPipBtn', 'aria-expanded') == 'true')
+    ok('T9b empty context', ctx() == 'empty', ctx())
+    topics = a.locator('#askPip .atopics button').all_inner_texts()
+    ok('T9c the five topics', topics == ['How do I enter my colors?', 'What does this result mean?', 'What are thread alternatives?', 'How do I use my shopping list?', 'Start the tour again'], topics)
+    a.click('#askPip [data-a=alts]'); ok('T9d topic answer shown, focused, honest about charts', 'not exact' in a.inner_text('#askAns') and a.evaluate("document.activeElement.id") == 'askAns')
+    a.keyboard.press('Escape'); ok('T9e Esc closes, focus back on Ask Pip', a.locator('#askPip').is_hidden() and a.evaluate("document.activeElement.id") == 'askPipBtn')
+    seen = {}
+    for t, dest in [('310\n9999', 'dmc'), ('310\n310', 'dmc'), ('310, 321', 'sullivans'), ('310, 321', 'dmc')]:
+        addlist(a, t); a.select_option('#dest', dest); a.click('#askPipBtn'); seen[t + dest] = (ctx(), a.inner_text('#askPip .actx')); a.click('#askPip [data-a=close]')
+    ok('T9f context per state: errors, duplicates, alternatives (true count), results', [x[0] for x in seen.values()] == ['errors', 'duplicates', 'alternatives', 'results'] and '2 of your 2 colors have a chart match' in seen['310, 321sullivans'][1], seen)
+    a.fill('#newProjName', 'Ask test'); a.click('#saveProj'); a.click('#tabProjects'); a.click('#askPipBtn'); c1 = ctx(); a.click('#askPip [data-a=close]'); a.click('[data-open]'); a.click('#askPipBtn'); c2 = ctx(); a.click('#askPip [data-a=close]'); a.click('#tabHelp'); a.click('#askPipBtn'); c3 = ctx()
+    ok('T9g context on projects, a project, and Help', (c1, c2, c3) == ('projects', 'project', 'help'), (c1, c2, c3))
+    a.click('#askPip [data-a=tour]'); ok('T10 restart from Ask Pip: step 1 on Add colors', step(a) == 0 and a.locator('#tourCard').is_visible() and a.locator('#askPip').is_hidden())
+    a.click('#tourCard [data-t=close]'); a.click('#tabHelp'); a.click('#helpTour'); ok('T10b restart from the Help tab', step(a) == 0 and not a.locator('#convertView').is_hidden())
+    a.click('#tourCard [data-t=close]')
+    # Pip hidden
+    hp = tp(init=f"localStorage.setItem('{PFX}.pip.v1','hidden')")
+    ok('T11 Pip hidden: invite still shows with its own small Pip', hp.locator('#pipFig').is_hidden() and hp.locator('#tourInvite img').count() == 1 and hp.locator('#tourInvite').is_visible())
+    hp.click('#tourYes'); ok('T11b tour card works with Pip hidden', hp.locator('#tourCard img').count() == 1 and step(hp) == 0)
+    hp.click('#tourCard [data-t=close]'); hp.click('#askPipBtn'); ok('T11c Ask Pip works with Pip hidden', hp.locator('#askPip').is_visible())
+    # hints
+    h = tp(fresh=False, init=f"localStorage.setItem('{HK}','on')"); h.evaluate("FlossFoxTour._timing({start:400,compare:300,quiet:300})"); h.wait_for_timeout(700)
+    ok('T21 tip: empty list -> "Not sure where to start?"', h.evaluate("FlossFoxPip.current()") == 'hintStart' and 'like 310' in h.inner_text('#pipMsg'))
+    addlist(h, '310, 321'); h.wait_for_timeout(4600); h.wait_for_timeout(700)
+    ok('T21b tip: compare brands only when real matches exist', h.evaluate("FlossFoxPip.current()") == 'hintCompare' and 'Brand to buy' in h.inner_text('#pipMsg'), h.evaluate("FlossFoxPip.current()"))
+    h.click('#clear'); h.evaluate("FlossFoxTour._timing({start:300})"); h.wait_for_timeout(600); ok('T21c each tip at most once per session', h.evaluate("FlossFoxPip.current()") != 'hintStart')
+    h2 = tp(fresh=False, init=f"localStorage.setItem('{HK}','on')"); h2.click('#inp'); h2.keyboard.type('31'); h2.evaluate("FlossFoxTour._timing({start:200,quiet:2000})"); h2.wait_for_timeout(500)
+    ok('T21d never while typing', h2.evaluate("FlossFoxPip.current()") != 'hintStart')
+    h3 = tp(fresh=False); h3.evaluate("FlossFoxTour._timing({start:200})"); h3.wait_for_timeout(500); ok('T21e tips off: no tip', h3.evaluate("FlossFoxPip.current()") != 'hintStart')
+    h3.click('#tabHelp'); h3.check('#hintsHelp'); ok('T21f tips toggle stored as a small pref', h3.evaluate(f"localStorage.getItem('{HK}')") == 'on')
+    # layout 320-1280
+    lay = []
+    for w in [320, 360, 412, 600, 768, 880, 1024, 1280]:
+        L = tp(w); L.click('#tourYes'); bad = []
+        for i in range(5):
+            if i == 1: addlist(L, '310 x2\n321\n3865')
+            r = L.evaluate("""(()=>{const c=document.getElementById('tourCard').getBoundingClientRect();const hit=[...document.querySelectorAll('#go,#sample,#clear,#inp,#dest,#copy,#saveProj,#pipToggle,#askPipBtn')].filter(e=>e.offsetParent).filter(e=>{const r=e.getBoundingClientRect();return !(r.right<=c.left||r.left>=c.right||r.bottom<=c.top||r.top>=c.bottom)}).map(e=>e.id);
+              const sm=[...document.querySelectorAll('#tourCard button')].filter(b=>b.getBoundingClientRect().height<44).length;return [document.documentElement.scrollWidth,hit,sm,c.right<=innerWidth]})()""")
+            if r[0] > w or r[1] or r[2] or not r[3]: bad.append((i, r))
+            if 0 < i < 4: nxt(L)
+        L.click('#askPipBtn'); aw = L.evaluate("document.documentElement.scrollWidth")
+        if bad or aw > w: lay.append((w, bad, aw))
+        L.context.close()
+    ok('T12 every step 320-1280: no overflow, card never covers controls, buttons >= 44px', not lay, lay)
+    kb = tp(); kb.click('#tourYes'); kb.keyboard.press('Tab'); f1 = kb.evaluate("document.activeElement.dataset.t")
+    kb.keyboard.press('Tab'); f2 = kb.evaluate("document.activeElement.dataset.t"); kb.keyboard.press('Enter'); kb.wait_for_timeout(80)
+    ok('T12b keyboard: Tab reaches the card buttons; Enter on Next advances', f1 == 'example' and f2 == 'next' and step(kb) == 1, (f1, f2, step(kb)))
+    kb.keyboard.press('Escape'); ok('T12c Esc closes and focus returns sensibly', kb.locator('#tourCard').count() == 0 and kb.evaluate("document.activeElement.id") in ('tourYes', 'inp', 'askPipBtn'), kb.evaluate("document.activeElement.id"))
+    rmt = tp(rm=True); rmt.click('#tourYes'); addlist(rmt, '310')
+    ok('T13 reduced motion: no animation in the tour, Pip still', rmt.evaluate("document.getElementById('tourCard').getAnimations({subtree:true}).length") == 0 and rmt.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
+    allrq = g.rq + d.rq + e.rq + v.rq + a.rq + h.rq
+    ok('T22 tour + Ask Pip make no outside requests', all(_up(u).netloc == _up(B).netloc for u in allrq if u.startswith('http')), [u for u in allrq if _up(u).netloc != _up(B).netloc][:5])
     # ---------- Phone layout ----------
     pm = page(412, True); pm.goto(B + '?sample'); pm.wait_for_timeout(200)
     ok('phone convert: no horizontal overflow', pm.evaluate('document.documentElement.scrollWidth') <= 412)

@@ -29,7 +29,10 @@ const STATES={
  duplicate:  {pose:'duplicates', pri:40, anim:'pop',   msg:r=>r.items.filter(i=>i.src.length>1).length===1?"Found a repeat! I've combined it for you.":"Found some repeats! I've combined them for you."},
  error:      {pose:'puzzled',    pri:50, anim:'tilt',  msg:errMsg},
  tangled:    {pose:'tangled',    pri:8,  anim:'wiggle',msg:()=>TANGLE[tn%2]},
- sleepy:     {pose:'sleepy',     pri:5,  anim:'doze',  msg:()=>''}
+ sleepy:     {pose:'sleepy',     pri:5,  anim:'doze',  msg:()=>''},
+ // Contextual tips (overlays, at most once per session each, only over a calm state; see tour.js)
+ hintStart:  {pose:'curious',    pri:22, anim:'tilt',  msg:()=>'Not sure where to start? Try typing a DMC number, like 310!'},
+ hintCompare:{pose:'helpful',    pri:22, anim:'pop',   msg:()=>{const n=window.FlossFoxAltFor?Math.max(FlossFoxAltFor('sullivans'),FlossFoxAltFor('anchor')):0;return n?'Want to compare another thread brand? Try "Brand to buy" in your shopping list.':''}}
 };
 const CALM=25; // overlays (tangled, sleepy) only sit on a base at or below this priority
 function stateFor(r,submitted){const c=['welcome'];
@@ -39,7 +42,7 @@ function stateFor(r,submitted){const c=['welcome'];
 const $=id=>document.getElementById(id);
 const el=$('pip');if(!el)return;
 const img=$('pipImg'),src=$('pipSrc'),msg=$('pipMsg'),fig=$('pipFig'),tog=$('pipToggle'),hi=$('pipHi');
-let cur=null,base='welcome',lastR={items:[],errs:[]},over=null,overT=0,celebrated=false;
+let touring=false,cur=null,base='welcome',lastR={items:[],errs:[]},over=null,overT=0,celebrated=false;
 const T={celebrate:4000,tangle:2600,tangleGap:60000,idle:90000,minSleep:4000,throttle:1000};
 const set=(a,ext)=>SIZES.map(w=>`assets/pip/pip-${a}-${w}.${ext} ${w}w`).join(', ');
 function show(name,r,anim=true){const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);
@@ -54,7 +57,7 @@ const quiet=()=>fig.hidden||document.hidden;
 // Called by the converter on every recalculation.
 function result(r,submitted){lastR=r;base=stateFor(r,submitted);
  if(STATES[base].pri>STATES.celebrating.pri)clearOver();          // errors/duplicates interrupt anything
- else if(over==='sleepy'||over==='tangled')clearOver();            // real input ends play and sleep
+ else if(over==='sleepy'||over==='tangled'||(over&&over.startsWith('hint')))clearOver();            // real input ends play and sleep
  const ex=typeof window.isExample==='function'&&window.isExample();
  const clean=submitted&&r.items.length&&!r.errs.length&&STATES[base].pri<=CALM;
  if(clean&&!celebrated&&!ex){const a=alt();if(!a||!a.review){celebrated=true;if(!fig.hidden){overlay('celebrating',T.celebrate);arm();return}}}
@@ -64,13 +67,13 @@ function result(r,submitted){lastR=r;base=stateFor(r,submitted);
 let lastTangle=-Infinity;
 function tangle(){const now=performance.now();
  if(over==='sleepy')wake();
- if(over==='celebrating'||STATES[base].pri>CALM||now-lastTangle<T.tangleGap||fig.hidden)return false;
+ if(touring||over==='celebrating'||STATES[base].pri>CALM||now-lastTangle<T.tangleGap||fig.hidden)return false;
  lastTangle=now;tn++;overlay('tangled',T.tangle);arm();return true}
 if(hi)hi.addEventListener('click',tangle);
 // Sleepy: one timer, reset on activity (throttled, passive). Paused while the tab is hidden. No polling.
 let idleT=0,sleptAt=0,lastAct=0;
 function arm(){clearTimeout(idleT);if(document.hidden||over==='sleepy')return;idleT=setTimeout(sleep,T.idle)}
-function sleep(){if(quiet()||over||STATES[base].pri>CALM)return arm();sleptAt=performance.now();overlay('sleepy',0)}
+function sleep(){if(touring||quiet()||over||STATES[base].pri>CALM)return arm();sleptAt=performance.now();overlay('sleepy',0)}
 function wake(){if(over!=='sleepy')return;const left=T.minSleep-(performance.now()-sleptAt);
  if(left>0){clearTimeout(overT);overT=setTimeout(wake,left);return}
  clearOver();show(base==='welcome'?'attentive':base,null,false);fig.classList.add('pip-fade');arm()}
@@ -88,6 +91,8 @@ vis(pref!=='hidden',false);tog.onclick=()=>vis(fig.hidden,true);
 window.FlossFoxPip=null;
 const api={result,show,stateFor,STATES,ART,FUTURE,current:()=>cur,base:()=>base,overlay:()=>over,tangle,projectReady,KEY:PIP_KEY,
  // test hook: shorten timers (dev/testing only; no effect unless called)
+ setTour:on=>{touring=!!on;if(touring&&(over==='sleepy'||over==='tangled'||(over&&over.startsWith('hint')))){clearOver();show(base,null,false)}arm()},touring:()=>touring,
+ hint:n=>{const S=STATES[n];if(!S||touring||over||quiet()||STATES[base].pri>CALM||!S.msg(lastR))return false;overlay(n,9000);arm();return true},
  _timing:o=>{Object.assign(T,o);arm();return{...T}}};
 /* global state */
 if(typeof state!=='undefined'&&(state.items.length||state.errs.length)){lastR=state;base=stateFor(state,true);show(base,state)}else show('welcome');
