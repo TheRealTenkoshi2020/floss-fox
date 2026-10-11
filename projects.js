@@ -13,7 +13,8 @@ function pstatus(t){$('projStatus').textContent=t}
 // ---- Validation / migration (used for localStorage and backup restore) ----
 function normItem(it){if(!it||typeof it!=='object'||typeof it.code!=='string'||!DMC[it.code])return null;
  const q=it.qty===null?null:(Number.isInteger(it.qty)&&it.qty>=1?it.qty:undefined);if(q===undefined)return null;
- return{code:it.code,qty:q,stated:it.stated!==false,src:Array.isArray(it.src)?it.src.filter(x=>typeof x==='string').slice(0,20).map(x=>x.slice(0,200)):[]}}
+ const st=it.stated!==false,a=q===null?0:(Number.isInteger(it.assumed)&&it.assumed>=0&&it.assumed<=q?it.assumed:(st?0:q));
+ return{code:it.code,qty:q,stated:a===0,assumed:a,src:Array.isArray(it.src)?it.src.filter(x=>typeof x==='string').slice(0,20).map(x=>x.slice(0,200)):[]}}
 function normDecision(code,d){d=d&&typeof d==='object'?d:{};const out={status:STATUSES.includes(d.status)?d.status:null,
  owned:(typeof d.owned==='number'&&isFinite(d.owned)&&d.owned>=0)?Math.round(d.owned*100)/100:null,
  anchor:(typeof d.anchor==='string'&&DMC[code].anchor.includes(d.anchor))?d.anchor:null,
@@ -79,8 +80,8 @@ const plural=(n,w,ws)=>`${n} ${n===1?w:(ws||w+'s')}`;
 function costLine(P){const p=PRICES[P.dest];let k=0,unpriced=0;P.lines.forEach(l=>{if(l.from.every(c=>fam(c)==='solid'))k+=l.q;else unpriced++});
  if(!P.lines.length)return'Nothing left to buy.';
  return`Rough cost of what's left to buy: ≈ ${rng(p.lo*k,p.hi*k)} USD for ${plural(P.lines.reduce((a,l)=>a+l.q,0),'skein')}${unpriced?` (plus ${plural(unpriced,'specialty thread')} with no price)`:''}. Colors that still need attention aren't included. Prices were checked ${PRICES.checked} and vary by store.`}
-const lineTxt=(P,l)=>`${BRAND[P.dest]} ${disp(P.dest,l.to)} x${l.q} (for DMC ${l.from.map(lab).join(', ')}; ${[...l.prov].join('; ')}${l.partial?'; after subtracting what you have, rounded up to whole skeins':''}${l.recvd?`; ${l.recvd} already received`:''})${l.from.length>1?' ⚠ note: several pattern colors share this thread':''}`;
-const needTxt=it=>it.qty===null?'amount not entered':plural(it.qty,'skein');
+const lineTxt=(P,l)=>`${BRAND[P.dest]} ${disp(P.dest,l.to)} x${l.q} (for DMC ${l.from.map(lab).join(', ')}; ${[...l.prov].join('; ')}${l.partial?'; after subtracting what you have, rounded up to whole skeins':''}${l.recvd?`; ${l.recvd} already received`:''}${l.ts.some(t=>asmOf(t.it)>0)?'; includes an assumed amount':''})${l.from.length>1?' ⚠ note: several pattern colors share this thread':''}`;
+const needTxt=it=>it.qty===null?'amount not entered':plural(it.qty,'skein')+asmTxt(it.qty,asmOf(it));
 function planText(p){const P=plan(p),o=[`${APP_NAME} project: ${p.name}`,`Brand to buy: ${BRAND[P.dest]}`,readyText(P,p),summaryText(P),''];
  const tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),co=P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy');
  o.push('NEED TO BUY:');if(!tb.length&&!co.length)o.push('- none');tb.forEach(l=>o.push('[ ] '+lineTxt(P,l)));co.forEach(t=>o.push(`[ ] DMC ${lab(t.it.code)}: amount not entered (add it to check this color off)`));
@@ -124,7 +125,7 @@ function card(p,P,t){const it=t.it,d=t.d,c=esc(it.code),e=DMC[it.code],f=fam(it.
  return`<li class="tcard st-${t.state}${t.kind?' k-'+t.kind:''}" id="card-${c}" data-code="${c}" data-search="${esc((lab(it.code)+' '+e.name+' '+(t.r.ok?t.r.to:'')).toLowerCase())}"><div class="main"><div class="top">
  <span class="bigsw" style="background:${e.hex}" title="Approximate DMC color"></span>
  <div class="ident"><div class="code">DMC ${L}${f!=='solid'?` <span class="tag">${f}</span>`:''}</div><div class="cname">${esc(cap(e.name))}${P.dest!=='dmc'&&t.r.ok?` · use <b>${BRAND[P.dest]} ${esc(disp(P.dest,t.r.to))}</b>`:''}</div>
- <div class="need">${it.qty===null?'<span class="unk">Amount needed: not entered</span>':`${plural(it.qty,'skein')} needed${it.stated===false?' (assumed)':''}`}</div>
+ <div class="need">${it.qty===null?'<span class="unk">Amount needed: not entered</span>':`${plural(it.qty,'skein')} needed${asmTxt(it.qty,asmOf(it))}`}</div>
  <div class="stat ${t.state}${t.kind?' k-'+t.kind:''}"><span aria-hidden="true">${si[0]}</span> ${si[1]}</div></div>
  <button type="button" class="sec exp" id="x-${c}" data-exp="${c}" aria-expanded="${open}" aria-controls="det-${c}">${open?'Hide details':'Details'}<span class="sr"> for DMC ${L}</span></button></div>
  <div class="seg" role="radiogroup" aria-label="Do you have DMC ${L}?">${['have','buy','check'].map(s=>`<label><input type="radio" name="st-${c}" id="st-${c}-${s}" value="${s}" data-st="${c}" ${d.status===s?'checked':''}><span>${STLBL[s]}</span></label>`).join('')}</div></div>
@@ -172,7 +173,7 @@ function applyFilter(P){const cards=[...document.querySelectorAll('#pCards .tcar
  const m=$('pFiltMsg');if(m)m.textContent=`Showing ${s2(n)}.`;const cb=$('pSearchClear');if(cb)cb.hidden=!query}
 function renderPlan(p,P){P=P||plan(p);const s=P.sum,tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),pct=s.total?Math.round(100*s.sufficient/s.total):0;
  const skeins=P.lines.reduce((a,l)=>a+l.q,0),colorOnly=P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy').length;
- const li=l=>`<b>${BRAND[P.dest]} ${esc(disp(P.dest,l.to))}</b> × ${l.q} <small class="mut">(for DMC ${l.from.map(c=>esc(lab(c))).join(', ')} · ${[...l.prov].map(esc).join('; ')}${l.partial?' · after subtracting what you have':''}${l.recvd?` · ${l.recvd} already received`:''})</small>`;
+ const li=l=>`<b>${BRAND[P.dest]} ${esc(disp(P.dest,l.to))}</b> × ${l.q} <small class="mut">(for DMC ${l.from.map(c=>esc(lab(c))).join(', ')} · ${[...l.prov].map(esc).join('; ')}${l.partial?' · after subtracting what you have':''}${l.recvd?` · ${l.recvd} already received`:''}${l.ts.some(t=>asmOf(t.it)>0)?' · includes an assumed amount':''})</small>`;
  const mw=l=>l.from.length>1?'<div class="hint">Note: several pattern colors use this one thread. Check that\'s what you want.</div>':'';
  const steps=nextSteps(P);
  $('pSum').innerHTML=`<h2 class="printonly">${esc(APP_NAME)}: ${esc(p.name)}</h2><p class="printonly">Brand to buy: ${esc(BRAND[P.dest])}</p>
@@ -180,7 +181,7 @@ function renderPlan(p,P){P=P||plan(p);const s=P.sum,tb=P.lines.filter(l=>!l.boug
  <p class="headline" role="status" aria-live="polite">${P.ready?`${foxSvg('fox')}<span>All your threads are accounted for. You're ready to stitch!<span class="sr" id="sSuf">${s.sufficient} of ${s.total}</span></span>`:`<span><span id="sSuf">${s.sufficient} of ${s.total}</span> colors ready</span>`}</p>
  ${s.total?`<div class="bar" role="progressbar" aria-label="Colors ready" aria-valuemin="0" aria-valuemax="${s.total}" aria-valuenow="${s.sufficient}" aria-valuetext="${s.sufficient} of ${s.total} colors ready"><span style="width:${pct}%"></span></div>`:''}
  ${P.ready?`<p class="skeins">${s.total} of ${s2(s.total)} have enough or have been checked in. Happy stitching! 🧵</p>`:''}<ul class="stats"${P.ready?' hidden':''}><li><b id="sBuy">${s.toBuy}</b>to buy</li><li><b id="sAw">${s.awaiting}</b>bought, waiting to check in</li><li><b id="sRev">${s.review}</b>need attention</li></ul>
- ${skeins||colorOnly?`<p class="skeins">Skeins still to get: <b>${skeins}</b>${colorOnly?` · plus ${s2(colorOnly)} with no amount entered, so the total isn't complete`:''}</p>`:''}
+ ${(n=>n?`<p class="skeins">${s2(n)} use${n===1?'s':''} an assumed amount (1 skein for each line with no amount). Check against your pattern in Details.</p>`:'')(p.items.filter(it=>it.qty!==null&&asmOf(it)>0).length)}${skeins||colorOnly?`<p class="skeins">Skeins still to get: <b>${skeins}</b>${colorOnly?` · plus ${s2(colorOnly)} with no amount entered, so the total isn't complete`:''}</p>`:''}
  ${steps.length?`<ul class="next noprint">${steps.map(([c,t,b,a],i)=>`<li class="${c}"><span>${esc(t)}</span><button type="button" class="sec small" id="ns-${i}" data-ns="${a}">${b}</button></li>`).join('')}</ul>`:''}
  <nav class="jump noprint" aria-label="Jump to"${P.ready?' hidden':''}><a href="#pThreads">Your colors</a><a href="#pReviewH">Needs attention (${s.review})</a><a href="#pShopH">Shopping list (${P.lines.length})</a></nav></section>`;
  $('pPlan').innerHTML=`<h3 id="pShopH" tabindex="-1">Shopping list</h3><h4>Need to buy</h4><ul>${tb.map(l=>`<li><label><input type="checkbox" id="pb-${esc(l.key)}" data-bought="${esc(l.key)}"> ${li(l)}</label>${mw(l)}</li>`).join('')}${P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy').map(t=>`<li>DMC ${esc(lab(t.it.code))} · <span class="unk">amount not entered</span>. Add it to check this color off.</li>`).join('')||(tb.length?'':'<li class="mut">Nothing left to buy.</li>')}</ul>
@@ -247,13 +248,13 @@ function bindEditor(p){const E=$('projEdit'),re=()=>{touch(p);renderEditor();ren
  E.querySelectorAll('[data-anc]').forEach(s=>s.onchange=()=>{p.decisions[s.dataset.anc].anchor=s.value||null;re()});
  E.querySelectorAll('[data-rr]').forEach(b=>b.onclick=()=>{const c=b.dataset.rr;if(!confirm(`Undo checking in DMC ${lab(c)}? It goes back on your shopping list.`))return;p.decisions[c].recv=null;re();pstatus('Check-in undone.')});
  E.querySelectorAll('[data-q]').forEach(i=>{if(i.tagName!=='INPUT')return;i.onchange=()=>{const v=i.value.trim(),it=p.items.find(x=>x.code===i.dataset.q);
-  if(!/^\d+$/.test(v)||+v<1){pstatus(`"${v}" isn't a whole number of skeins (1 or more), so nothing changed. Tick "Not entered" if you don't know.`);i.value=it.qty===null?'':it.qty;return}it.qty=+v;it.stated=true;re()}});
- E.querySelectorAll('[data-unk]').forEach(c=>c.onchange=()=>{const it=p.items.find(x=>x.code===c.dataset.unk);if(c.checked){it.qty=null;it.stated=true}else{it.qty=1;it.stated=false;pstatus('Amount set to 1 skein (assumed). Change it to the real number.')}re()});
+  if(!/^\d+$/.test(v)||+v<1){pstatus(`"${v}" isn't a whole number of skeins (1 or more), so nothing changed. Tick "Not entered" if you don't know.`);i.value=it.qty===null?'':it.qty;return}it.qty=+v;it.stated=true;it.assumed=0;re()}});
+ E.querySelectorAll('[data-unk]').forEach(c=>c.onchange=()=>{const it=p.items.find(x=>x.code===c.dataset.unk);if(c.checked){it.qty=null;it.stated=true;it.assumed=0}else{it.qty=1;it.stated=false;it.assumed=1;pstatus('Amount set to 1 skein (assumed). Change it to the real number.')}re()});
  E.querySelectorAll('[data-own]').forEach(i=>i.onchange=()=>{const v=i.value.trim(),d=p.decisions[i.dataset.own];
   if(v===''){d.owned=null;re();return}const n=Number(v);if(!isFinite(n)||n<0){pstatus(`"${v}" isn't a valid amount, so nothing changed.`);i.value=d.owned===null?'':d.owned;return}d.owned=Math.round(n*100)/100;re()});
  E.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const c=b.dataset.rm;if(!confirm(`Remove DMC ${lab(c)} from this project?`))return;p.items=p.items.filter(x=>x.code!==c);delete p.decisions[c];expanded.delete(c);re()});
  $('pAddBtn').onclick=()=>{const {items,errs}=parse($('pAdd').value);items.forEach(n=>{const ex=p.items.find(x=>x.code===n.code);
-  if(ex){ex.qty=(ex.qty===null||n.qty===null)?null:ex.qty+n.qty;ex.src=ex.src.concat(n.src);ex.stated=ex.stated||n.stated}else{p.items.push({code:n.code,qty:n.qty,stated:n.stated,src:n.src});p.decisions[n.code]=normDecision(n.code,{})}});
+  if(ex){ex.qty=(ex.qty===null||n.qty===null)?null:ex.qty+n.qty;ex.src=ex.src.concat(n.src);ex.assumed=ex.qty===null?0:asmOf(ex)+asmOf(n);ex.stated=ex.assumed===0}else{p.items.push({code:n.code,qty:n.qty,stated:n.stated,assumed:asmOf(n),src:n.src});p.decisions[n.code]=normDecision(n.code,{})}});
   touch(p);renderEditor();renderList();$('pAddBox').open=true;$('pAddErr').innerHTML=errs.length?`<div class="errbox"><b>${errs.length} couldn't be added:</b><ul>${errs.map(e=>`<li>"${esc(e.t)}": ${esc(e.why)}</li>`).join('')}</ul></div>`:'';if(errs.length)$('pAdd').value=errs.map(e=>e.t).join('\n');pstatus(`Added ${s2(items.length)}.`)}}
 
 // ---- Export / backup / restore ----
@@ -261,9 +262,9 @@ const safe=n=>(n||'project').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')
 function download(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
 function csv(p){const P=plan(p),q=v=>{v=v===null||v===undefined?'':String(v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
  const SN={have:'confirmed sufficient (owned)',received:'confirmed sufficient (received)',buy:'to buy',awaiting:'bought, awaiting confirmation',review:'needs review'};
- const rows=[['project','dmc_code','dmc_name','needed_skeins','quantity_stated','status','owned_skeins','buy_in','will_use','source','to_buy_skeins','bought','received_skeins','readiness','issue']];
+ const rows=[['project','dmc_code','dmc_name','needed_skeins','quantity_stated','status','owned_skeins','buy_in','will_use','source','to_buy_skeins','bought','received_skeins','readiness','issue','assumed_skeins']];
  P.threads.forEach(t=>{const it=t.it,d=t.d,r=t.r,line=P.lines.find(l=>l.from.includes(it.code));
-  rows.push([p.name,lab(it.code),DMC[it.code].name,it.qty===null?'UNKNOWN':it.qty,it.stated===false?'assumed':'yes',d.status||'not checked',d.owned===null?'':d.owned,BRAND[P.dest],r.ok?disp(P.dest,r.to):'',r.ok?r.prov:'',line?t.rem+(line.from.length>1?` (shared line total ${line.q})`:''):'',line?(line.bought?'yes':'no'):'',t.recv||'',SN[t.state],t.why])});
+  rows.push([p.name,lab(it.code),DMC[it.code].name,it.qty===null?'UNKNOWN':it.qty,(a=>a===0?'yes':a>=it.qty?'assumed':'partly assumed')(asmOf(it)),d.status||'not checked',d.owned===null?'':d.owned,BRAND[P.dest],r.ok?disp(P.dest,r.to):'',r.ok?r.prov:'',line?t.rem+(line.from.length>1?` (shared line total ${line.q})`:''):'',line?(line.bought?'yes':'no'):'',t.recv||'',SN[t.state],t.why,it.qty===null?'':asmOf(it)])});
  return rows.map(r=>r.map(q).join(',')).join('\r\n')+'\r\n'}
 function backup(){const d={app:'floss-fox',schema:SCHEMA,exported:nowISO(),projects:store.projects};download(JSON.stringify(d,null,2),'floss-fox-backup-'+nowISO().slice(0,10)+'.json','application/json');pstatus(`Backup downloaded with ${store.projects.length} project(s). Keep the file somewhere safe.`)}
 function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBox').open=true;if(file.size>5e6){R.hidden=false;R.innerHTML='<b class="warn">That file is too large to be a Floss Fox backup.</b>';return}
@@ -289,7 +290,7 @@ $('backupBtn').onclick=backup;$('restoreFile').onchange=e=>{restoreFile(e.target
 let saving=false;
 $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg').textContent='Nothing to save yet. Add your colors first.';return}saving=true;setTimeout(()=>saving=false,800);
  const ex=window.isExample&&window.isExample();
- const p={id:newId(),name:($('newProjName').value.trim()||(ex?'Example project':'Untitled project')).slice(0,100),notes:'',buyBrand:$('dest').value,items:state.items.map(i=>({code:i.code,qty:i.qty,stated:i.stated!==false,src:i.src.slice()})),decisions:{},purchased:{},created:nowISO(),updated:nowISO()};
+ const p={id:newId(),name:($('newProjName').value.trim()||(ex?'Example project':'Untitled project')).slice(0,100),notes:'',buyBrand:$('dest').value,items:state.items.map(i=>({code:i.code,qty:i.qty,stated:i.stated!==false,assumed:asmOf(i),src:i.src.slice()})),decisions:{},purchased:{},created:nowISO(),updated:nowISO()};
  p.items.forEach(i=>p.decisions[i.code]=normDecision(i.code,{anchor:choice[i.code]||null}));store.projects.push(p);const ok=save();
  $('copymsg').innerHTML=(ok?`✓ Saved "${esc(p.name)}" in this browser.`:`Saved for now only: this browser isn't letting Floss Fox store projects, so download a backup from My projects.`)+` <button type="button" class="pri small" id="openSaved">Check what you have →</button>`;$('newProjName').value='';renderList();
  $('openSaved').onclick=()=>{showView('projects');openProject(p.id)}};

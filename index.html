@@ -70,14 +70,19 @@ input[type=text],input[type=number],.pnotes{font:inherit;border:1px solid var(--
 @media print{.tcard{break-inside:avoid}}
 /* ===== Floss Fox design system (Milestone 1.2) ===== */
 [hidden]{display:none!important}
+mark.badline{background:#FBE3DA;color:var(--ink);border-radius:4px;padding:0 4px;box-shadow:inset 3px 0 0 var(--coral-ink,#A2452A)}.asm{color:var(--ink-2)}
 /* Pip companion */
 .herogrid{display:grid;gap:var(--s3)}
-.pip{display:grid;grid-template-columns:84px minmax(0,1fr);gap:var(--s3);align-items:center;min-height:122px}
-.pipfig{width:84px;height:118px;background:#fff;border:1px solid var(--line);border-radius:var(--r-m,14px);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pip{display:grid;grid-template-columns:84px minmax(0,1fr);grid-template-areas:"fig msg" "tog msg";grid-template-rows:118px 44px;column-gap:var(--s3);row-gap:0}
+.pipfig{grid-area:fig;width:84px;height:118px;background:#fff;border:1px solid var(--line);border-radius:var(--r-m,14px);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .pipfig img{width:100%;height:100%;object-fit:contain;padding:4px;display:block}
-.pipbubble{position:relative;margin:0;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:.93rem;line-height:1.4}
+.pipbubble{grid-area:msg;align-self:center;position:relative;margin:0;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:9px 13px;font-size:.92rem;line-height:1.38}
 .pipbubble::before{content:'';position:absolute;left:-7px;top:50%;width:12px;height:12px;background:#fff;border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg)}
-@media(min-width:880px){.herogrid{grid-template-columns:minmax(0,1fr) 200px;align-items:start}.herogrid.nopip{grid-template-columns:1fr}.pip{order:2;grid-template-columns:1fr;justify-items:center;min-height:0;position:sticky;top:90px}.pipfig{width:170px;height:236px}.pipbubble::before{left:50%;top:-7px;transform:translateX(-50%) rotate(135deg)}.heromain{order:1}}
+.piptog{grid-area:tog;justify-self:center;min-height:44px;min-width:44px;padding:0 10px;background:none;border:0;color:var(--sage-ink);font:inherit;font-size:.82rem;font-weight:650;text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:10px}
+.piptog:hover{background:var(--sage-50,#EEF3EE)}
+.pip.pipoff{display:flex;min-height:0;justify-content:flex-end}
+@media(max-width:420px){.hero h1{font-size:1.42rem;margin-bottom:var(--s1)}.hero .lead{display:none}.hero .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:var(--s2) 0 var(--s3)}.hero .steps li{display:flex;flex-direction:row;align-items:center;gap:5px;padding:6px 7px;border-radius:12px;font-size:.76rem;line-height:1.2;text-align:left;min-height:0}.hero .steps .num{width:20px;height:20px;font-size:.72rem;flex:0 0 20px;margin:0}.hero{padding-top:var(--s4)}}
+@media(min-width:880px){.herogrid{grid-template-columns:minmax(0,1fr) 176px;align-items:start}.herogrid.nopip{grid-template-columns:minmax(0,1fr) 176px}.pip{order:2;grid-template-columns:1fr;grid-template-areas:"fig" "msg" "tog";grid-template-rows:auto minmax(96px,auto) auto;justify-items:center;row-gap:var(--s2);min-height:0;position:sticky;top:90px}.pipfig{width:140px;height:196px}.pipbubble::before{left:50%;top:-7px;transform:translateX(-50%) rotate(135deg)}.piptog{justify-self:center}.heromain{order:1}.pip.pipoff{display:flex;justify-content:center}}
 @keyframes pippop{from{opacity:.55;transform:scale(.95)}to{opacity:1;transform:none}}
 @keyframes piptilt{0%{transform:rotate(0)}40%{transform:rotate(-3deg)}100%{transform:rotate(0)}}
 @keyframes pipfade{from{opacity:.4}to{opacity:1}}
@@ -225,17 +230,18 @@ code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);border-r
 <h1 id="heroH">Your thread list, made simple.</h1>
 <p class="lead">Paste your DMC colors, see what you need, and make a shopping list in seconds.</p>
 <ol class="steps" aria-label="How it works"><li><span class="num" aria-hidden="true">1</span> Add your colors</li><li><span class="num" aria-hidden="true">2</span> Check what you have</li><li><span class="num" aria-hidden="true">3</span> Get your shopping list</li></ol>
-<div class="herogrid"><aside id="pip" class="pip" aria-label="Pip, your helper"><div class="pipfig" id="pipFig"><picture><source id="pipSrc" type="image/webp" srcset="assets/pip/pip-greeting-160.webp 160w, assets/pip/pip-greeting-320.webp 320w, assets/pip/pip-greeting-480.webp 480w" sizes="(min-width:880px) 170px, 84px"><img id="pipImg" data-art="greeting" src="assets/pip/pip-greeting-320.jpg" srcset="assets/pip/pip-greeting-160.jpg 160w, assets/pip/pip-greeting-320.jpg 320w, assets/pip/pip-greeting-480.jpg 480w" sizes="(min-width:880px) 170px, 84px" width="320" height="465" alt="" decoding="async"></picture></div><p class="pipbubble" id="pipMsg"></p></aside><div class="heromain">
+<div class="herogrid"><aside id="pip" class="pip" aria-label="Pip, your helper"><div class="pipfig" id="pipFig"><picture><source id="pipSrc" type="image/webp" srcset="assets/pip/pip-greeting-160.webp 160w, assets/pip/pip-greeting-320.webp 320w, assets/pip/pip-greeting-480.webp 480w" sizes="(min-width:880px) 170px, 84px"><img id="pipImg" data-art="greeting" src="assets/pip/pip-greeting-320.jpg" srcset="assets/pip/pip-greeting-160.jpg 160w, assets/pip/pip-greeting-320.jpg 320w, assets/pip/pip-greeting-480.jpg 480w" sizes="(min-width:880px) 170px, 84px" width="320" height="465" alt="" decoding="async"></picture></div><p class="pipbubble" id="pipMsg"></p><button class="piptog" id="pipToggle" type="button" aria-controls="pipFig pipMsg" aria-expanded="true">Hide Pip</button></aside><div class="heromain">
 <div id="exampleBanner" class="banner" role="status" hidden><span><b>You're trying an example.</b> These colors are a sample, not your thread. Nothing is saved unless you choose to.</span> <button type="button" class="sec small" id="exitExample">Back to my list</button></div>
 <label for="inp" class="biglabel">Paste your DMC color list</label>
 <textarea id="inp" placeholder="310, 321, 666, 823" aria-describedby="inpHint"></textarea>
+
+<div class="row"><button class="pri" id="go">Add my colors</button><button class="sec" id="sample">Try an example</button><button class="ghost" id="clear">Clear</button><button class="ghost" id="openProj" type="button">Open my projects</button></div>
 <p class="hint" id="inpHint">One color per line, or separated by commas. Know how many skeins? Add it like <code>310 x2</code>.</p>
 <details class="pastehelp"><summary>What can I paste?</summary>
 <ul><li>DMC numbers: <code>310</code>, <code>DMC 321 Red</code>, plus <code>Blanc</code>, <code>Ecru</code> and <code>B5200</code></li>
 <li>Skein amounts: <code>310 x2</code>, <code>310 ×2</code>, <code>310x2</code>, <code>310 (2)</code> or <code>310 2 skeins</code></li>
 <li>Don't know the amount? Write <code>310 x?</code>. If you leave the amount off, Floss Fox counts 1 skein and marks it "assumed".</li>
 <li>Not supported yet: other brands' numbers, PDFs and photos. Paste DMC numbers only.</li></ul></details>
-<div class="row"><button class="pri" id="go">Add my colors</button><button class="sec" id="sample">Try an example</button><button class="ghost" id="clear">Clear</button><button class="ghost" id="openProj" type="button">Open my projects</button><button class="ghost" id="pipToggle" type="button" aria-controls="pip" aria-expanded="true">Hide Pip</button></div>
 </div></div>
 </section>
 <div id="status" class="sr" role="status" aria-live="polite"></div>
@@ -297,7 +303,8 @@ const BRAND={anchor:"Anchor",sullivans:"Sullivans",dmc:"DMC"};
 const $=id=>document.getElementById(id);
 document.title=APP_NAME;$('appname').innerHTML=APP_NAME.replace(/(\S+)$/,'<span>$1</span>');$('shoptitle').textContent=APP_NAME;$('affdisc').hidden=!SHOW_AFFILIATE_DISCLOSURE;
 const lab=c=>c==='WHITE'?'BLANC (White)':c;const disp=(d,t)=>d==='dmc'?lab(t):t;
-const qtxt=it=>it.qty===null?'? (quantity unknown)':it.qty+(it.stated===false?' (assumed)':'');const qn=q=>q===null?'?':q;
+const asmTxt=(q,a)=>q===null||!a?'':(a>=q?' (assumed)':` (${a} assumed)`);const asmOf=it=>it.assumed!==undefined?it.assumed:(it.stated===false&&it.qty!==null?it.qty:0);
+const qtxt=it=>it.qty===null?'? (quantity unknown)':it.qty+asmTxt(it.qty,asmOf(it));const qn=q=>q===null?'?':q;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fam=c=>{const n=DMC[c].name.toLowerCase();return /metallic/.test(n)?'metallic':/variegated/.test(n)?'variegated':'solid'};
 // ---- Parsing: never partially accept a piece of input ----
@@ -305,17 +312,17 @@ function parse(text){const items=[],errs=[];
  text.split(/[\n,;]+/).forEach(orig=>{const t=orig.trim();if(!t)return;
   let r=t.replace(/×/g,'x').replace(/^dmc\b\s*/i,'').replace(/^#\s*/,'');
   const m=r.match(/^(B5200|ecru|white|blanc|\d{1,4})(?=$|[\sx(#])/i);
-  if(!m){errs.push({t,why:'not recognised as a DMC number'});return}
+  if(!m){errs.push({t,kind:'code',why:'not recognised as a DMC number'});return}
   let code=m[1].toUpperCase();r=r.slice(m[0].length);
   if(code==='BLANC')code='WHITE';if(/^\d$/.test(code))code='0'+code;
   let qty=null;const N='(-?[\\d.]+|\\?)';const qre=[new RegExp('^\\s*x\\s*'+N,'i'),new RegExp('\\bx\\s*'+N,'i'),new RegExp('\\(\\s*'+N+'\\s*\\)'),new RegExp(N+'\\s*(?:skeins?|sk)\\b','i'),/(-?[\d.]+)\s*x\b/i,/(?:^|\s)(\?)(?=\s|$)/];
   for(const q of qre){const mm=r.match(q);if(mm){qty=mm[1];r=r.replace(mm[0],' ');break}}
-  if(/\d/.test(r)){errs.push({t,why:'contains more than one number. Put each colour on its own line or separate with commas'});return}
-  if(/\?|\bskeins?\b|\bsk\b|\bx\b|\b(one|two|three|four|five|six|seven|eight|nine|ten|half)\b/i.test(r)){errs.push({t,why:'couldn\'t read the quantity. Use a number like "x2", or "x?" if you don\'t know'});return}
+  if(/\d/.test(r)){errs.push({t,kind:'multi',why:'contains more than one number. Put each colour on its own line or separate with commas'});return}
+  if(/\?|\bskeins?\b|\bsk\b|\bx\b|\b(one|two|three|four|five|six|seven|eight|nine|ten|half)\b/i.test(r)){errs.push({t,kind:'qty',why:'couldn\'t read the quantity. Use a number like "x2", or "x?" if you don\'t know'});return}
   const stated=qty!==null;if(qty==='?')qty=null;else if(qty===null)qty='1';
-  if(qty!==null&&(!/^\d+$/.test(qty)||+qty<1)){errs.push({t,why:`quantity "${qty}" isn't a whole number of skeins (1 or more)`});return}
-  if(!DMC[code]){errs.push({t,why:`DMC ${code} isn't in the chart data`});return}
-  const q=qty===null?null:+qty;const ex=items.find(i=>i.code===code);if(ex){ex.qty=(ex.qty===null||q===null)?null:ex.qty+q;ex.stated=ex.stated||stated;ex.src.push(t)}else items.push({code,qty:q,stated,src:[t]})});
+  if(qty!==null&&(!/^\d+$/.test(qty)||+qty<1)){errs.push({t,kind:'qty',why:`quantity "${qty}" isn't a whole number of skeins (1 or more)`});return}
+  if(!DMC[code]){errs.push({t,kind:'code',why:`DMC ${code} isn't in the chart data`});return}
+  const q=qty===null?null:+qty;const ex=items.find(i=>i.code===code);const asm=stated?0:1;if(ex){ex.qty=(ex.qty===null||q===null)?null:ex.qty+q;ex.assumed=ex.qty===null?0:ex.assumed+asm;ex.stated=ex.assumed===0;ex.src.push(t)}else items.push({code,qty:q,stated,assumed:q===null?0:asm,src:[t]})});
  return{items,errs}}
 // ---- Resolution per destination brand ----
 const choice={};const checked=new Set();
@@ -340,17 +347,18 @@ function anchorCell(it){const c=it.code,o=DMC[c].anchor,f=fam(c);
  const opts=(disputed?['<option value="">Choose…</option>']:[]).concat(o.map(a=>`<option value="${esc(a)}"${(choice[c]||(!disputed&&o[0]))===a?' selected':''}>Anchor ${esc(a)}</option>`));
  return `<select class="pick" data-code="${esc(c)}" aria-label="Anchor choice for DMC ${esc(c)}">${opts.join('')}</select> <span class="tag">${disputed?'needs review':o.length+' chart options'}</span>`+(disputed?`<br><small class="warn">${esc(WHITE_DISPUTE)}</small>`:'')}
 function renderTable(){const {items,errs}=state;
- $('errs').innerHTML=errs.length?`<div class="errbox"><b>${errs.length} line${errs.length>1?'s':''} couldn't be read.</b> Fix ${errs.length>1?'them':'it'} in the box above, then tap <i>Add my colors</i> again.<ul>${errs.map(e=>`<li>"${esc(e.t)}": ${esc(e.why)}</li>`).join('')}</ul></div>`:'';
+ $('errs').innerHTML=errs.length?`<div class="errbox"><b>${errs.length} line${errs.length>1?'s':''} couldn't be read.</b> Fix ${errs.length>1?'them':'it'} in the box above, then tap <i>Add my colors</i> again.<ul>${errs.map(e=>`<li><mark class="badline">"${esc(e.t)}"</mark>: ${esc(e.why)}</li>`).join('')}</ul></div>`:'';
  $('tbl').innerHTML=items.length?`<table><thead><tr><th>DMC</th><th>Anchor (chart)</th><th>Sullivans (official chart)</th></tr></thead><tbody>${items.map(it=>{const e=DMC[it.code],f=fam(it.code);
   return `<tr><td>${sw(e.hex)}<b>DMC ${esc(lab(it.code))}</b> ${f!=='solid'?`<span class="tag">${f}</span>`:''}<br><small class="mut">${esc(e.name)} · ×${qtxt(it)} · from "${it.src.map(esc).join('", "')}"</small></td>
   <td><span class="lbl">Anchor (chart)</span>${anchorCell(it)}</td><td><span class="lbl">Sullivans (official chart)</span>${f!=='solid'?`<span class="warn">${f}: not substituted</span>`:SULL[it.code]?`<b>${SULL[it.code]}</b>`:'<span class="warn">No match</span>'}</td></tr>`}).join('')}</tbody></table>`:'';
  document.querySelectorAll('.pick').forEach(s=>s.onchange=()=>{choice[s.dataset.code]=s.value||undefined;renderList()});
- const sk=items.reduce((a,i)=>a+(i.qty||0),0)+(items.some(i=>i.qty===null)?' + unknown':'');
- $('summary').innerHTML=items.length||errs.length?`${items.length?`<span class="found"><span aria-hidden="true">✓</span> Found <b>${items.length}</b> color${items.length===1?'':'s'} (${sk} skein${sk==1?'':'s'}). Let's see which ones you still need.</span>`:'<span class="found">No colors recognized yet.</span>'}${errs.length?` <span class="fixme">${errs.length} line${errs.length===1?'':'s'} need${errs.length===1?'s':''} a fix (see below).</span>`:''}${items.length?'<span class="nextacts"><a href="#saveBox" class="btnlink pri">Check what you have</a><a href="#shopcard" class="btnlink sec">Shopping list ↓</a></span>':''}`:'';
+ const skn=items.reduce((a,i)=>a+(i.qty||0),0),unk=items.filter(i=>i.qty===null).length,asm=items.reduce((a,i)=>a+(i.qty===null?0:asmOf(i)),0);
+ const skTxt=`${skn} skein${skn===1?'':'s'}${unk?` + ${unk===1?'1 color':unk+' colors'} with amount unknown`:''}${asm?` <span class="asm">(${asm} assumed — no amount given)</span>`:''}`;
+ $('summary').innerHTML=items.length||errs.length?`${items.length?`<span class="found"><span aria-hidden="true">✓</span> Found <b>${items.length}</b> color${items.length===1?'':'s'} · ${skTxt}. Let's see which ones you still need.</span>`:'<span class="found">No colors recognized yet.</span>'}${errs.length?` <span class="fixme">${errs.length} line${errs.length===1?'':'s'} need${errs.length===1?'s':''} a fix (see below).</span>`:''}${items.length?'<span class="nextacts"><a href="#saveBox" class="btnlink pri">Check what you have</a><a href="#shopcard" class="btnlink sec">Shopping list ↓</a></span>':''}`:'';
  $('results').hidden=!(items.length||errs.length);$('shopcard').hidden=!items.length}
 function buildList(){const dest=$('dest').value,groups={},review=[];
  state.items.forEach(it=>{const r=resolve(it,dest);if(!r.ok){review.push({it,r});return}
-  const g=groups[r.to]||(groups[r.to]={to:r.to,qty:0,from:[],prov:new Set()});g.qty=(g.qty===null||it.qty===null)?null:g.qty+it.qty;g.from.push(it.code);g.prov.add(r.prov)});
+  const g=groups[r.to]||(groups[r.to]={to:r.to,qty:0,asm:0,from:[],prov:new Set()});g.qty=(g.qty===null||it.qty===null)?null:g.qty+it.qty;g.asm=g.qty===null?0:g.asm+asmOf(it);g.from.push(it.code);g.prov.add(r.prov)});
  return{dest,lines:Object.values(groups),review}}
 function costRows(){const n=state.items.reduce((a,i)=>a+(i.qty||0),0),unk=state.items.filter(i=>i.qty===null).length;
  const row=(dest)=>{let k=0;state.items.forEach(it=>{if(fam(it.code)==='solid'&&it.qty!==null&&resolve(it,dest).ok)k+=it.qty});const p=PRICES[dest];
@@ -359,12 +367,12 @@ function costRows(){const n=state.items.reduce((a,i)=>a+(i.qty||0),0),unk=state.
  return[row('dmc'),row('anchor'),row('sullivans'),['CXC full set',`Set purchase ≈ $${PRICES.cxcSet.lo}–${PRICES.cxcSet.hi} USD (~${PRICES.cxcSet.colours} colours). Contents and per-colour quantities aren't verified, so coverage and shortfalls can't be checked.`]]}
 function renderList(){const L=buildList();$('destprint').textContent='Buying in: '+BRAND[L.dest];
  $('shop').innerHTML=L.lines.map(g=>{const key=L.dest+':'+g.to;const merge=g.from.length>1;
-  return `<li><label><input type="checkbox" data-key="${esc(key)}"${checked.has(key)?' checked':''}><b>${BRAND[L.dest]} ${esc(disp(L.dest,g.to))}</b> × ${qn(g.qty)} <small>(for DMC ${g.from.map(c=>esc(lab(c))).join(', ')} · ${[...g.prov].map(esc).join('; ')})</small></label>${merge?`<div class="warn small">⚠ ${g.from.length} different pattern colours map to this one thread. Check that's what you want.</div>`:''}</li>`}).join('')||'<li class="mut">Nothing ready to buy yet. See "Needs review".</li>';
+  return `<li><label><input type="checkbox" data-key="${esc(key)}"${checked.has(key)?' checked':''}><b>${BRAND[L.dest]} ${esc(disp(L.dest,g.to))}</b> × ${qn(g.qty)}${asmTxt(g.qty,g.asm)} <small>(for DMC ${g.from.map(c=>esc(lab(c))).join(', ')} · ${[...g.prov].map(esc).join('; ')})</small></label>${merge?`<div class="warn small">⚠ ${g.from.length} different pattern colours map to this one thread. Check that's what you want.</div>`:''}</li>`}).join('')||'<li class="mut">Nothing ready to buy yet. See "Needs review".</li>';
  document.querySelectorAll('#shop input[type=checkbox]').forEach(cb=>cb.onchange=()=>{cb.checked?checked.add(cb.dataset.key):checked.delete(cb.dataset.key)});
  $('review').innerHTML=L.review.length?`<div class="errbox"><b>Needs your attention (not on the list yet):</b><ul>${L.review.map(({it,r})=>`<li>DMC ${esc(lab(it.code))} × ${qn(it.qty)}: ${esc(r.why)}</li>`).join('')}</ul></div>`:'';
  const rows=costRows();$('totals').innerHTML=`<b>Estimated costs for this list</b><table>${rows.map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</table><small>Rough estimates (prices checked ${PRICES.checked}), before shipping. Metallic/variegated threads aren't priced. Check the store.</small>`}
 function listText(){const L=buildList(),out=[`${APP_NAME} shopping list: buying in ${BRAND[L.dest]}`];
- L.lines.forEach(g=>{const key=L.dest+':'+g.to;out.push(`[${checked.has(key)?'x':' '}] ${BRAND[L.dest]} ${disp(L.dest,g.to)} x${qn(g.qty)} (DMC ${g.from.map(lab).join(', ')}; ${[...g.prov].join('; ')})`+(g.from.length>1?' ⚠ several pattern colours share this thread':''))});
+ L.lines.forEach(g=>{const key=L.dest+':'+g.to;out.push(`[${checked.has(key)?'x':' '}] ${BRAND[L.dest]} ${disp(L.dest,g.to)} x${qn(g.qty)}${asmTxt(g.qty,g.asm)} (DMC ${g.from.map(lab).join(', ')}; ${[...g.prov].join('; ')})`+(g.from.length>1?' ⚠ several pattern colours share this thread':''))});
  if(L.review.length){out.push('','Needs review (not included):');L.review.forEach(({it,r})=>out.push(`- DMC ${lab(it.code)} x${qn(it.qty)}: ${r.why}`))}
  if(state.errs.length){out.push('','Input problems:');state.errs.forEach(e=>out.push(`- "${e.t}": ${e.why}`))}
  out.push('','Estimated costs:');costRows().forEach(([a,b])=>out.push(`- ${a}: ${b}`));out.push(`(Prices checked ${PRICES.checked}; estimates only.)`);return out.join('\n')}
