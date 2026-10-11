@@ -70,10 +70,11 @@ input[type=text],input[type=number],.pnotes{font:inherit;border:1px solid var(--
 @media print{.tcard{break-inside:avoid}}
 /* ===== Floss Fox design system (Milestone 1.2) ===== */
 [hidden]{display:none!important}
+footer{font-size:.86rem;color:var(--ink-2);padding:var(--s4) var(--s2)}footer .sources summary{min-height:44px;display:flex;align-items:center;font-weight:650;color:var(--sage-ink);cursor:pointer}
 details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}details>summary::before{content:'▸';display:inline-block;width:1.2em;transition:transform var(--t)}details[open]>summary::before{transform:rotate(90deg)}
 @media(max-width:600px){textarea#inp{min-height:108px}.hero .lead{margin-bottom:var(--s3)}.steps{margin-bottom:var(--s4)}}
 :root{--canvas:#F8F4EB;--surface:#FFFDF8;--surface-2:#F3EEE3;--sage-50:#E3ECE1;--sage-100:#DDE8DB;--sage:#678A75;--sage-ink:#3D5C48;--sage-ink-2:#314B3B;--coral:#C77868;--fox:#B4532A;--fox-ink:#94401D;
---ink:#343B39;--ink-2:#535B58;--line:#DDD4C4;--line-2:#A99E8C;--focus:#1E5FA8;
+--ink:#343B39;--ink-2:#535B58;--line:#DDD4C4;--line-2:#8A7F6E;--focus:#1E5FA8;
 --ok-bg:#E5EFE3;--ok-ink:#2D5838;--ok-line:#7FA486;--wait-bg:#FBF1DE;--wait-ink:#73500F;--wait-line:#C9A25A;--att-bg:#FBEDE6;--att-ink:#8A3A1F;--att-line:#D79A82;--buy-bg:#F6ECE6;--buy-ink:#7E3B1D;--buy-line:#C27A55;
 --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--r1:8px;--r2:12px;--r3:18px;--pill:999px;
 --shadow:0 1px 2px rgba(52,59,57,.06),0 6px 18px rgba(52,59,57,.07);--shadow-2:0 2px 4px rgba(52,59,57,.08),0 10px 28px rgba(52,59,57,.10);--t:180ms cubic-bezier(.2,.7,.3,1);
@@ -257,9 +258,9 @@ code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);border-r
 <h3>About colors and brands</h3><p>Color swatches are screen approximations, not thread proofs. Other brands come from published conversion charts. When a chart gives more than one match, or the sources disagree, you choose. Compare real thread before swapping it into a stitched piece.</p>
 <h3>Your data</h3><p>Everything stays in this browser on this device. Nothing is uploaded, and there are no accounts or tracking. Use <i>Back up my projects</i> in My projects to keep a copy.</p>
 <p><a href="about.html">About Floss Fox</a> · <a href="privacy.html">Privacy</a></p></div></div>
-<footer><p><b>Data:</b> DMC→Anchor pairings from the <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_anchor">Cyberstitchers DMC to Anchor chart</a> (downloaded 10 Oct 2026): <span id="cov"></span>. Cyberstitchers notes pairings "may not be an exact match", and its swatches are DMC colours, so Floss Fox shows DMC swatches only and no longer computes colour-distance alternates. Sullivans numbers come from <a href="https://www.sullivansusa.net/wp-content/uploads/2021/09/Conversion-Chart-from-DMC.pdf">Sullivans USA's official DMC conversion chart</a>, cross-checked against <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_sullivans">Cyberstitchers</a> (all 454 overlapping codes agree): <span id="sullcov"></span>. Brand notes summarise stitcher reviews and tests (<a href="https://sirithre.com/cxc-floss-how-does-it-compare-to-dmc/">Sirithre</a>, <a href="https://lordlibidan.com/are-cheap-embroidery-threads-worth-it/">Lord Libidan</a>, <a href="https://www.thread-bare.com/blog/5-cross-stitch-floss-brands-compared">Thread Bare</a>, <a href="https://stitchmate.app/tools/sullivans-color-chart">Stitchmate</a>). Check real skeins or a shade card before buying. Unofficial; not affiliated with DMC, Anchor, Sullivans or CXC.</p>
+<footer><p class="footlinks"><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · No accounts, no tracking: your lists stay on this device.</p><details class="sources"><summary>Where the color data and prices come from</summary><p><b>Data:</b> DMC→Anchor pairings from the <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_anchor">Cyberstitchers DMC to Anchor chart</a> (downloaded 10 Oct 2026): <span id="cov"></span>. Cyberstitchers notes pairings "may not be an exact match", and its swatches are DMC colours, so Floss Fox shows DMC swatches only and no longer computes colour-distance alternates. Sullivans numbers come from <a href="https://www.sullivansusa.net/wp-content/uploads/2021/09/Conversion-Chart-from-DMC.pdf">Sullivans USA's official DMC conversion chart</a>, cross-checked against <a href="https://www.cyberstitchers.com/stitching_tools/floss_conversion_charts/dmc_to_sullivans">Cyberstitchers</a> (all 454 overlapping codes agree): <span id="sullcov"></span>. Brand notes summarise stitcher reviews and tests (<a href="https://sirithre.com/cxc-floss-how-does-it-compare-to-dmc/">Sirithre</a>, <a href="https://lordlibidan.com/are-cheap-embroidery-threads-worth-it/">Lord Libidan</a>, <a href="https://www.thread-bare.com/blog/5-cross-stitch-floss-brands-compared">Thread Bare</a>, <a href="https://stitchmate.app/tools/sullivans-color-chart">Stitchmate</a>). Check real skeins or a shade card before buying. Unofficial; not affiliated with DMC, Anchor, Sullivans or CXC.</p>
 <p><b>Prices</b> (USD estimates, checked <span id="pdate"></span>): <span id="psrc"></span>. Sources: <a href="https://business.walmart.com/browse/arts-crafts/embroidery-floss/2809790_6337649_8167029">Walmart Business</a>, <a href="https://herrschners.com/dmc-6-strand-embroidery-floss/">Herrschners</a>, <a href="https://www.lovecrafts.com/en-us/p/dmc-6-strand-embroidery-floss?sku=10185707">LoveCrafts</a>, <a href="https://artpatt.com/blog/dmc-vs-anchor-floss-comparison">ArtPatt</a>, <a href="https://www.amazon.com/dp/B0036ZWESW">Amazon (Sullivans)</a>.</p>
-<p><a href="about.html">About</a> · <a href="privacy.html">Privacy</a></p><p><span class="paw">🐾</span> Conversion data credit: <a href="https://www.cyberstitchers.com/">Cyberstitchers</a>. Thank you for maintaining these charts!</p></footer>
+</details><p><span class="paw">🐾</span> Conversion data credit: <a href="https://www.cyberstitchers.com/">Cyberstitchers</a>. Thank you for maintaining these charts!</p></footer>
 </div>
 <script>
 const APP_NAME="Floss Fox"; // rename here
@@ -349,9 +350,10 @@ function listText(){const L=buildList(),out=[`${APP_NAME} shopping list: buying 
  if(state.errs.length){out.push('','Input problems:');state.errs.forEach(e=>out.push(`- "${e.t}": ${e.why}`))}
  out.push('','Estimated costs:');costRows().forEach(([a,b])=>out.push(`- ${a}: ${b}`));out.push(`(Prices checked ${PRICES.checked}; estimates only.)`);return out.join('\n')}
 function run(){state=parse($('inp').value);renderTable();renderList();$('status').textContent=state.items.length?`Found ${state.items.length} colors${state.errs.length?`, ${state.errs.length} need a fix`:''}`:''}
-$('go').onclick=run;$('dest').onchange=()=>{renderTable();renderList()};$('clear').onclick=()=>{$('inp').value='';run()};
+const toResults=()=>{if(!state.items.length&&!state.errs.length)return;const h=$('results').querySelector('h2');h.tabIndex=-1;$('results').scrollIntoView({block:'start'});h.focus({preventScroll:true})};
+$('go').onclick=()=>{run();toResults()};$('dest').onchange=()=>{renderTable();renderList()};$('clear').onclick=()=>{$('inp').value='';run()};
 const SAMPLE="DMC 310 Black x2\n321 Red\n3865 (2)\n blanc, 3799, 415, 762\nDMC 699 Green 3 skeins\n740, 742, 798, 813\n3354\n01";let exampleOn=false,draft='';
-$('sample').onclick=()=>{if(!exampleOn){draft=$('inp').value;exampleOn=true}$('inp').value=SAMPLE;$('exampleBanner').hidden=false;$('exitExample').textContent=draft.trim()?'Back to my list':'Close example';run()};
+$('sample').onclick=()=>{if(!exampleOn){draft=$('inp').value;exampleOn=true}$('inp').value=SAMPLE;$('exampleBanner').hidden=false;$('exitExample').textContent=draft.trim()?'Back to my list':'Close example';run();if(!fromHook)toResults()};let fromHook=false;
 $('exitExample').onclick=()=>{exampleOn=false;$('exampleBanner').hidden=true;$('inp').value=draft;draft='';run();$('inp').focus()};
 window.isExample=()=>exampleOn&&$('inp').value===SAMPLE;
 $('openProj').onclick=()=>$('tabProjects').click();
@@ -361,6 +363,6 @@ $('copy').onclick=async()=>{const t=listText(),msg=$('copymsg'),fb=$('copyfallba
 $('sullcov').textContent=Object.keys(SULL).length+' of '+Object.keys(DMC).length+' DMC codes have a Sullivans match';
 $('cov').textContent=Object.keys(DMC).length+' DMC codes, '+Object.values(DMC).filter(e=>e.anchor.length).length+' with at least one chart Anchor match';
 $('psrc').textContent=['dmc','anchor','sullivans','cxcSet'].map(k=>k+': '+PRICES[k].src).join(' · ');$('pdate').textContent=PRICES.checked;
-if(location.search==="?sample")$('sample').onclick();
+if(location.search==="?sample"){fromHook=true;$('sample').onclick();fromHook=false}
 </script>
 <script src="projects.js"></script></body></html>
