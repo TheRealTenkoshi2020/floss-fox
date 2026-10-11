@@ -332,26 +332,31 @@ with sync_playwright() as p:
     ok('P1b image loaded and decorative (alt=""), bubble not a live region', pp.evaluate("document.getElementById('pipImg').naturalWidth") > 0 and pp.get_attribute('#pipImg', 'alt') == '' and pp.get_attribute('#pipMsg', 'aria-live') is None)
     from urllib.parse import urlparse
     bad = []
-    for a in ['greeting', 'curious', 'puzzled', 'duplicates']:
+    for a in ['greeting', 'curious', 'puzzled', 'duplicates', 'helpful', 'tangled', 'celebrating', 'sleepy']:
         for w in [160, 320, 480]:
             for ext in ['webp', 'jpg']:
                 r = pp.request.get(B + f'assets/pip/pip-{a}-{w}.{ext}')
                 if r.status != 200 or len(r.body()) > 60000: bad.append((a, w, ext, r.status, len(r.body())))
-    ok('P2 all 24 Pip files load and are small (<60 KB)', not bad, bad)
+    ok('P2 all 48 Pip files (8 poses) load and are small (<60 KB)', not bad, bad)
     pp.wait_for_timeout(800)
     ok('P2b no requests outside the site origin', all(urlparse(u).netloc == urlparse(B).netloc for u in reqs if u.startswith('http')), [u for u in reqs if urlparse(u).netloc != urlparse(B).netloc][:5])
     def sub(g, t): g.fill('#inp', t); g.click('#go'); return pst(g)
     s1 = sub(pp, '310\n9999'); ok('P3 invalid number -> puzzled', s1 == ['error', 'puzzled', 'I couldn’t read “9999” as a DMC number. Check the highlighted line below.'.replace('’', "'")], s1)
     s2 = sub(pp, '310\n310 x2'); ok('P3b duplicate -> duplicates, and the claim is true (one line, amounts summed)', s2[:2] == ['duplicate', 'duplicates'] and s2[2] == "Found a repeat! I've combined it for you." and pp.evaluate("state.items.length") == 1 and pp.evaluate("state.items[0].qty") == 3, s2)
-    s3 = sub(pp, '310, 321'); ok('P3c valid list -> curious, honest next step', s3 == ['listReady', 'curious', "Your colors are ready! Let's see what you have."], s3)
+    s3 = sub(pp, '310, 321'); ok('P3c first clean list -> one celebration', s3 == ['celebrating', 'celebrating', 'Yay! Your list is ready!'], s3)
+    pp.wait_for_timeout(4300); s3b = pst(pp); ok('P3c2 celebration settles to calm curious, no new animation loop', s3b == ['listReady', 'curious', "Your colors are ready! Let's see what you have."] and pp.evaluate("document.getElementById('pipFig').className.includes('pip-')") is False, (s3b, pp.evaluate("document.getElementById('pipFig').className")))
+    s3c = sub(pp, '310, 321, 415'); ok('P3c3 later clean lists do not celebrate again', s3c[0] == 'listReady', s3c)
     s4 = sub(pp, '310\n310\nzzz'); ok('P3d priority: error beats duplicate', s4[0] == 'error', s4)
     s5 = sub(pp, '   '); ok('P3e empty submit -> curious guidance', s5[:2] == ['empty', 'curious'], s5)
     pp.click('#clear'); ok('P3f clear -> welcome', pst(pp)[0] == 'welcome')
     pp.click('#tabHelp'); pp.click('#tabConvert'); pp.locator('#inp').focus(); ok('P3g focusing the empty box -> attentive (curious)', pst(pp)[:2] == ['attentive', 'curious'], pst(pp))
     pp.click('#sample'); ok('P3h example list uses the same rules (duplicate/listReady)', pst(pp)[0] in ('duplicate', 'listReady', 'error'), pst(pp))
     sub(pp, '310, 321'); before = pst(pp)
-    pp.select_option('#dest', 'sullivans'); pp.click('#tabHelp'); pp.click('#tabConvert'); pp.fill('#inp', '9999 typing not submitted')
+    pp.click('#tabHelp'); pp.click('#tabConvert'); pp.fill('#inp', '9999 typing not submitted')
     ok('P4 unrelated actions and typing do not change Pip', pst(pp) == before, (before, pst(pp)))
+    pp.select_option('#dest', 'sullivans'); hs = pst(pp)
+    ok('P4b Buy in Sullivans with chart matches -> helpful, and the count is true', hs[:2] == ['helpful', 'helpful'] and hs[2] == 'Look! I found Sullivans options for 2 of your 2 colors.' and pp.locator('#shop li').count() == 2, hs)
+    pp.select_option('#dest', 'dmc'); ok('P4c back to DMC -> no alternative claim', pst(pp)[0] == 'listReady', pst(pp))
     pp.evaluate("""()=>{const i=document.getElementById('inp'),g=document.getElementById('go');for(const t of ['9999','310\\n310','zzz','310, 321, 666']){i.value=t;g.click()}}""")
     pp.wait_for_timeout(600)
     ok('P5 rapid changes leave no stale state (final state, image and text agree)', pst(pp) == ['listReady', 'curious', "Your colors are ready! Let's see what you have."] and pp.evaluate('state.items.length') == 3 and 'curious' in pp.evaluate("document.getElementById('pipImg').currentSrc"), (pst(pp), pp.evaluate("document.getElementById('pipImg').currentSrc")))
@@ -373,10 +378,83 @@ with sync_playwright() as p:
     ok('P6c app fully works with Pip hidden (results + errors in normal UI)', 'DMC 310' in h2.inner_text('#results') and '9999' in h2.inner_text('#errs'))
     ok('P6d Pip preference never touches project storage', h2.evaluate(f"localStorage.getItem('{KEY}')") is None)
     h2.locator('#pipToggle').focus(); h2.keyboard.press('Enter'); ok('P9 keyboard toggles Pip back on; state is current', h2.locator('#pipFig').is_visible() and h2.evaluate(f"localStorage.getItem('{PK}')") == 'shown' and pst(h2)[0] == 'error', pst(h2))
-    ok('P9b only the Hide/Show toggle is focusable inside Pip (no focus trap)', h2.evaluate("[...document.querySelectorAll('#pip a,#pip button,#pip input,#pip [tabindex]')].map(e=>e.id)") == ['pipToggle'])
+    ok('P9b only the Hide/Show toggle is focusable inside Pip (no focus trap)', h2.evaluate("[...document.querySelectorAll('#pip a,#pip button,#pip input,#pip [tabindex]')].map(e=>e.id)") == ['pipHi', 'pipToggle'] and h2.get_attribute('#pipHi', 'aria-label') == 'Say hi to Pip')
     rmp = br.new_context(viewport={'width': 412, 'height': 900}, reduced_motion='reduce').new_page(); rmp.goto(B); rmp.fill('#inp', '9999'); rmp.click('#go')
     ok('P8 reduced motion: no Pip animation', rmp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
     ok('P8b with motion: gentle whole-image animation only', pp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") in ('pippop', 'piptilt', 'pipfade', 'none'))
+    # ---------- Pip phase 2 ----------
+    def fresh(w=412, rm=False):
+        c = br.new_context(viewport={'width': w, 'height': 900}, reduced_motion='reduce' if rm else 'no-preference'); g = c.new_page(); rq = []
+        g.on('request', lambda r: rq.append(r.url)); g.on('pageerror', lambda e: errs.append(str(e))); g.goto(B); g.wait_for_load_state('networkidle'); return g, rq
+    q, qrq = fresh()
+    # all 8 states load the right art
+    loaded = q.evaluate("""async()=>{const out={};for(const n of ['welcome','listReady','error','duplicate','helpful','tangled','celebrating','sleepy']){FlossFoxPip.show(n,{items:[{src:['a','a']}],errs:[{t:'x',kind:'code'}]});const i=document.getElementById('pipImg');await new Promise(r=>{if(i.complete&&i.naturalWidth)r();else{i.onload=r;i.onerror=r}});out[n]=[document.getElementById('pip').dataset.pose,i.naturalWidth>0,/pip-([a-z]+)-/.exec(i.currentSrc)[1]]}return out}""")
+    ok('Q1 all 8 poses load their own artwork', all(v[1] and v[0] == v[2] for v in loaded.values()) and {v[0] for v in loaded.values()} == {'greeting', 'curious', 'puzzled', 'duplicates', 'helpful', 'tangled', 'celebrating', 'sleepy'}, loaded)
+    ok('Q1b no "thinking" art and its state is never used', q.evaluate("!('thinking' in FlossFoxPip.ART) && FlossFoxPip.STATES.processing.pose==='thinking'"))
+    old = q.evaluate("['welcome','attentive','empty','listReady','duplicate','error'].map(n=>[n,FlossFoxPip.STATES[n].pose])")
+    ok('Q1c old states keep their poses', old == [['welcome', 'greeting'], ['attentive', 'curious'], ['empty', 'curious'], ['listReady', 'curious'], ['duplicate', 'duplicates'], ['error', 'puzzled']], old)
+    q.goto(B); q.fill('#inp', '310, 321'); q.click('#go'); q.wait_for_timeout(4300)
+    # tangled easter egg
+    q.click('#pipHi'); t1 = pst(q)
+    ok('Q2 tap Pip -> tangled with a playful line', t1[:2] == ['tangled', 'tangled'] and t1[2] in ("Oops! Got a little tangled up!", "I meant to do that. Probably."), t1)
+    q.wait_for_timeout(2800); ok('Q2b tangled settles back to the real state', pst(q)[0] == 'listReady', pst(q))
+    q.click('#pipHi'); ok('Q2c rate-limited: a second tap within a minute does nothing', pst(q)[0] == 'listReady', pst(q))
+    q.evaluate("FlossFoxPip._timing({tangleGap:0})")
+    q.fill('#inp', '9999'); q.click('#go'); q.click('#pipHi'); ok('Q2d never over an error', pst(q)[0] == 'error', pst(q))
+    q.fill('#inp', '310\n310'); q.click('#go'); q.click('#pipHi'); ok('Q2e never over a duplicate', pst(q)[0] == 'duplicate', pst(q))
+    q.fill('#inp', '310'); q.click('#go'); q.locator('#pipHi').focus(); q.keyboard.press('Enter'); ok('Q2f keyboard can say hi too', pst(q)[0] == 'tangled', pst(q))
+    q.fill('#inp', '9999'); q.click('#go'); ok('Q3 priority: an error interrupts tangled immediately', pst(q)[0] == 'error', pst(q))
+    # celebration once per real completion; never for the example list
+    e, _ = fresh(); e.click('#sample'); e.evaluate("document.getElementById('exitExample').click()"); ok('Q4 the example list never triggers a celebration', e.evaluate("FlossFoxPip.current()") != 'celebrating', e.evaluate("FlossFoxPip.current()"))
+    e.fill('#inp', '9999'); e.click('#go'); e.fill('#inp', '310 x2'); e.click('#go'); ok('Q4b first clean list after fixing errors celebrates', pst(e)[0] == 'celebrating', pst(e))
+    e.fill('#inp', '9999'); e.click('#go'); ok('Q4c error interrupts the celebration', pst(e)[0] == 'error'); e.fill('#inp', '310'); e.click('#go'); ok('Q4d no second celebration', pst(e)[0] == 'listReady', pst(e))
+    # project ready transition
+    pr, _ = fresh(); pr.fill('#inp', '310 x2\n321'); pr.click('#go'); pr.wait_for_timeout(4300); pr.click('#saveProj'); pr.click('#openSaved')
+    c0 = pr.locator('#pCel').count()
+    pr.evaluate("()=>{for(let k=0;k<20;k++){const c=[...document.querySelectorAll('.cards [data-st][value=have]')].find(r=>!r.checked);if(!c)break;c.click()}}")
+    pr.wait_for_timeout(100); rdy = pr.evaluate("document.getElementById('pSummary').dataset.ready")
+    ok('Q5 project turning ready shows one celebrating Pip', c0 == 0 and rdy == 'true' and pr.locator('#pCel img').count() == 1 and "You're ready to stitch!" in pr.inner_text('#pSummary'), (c0, rdy, pr.locator('#pCel').count()))
+    pr.wait_for_timeout(4300); ok('Q5b celebration settles (animation class removed, no loop)', pr.locator('#pCel.pip-cheer').count() == 0 and pr.locator('#pCel').count() == 1)
+    pr.evaluate("document.querySelector('.cards [data-st][value=have]').click()"); pr.wait_for_timeout(100)
+    ok('Q5c re-render while still ready: no repeat celebration', pr.locator('#pCel.pip-cheer').count() == 0)
+    ok('Q5d project overflow ok at 412px with celebration', pr.evaluate('document.documentElement.scrollWidth') <= 412)
+    # sleepy
+    z, _ = fresh(); z.evaluate("FlossFoxPip._timing({idle:600,minSleep:300})"); z.wait_for_timeout(900)
+    zs = pst(z); ok('Q6 sleepy after inactivity, no dialogue', zs == ['sleepy', 'sleepy', ''] and z.evaluate("getComputedStyle(document.getElementById('pipMsg')).visibility") == 'hidden', zs)
+    z.mouse.move(50, 50); z.mouse.move(80, 90); z.wait_for_timeout(400); zw = pst(z)
+    ok('Q6b wakes to curious on activity, once', zw[:2] == ['attentive', 'curious'], zw)
+    z.fill('#inp', '9999'); z.click('#go'); z.wait_for_timeout(1000); ok('Q6c never sleeps over an error', pst(z)[0] == 'error', pst(z))
+    z.fill('#inp', '310\n310'); z.click('#go'); z.wait_for_timeout(1000); ok('Q6d never sleeps over a duplicate', pst(z)[0] == 'duplicate', pst(z))
+    z.fill('#inp', '310'); z.click('#go'); z.wait_for_timeout(300); ok('Q6e never sleeps during the celebration', pst(z)[0] == 'celebrating', pst(z))
+    z.evaluate("FlossFoxPip._timing({idle:400})"); z.wait_for_timeout(5000); ok('Q6f sleeps after the celebration ends', pst(z)[0] == 'sleepy', pst(z))
+    z.evaluate("FlossFoxPip._timing({idle:1200,minSleep:600})"); z.keyboard.press('Shift'); z.wait_for_timeout(300); ok('Q6h key press wakes Pip', pst(z)[0] == 'listReady', pst(z))
+    hid = z.evaluate("""async()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));await new Promise(r=>setTimeout(r,1600));const a=FlossFoxPip.current();
+      Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));await new Promise(r=>setTimeout(r,1500));return [a,FlossFoxPip.current()]}""")
+    ok('Q6i timer paused while the tab is hidden, resumes when visible', hid == ['listReady', 'sleepy'], hid)
+    mz, _ = fresh(); mz.evaluate("FlossFoxPip._timing({idle:500,minSleep:1500})"); mz.wait_for_timeout(750); mz.keyboard.press('Shift'); mz.wait_for_timeout(200); g1 = pst(mz)[0]; mz.wait_for_timeout(1500); g2 = pst(mz)[0]
+    ok('Q6g minimum sleep: input right after dozing off waits, then one wake (no flip-flop)', (g1, g2) == ('sleepy', 'attentive'), (g1, g2)); mz.context.close()
+    zz, _ = fresh(); zz.evaluate("FlossFoxPip._timing({idle:1500})")
+    for i in range(30): zz.mouse.move(10 + i * 10, 100); zz.wait_for_timeout(100)
+    ok('Q6j steady activity keeps Pip awake', pst(zz)[0] != 'sleepy', pst(zz))
+    zz.click('#pipToggle'); zz.wait_for_timeout(1800); ok('Q6k hidden Pip never sleeps', zz.evaluate("FlossFoxPip.overlay()") is None)
+    # rapid interactions
+    rp, _ = fresh(); rp.evaluate("FlossFoxPip._timing({tangleGap:0})")
+    rp.evaluate("""()=>{const i=document.getElementById('inp'),g=document.getElementById('go'),h=document.getElementById('pipHi');for(const t of ['310','9999','310\\n310','310, 321']){i.value=t;g.click();h.click()}}""")
+    rr = pst(rp); ok('Q7 rapid taps + submits: final state, art and text agree', rr[0] in ('tangled', 'listReady') and rr[1] == rp.evaluate("FlossFoxPip.STATES[FlossFoxPip.current()].pose") and rp.evaluate("document.getElementById('pipImg').dataset.art") == rr[1], rr)
+    rp.wait_for_timeout(2800); ok('Q7b and settles to listReady', pst(rp)[0] == 'listReady', pst(rp))
+    ok('Q8 no network requests outside the site', all(urlparse(u).netloc == urlparse(B).netloc for u in qrq if u.startswith('http')))
+    lay = []
+    for w in [320, 360, 412, 768, 880, 1024, 1280]:
+        g, _ = fresh(w); t0 = g.evaluate("document.getElementById('inp').getBoundingClientRect().top+scrollY"); tops2 = []
+        for n in ['helpful', 'tangled', 'celebrating', 'sleepy', 'welcome']:
+            g.evaluate(f"FlossFoxPip.show('{n}')"); g.wait_for_timeout(30); tops2.append(g.evaluate("document.getElementById('inp').getBoundingClientRect().top+scrollY"))
+        if g.evaluate('document.documentElement.scrollWidth') > w or any(t != t0 for t in tops2): lay.append((w, t0, tops2))
+        g.context.close()
+    ok('Q9 new poses: no overflow and no layout shift 320-1280', not lay, lay)
+    rmq, _ = fresh(rm=True); rmq.click('#pipHi'); rmq.evaluate("FlossFoxPip.show('celebrating')")
+    ok('Q10 reduced motion: no animation on new poses', rmq.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
+    ok('Q10b bubble still not a live region; image decorative', rmq.get_attribute('#pipMsg', 'aria-live') is None and rmq.get_attribute('#pipImg', 'alt') == '')
+    cq = fresh()[0]; cq.focus('#pipHi'); fo = cq.evaluate("getComputedStyle(document.getElementById('pipHi')).outlineStyle"); ok('Q11 easter-egg button has a visible focus ring', fo != 'none', fo)
     badp = []
     for w in [320, 360, 412, 600, 768, 880, 1024, 1280]:
         for hid in [False, True]:

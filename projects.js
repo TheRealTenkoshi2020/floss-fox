@@ -76,6 +76,9 @@ function plan(p){const dest=p.buyBrand,threads=[];
  const by=st=>threads.filter(t=>st.includes(t.state));
  const sum={sufficient:by(['have','received']).length,toBuy:by(['buy']).length,awaiting:by(['awaiting']).length,review:by(['review']).length,total:threads.length};
  return{dest,threads,lines,review:by(['review']),have:by(['have','received']),sum,ready:sum.total>0&&sum.sufficient===sum.total}}
+// Pip celebrates once per real not-ready -> ready transition (pose only, no bubble: the headline right beside it already says it).
+const CEL=()=>{setTimeout(()=>{const f=document.getElementById('pCel');if(f){f.classList.remove('pip-cheer')}},4000);
+ return`<span class="pcel pipfig pip-cheer" id="pCel" aria-hidden="true"><picture><source type="image/webp" srcset="assets/pip/pip-celebrating-160.webp 160w, assets/pip/pip-celebrating-320.webp 320w" sizes="64px"><img src="assets/pip/pip-celebrating-160.jpg" width="160" height="243" alt=""></picture></span>`};
 const FL=()=>window.FlossFoxLinks||{buyLinks:()=>'',retailersFor:()=>[]};
 const DISC=()=>`<p class="affdisc noprint"><b>Affiliate links:</b> Floss Fox may earn a small commission at no extra cost to you. <a href="about.html#affiliates">More info</a>${window.FLOSS_FOX_TEST_LINKS?' (Preview: test links, not tracked.)':''}</p>`;
 const plural=(n,w,ws)=>`${n} ${n===1?w:(ws||w+'s')}`;
@@ -173,14 +176,14 @@ function applyFilter(P){const cards=[...document.querySelectorAll('#pCards .tcar
  const nr=$('pNoRes');if(nr){nr.hidden=!!n||!cards.length;nr.innerHTML=n?'':`${q?`No colors match “${esc(query)}”${filt!=='all'?' in this view':''}.`:'Nothing here right now.'} <button type="button" class="sec small" id="pNoResClear">Show all colors</button>`;const b=$('pNoResClear');if(b)b.onclick=()=>{query='';filt='all';renderEditor()}}
  if(!cards.length&&nr){nr.hidden=false;nr.innerHTML='No colors in this project yet. Use <b>Add more colors</b> below.';const ab=$('pAddBox');if(ab)ab.open=true}
  const m=$('pFiltMsg');if(m)m.textContent=`Showing ${s2(n)}.`;const cb=$('pSearchClear');if(cb)cb.hidden=!query}
-function renderPlan(p,P){P=P||plan(p);const s=P.sum,tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),pct=s.total?Math.round(100*s.sufficient/s.total):0;
+function renderPlan(p,P){P=P||plan(p);const cel=!!(window.FlossFoxPip&&FlossFoxPip.projectReady(p.id,P.ready));const s=P.sum,tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),pct=s.total?Math.round(100*s.sufficient/s.total):0;
  const skeins=P.lines.reduce((a,l)=>a+l.q,0),colorOnly=P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy').length;
  const li=l=>`<b>${BRAND[P.dest]} ${esc(disp(P.dest,l.to))}</b> × ${l.q} <small class="mut">(for DMC ${l.from.map(c=>esc(lab(c))).join(', ')} · ${[...l.prov].map(esc).join('; ')}${l.partial?' · after subtracting what you have':''}${l.recvd?` · ${l.recvd} already received`:''}${l.ts.some(t=>asmOf(t.it)>0)?' · includes an assumed amount':''})</small>`;
  const mw=l=>l.from.length>1?'<div class="hint">Note: several pattern colors use this one thread. Check that\'s what you want.</div>':'';
  const steps=nextSteps(P);
  $('pSum').innerHTML=`<h2 class="printonly">${esc(APP_NAME)}: ${esc(p.name)}</h2><p class="printonly">Brand to buy: ${esc(BRAND[P.dest])}</p>
  <section class="psum" id="pSummary" data-ready="${P.ready}" aria-labelledby="pSumH"><h2 class="sr" id="pSumH">Project summary</h2>
- <p class="headline" role="status" aria-live="polite">${P.ready?`${foxSvg('fox')}<span>All your threads are accounted for. You're ready to stitch!<span class="sr" id="sSuf">${s.sufficient} of ${s.total}</span></span>`:`<span><span id="sSuf">${s.sufficient} of ${s.total}</span> colors ready</span>`}</p>
+ <p class="headline" role="status" aria-live="polite">${P.ready?`${cel?CEL():foxSvg('fox')}<span>All your threads are accounted for. You're ready to stitch!<span class="sr" id="sSuf">${s.sufficient} of ${s.total}</span></span>`:`<span><span id="sSuf">${s.sufficient} of ${s.total}</span> colors ready</span>`}</p>
  ${s.total?`<div class="bar" role="progressbar" aria-label="Colors ready" aria-valuemin="0" aria-valuemax="${s.total}" aria-valuenow="${s.sufficient}" aria-valuetext="${s.sufficient} of ${s.total} colors ready"><span style="width:${pct}%"></span></div>`:''}
  ${P.ready?`<p class="skeins">${s.total} of ${s2(s.total)} have enough or have been checked in. Happy stitching! 🧵</p>`:''}<ul class="stats"${P.ready?' hidden':''}><li><b id="sBuy">${s.toBuy}</b>to buy</li><li><b id="sAw">${s.awaiting}</b>bought, waiting to check in</li><li><b id="sRev">${s.review}</b>need attention</li></ul>
  ${(n=>n?`<p class="skeins">${s2(n)} use${n===1?'s':''} an assumed amount (1 skein for each line with no amount). Check against your pattern in Details.</p>`:'')(p.items.filter(it=>it.qty!==null&&asmOf(it)>0).length)}${skeins||colorOnly?`<p class="skeins">Skeins still to get: <b>${skeins}</b>${colorOnly?` · plus ${s2(colorOnly)} with no amount entered, so the total isn't complete`:''}</p>`:''}
