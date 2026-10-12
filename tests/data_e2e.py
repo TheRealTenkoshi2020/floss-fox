@@ -144,7 +144,7 @@ with sync_playwright() as p:
     ok('Q3 independence note in plain words', "Each project is checked against your whole collection; floss isn't reserved between projects." in box, box)
     before = proj(g)[0]['decisions']; collBefore = ls(g, TKEY)
     g.click('#pUseColl'); g.wait_for_timeout(100); pv = g.inner_text('#pCmpPrev')
-    ok('U1 preview lists the changes before anything is applied', 'DMC 699' in pv and proj(g)[0]['decisions'] == before, pv)
+    ok('U1 preview shows a compact summary before anything is applied', 'Will mark 1 Have enough, 1 Not sure, 2 Need to buy' in pv and proj(g)[0]['decisions'] == before, pv)
     g.click('#pCancelColl'); ok('U2 Cancel leaves the project unchanged', proj(g)[0]['decisions'] == before and g.locator('#pCmpPrev').count() == 0)
     g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(100); dec = proj(g)[0]['decisions']
     ok('U3 apply: owned -> Have, not verified -> Not sure, short/missing -> Need to buy', dec['310']['status'] == 'have' and dec['815']['status'] == 'check' and dec['321']['status'] == 'buy' and dec['699']['status'] == 'buy', dec)

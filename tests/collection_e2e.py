@@ -89,7 +89,7 @@ with sync_playwright() as p:
     ok('D3 Demogorgon (no amounts): 13 owned-not-verified, 0 owned, 0 short, 6 missing', d.inner_text('#cmpUnver').startswith('? 13') and d.inner_text('#cmpOwned').startswith('✓ 0') and '0' in d.inner_text('#cmpShort') and d.inner_text('#cmpMissing').startswith('✗ 6'), d.inner_text('#pCmp'))
     ok('D4 stitch counts kept on the project', json.loads(ls(d, KEY))['projects'][0]['items'][0]['stitchCount'] == 100)
     d.click('#pUseColl'); d.click('#pApplyColl'); d.wait_for_timeout(100); plan = d.inner_text('#pPlan')
-    ok('D5 shopping list holds exactly the 6 missing colors', all(f'DMC {c}' in plan for c in ['498', '304', '3799', '535', '3371']) and 'Ecru' in plan.replace('ECRU', 'Ecru') and 'DMC 310 ' not in plan.split('Needs attention')[0], plan[:500])
+    ok('D5 shopping list holds exactly the 6 missing colors', all(f'DMC {c}' in plan for c in ['498', '304', '3799', '535', '3371']) and 'Ecru' in plan.replace('ECRU', 'Ecru') and 'DMC 310 ' not in plan.split('Check first')[0].split('Needs attention')[0], plan[:500])
     ok('D6 price estimate shown for the missing list', '$' in plan, plan[:300])
     d.click('#pCopy'); d.wait_for_timeout(150); clip = d.evaluate('navigator.clipboard.readText()')
     ok('D7 copy as text reuses the existing list', 'DMC 3371' in clip and 'DMC 310 x' not in clip, clip[:300])

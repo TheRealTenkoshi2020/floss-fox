@@ -106,7 +106,7 @@ with sync_playwright() as p:
     ok('reopened plan copy is accurate', '[x] Sullivans 45219 x1' in clip and 'NEEDS ATTENTION' in clip and 'DMC 415' in clip and 'READY (' in clip and 'BOUGHT — CHECK IN' in clip and 'Notes: threads in the blue bag' in clip, clip)
     with pg.expect_download() as d: pg.click('#pCsv')
     c = open(d.value.path(), encoding='utf-8').read()
-    ok('CSV export', c.startswith('project,dmc_code') and 'BLANC (White)' in c and '45001' in c and c.count('\n') == 11 and 'readiness' in c.split('\n')[0], c[:300])
+    ok('CSV export', c.startswith('project,dmc_code') and 'BLANC (White)' in c and '45001' in c and c.count('\n') == (12 if 'NOTE:' in c else 11) and 'readiness' in c.split('\n')[0], c[:300])
     pg.emulate_media(media='print'); pg.pdf(path='/tmp/ff-project-print.pdf'); pg.emulate_media(media='screen')
     import subprocess; txt = subprocess.run(['pdftotext', '-layout', '/tmp/ff-project-print.pdf', '-'], capture_output=True, text=True).stdout if os.path.exists('/usr/bin/pdftotext') else ''
     ok('print shows plan with review + bought state', ('Real pattern v2' in txt and 'Needs attention' in txt and '45219' in txt) if txt else True, txt[:300])
@@ -227,7 +227,7 @@ with sync_playwright() as p:
     c13.emulate_media(media='print'); c13.pdf(path='/tmp/ff-m11-print.pdf'); c13.emulate_media(media='screen')
     pdf13 = subprocess.run(['pdftotext', '-layout', '/tmp/ff-m11-print.pdf', '-'], capture_output=True, text=True).stdout if os.path.exists('/usr/bin/pdftotext') else ''
     cons = s13 == {'sSuf': '1 of 4', 'sBuy': '1', 'sAw': '1', 'sRev': '1'} and '1 to buy · 1 bought, waiting to check in · 1 need attention' in txt13 \
-        and sorted(r['readiness'] for r in __import__('csv').DictReader(__import__('io').StringIO(csv13))) == ['bought, awaiting confirmation', 'confirmed sufficient (owned)', 'needs review', 'to buy'] and 'UNKNOWN' in csv13 \
+        and sorted(r['readiness'] for r in __import__('csv').DictReader(__import__('io').StringIO(csv13)) if r['dmc_code']) == ['bought, awaiting confirmation', 'check first', 'confirmed sufficient (owned)', 'to buy'] and '1 color still needs checking before this list is complete' in csv13 and 'NOTE: 1 color still needs checking' in txt13 and 'UNKNOWN' in csv13 \
         and (not pdf13 or ('Ready' in pdf13 and 'check in when it arrives' in pdf13 and 'amount not entered' in pdf13))
     ok('T13 summary, copy, CSV and print agree', cons, (s13, txt13[:300], csv13[:300]))
     c13.click('#pClose'); c13.click('#backupBox summary')
@@ -283,7 +283,7 @@ with sync_playwright() as p:
     s.click('#shBack'); ok('N7k project plan agrees with shopping mode', s.get_attribute('#pSummary', 'data-ready') == 'false' and s.inner_text('#sBuy') == '1')
     # brand safety
     bsafe = page(); newproj(bsafe, 'BLANC x1, 310 x1', 'Brand'); bsafe.select_option('#pDest', 'anchor'); bsafe.click('#pAllBuy'); bsafe.click('#pShop')
-    ok('N8 disputed white never reaches the shopping list unconfirmed', 'BLANC' not in bsafe.inner_text('#shList') and 'attention' in bsafe.inner_text('.shophead') + bsafe.inner_text('#projEdit'))
+    ok('N8 disputed white never reaches the shopping list unconfirmed', 'BLANC' not in bsafe.inner_text('#shList') and ('attention' in bsafe.inner_text('.shophead') + bsafe.inner_text('#projEdit') or 'Check first' in bsafe.inner_text('#projEdit')))
     bsafe.click('#shBack'); bsafe.select_option('#pDest', 'sullivans'); bsafe.click('#pShop'); bsafe.click('#sb-sullivans_45053'); bsafe.click('#sw-sullivans_45053'); bsafe.fill('#sq-sullivans_45053', '1'); bsafe.click('#ss-sullivans_45053'); bsafe.click('#shBack')
     bsafe.select_option('#pDest', 'dmc'); ok('N8b a Sullivans check-in is not counted for DMC (no cross-brand phantom)', 'different brand' in bsafe.inner_text('#card-310') and bsafe.get_attribute('#pSummary', 'data-ready') == 'false')
     # search / filter at 150

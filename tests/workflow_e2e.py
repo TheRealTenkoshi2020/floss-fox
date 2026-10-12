@@ -59,7 +59,7 @@ with sync_playwright() as p:
         ok(f'W8 {T} short color shows need vs have', '321 (need 3 skeins, have 1 skein)' in box, box)
         collBefore = ls(TKEY)
         g.click('#pUseColl'); g.wait_for_timeout(80); shot('03-preview'); g.click('#pApplyColl'); g.wait_for_timeout(150)
-        plan = g.inner_text('#pPlan'); top = plan.split('Needs attention')[0]
+        plan = g.inner_text('#pPlan'); top = plan.split('Check first')[0].split('Needs attention')[0]
         ok(f'W9 {T} shopping list: the 6 missing + 321 × 2 (only the difference)', all(f'DMC {c}' in top for c in MISSING) and 'DMC 321 × 2' in top and 'DMC 310 ' not in top, top[:500])
         shot('04-shopping')
         # close the browser and reopen with the same profile
