@@ -45,7 +45,7 @@ function normProject(p){if(!p||typeof p!=='object'||typeof p.id!=='string'||!p.i
  items.forEach(it=>dec[it.code]=normDecision(it.code,p.decisions&&p.decisions[it.code]));
  const purchased={};if(p.purchased&&typeof p.purchased==='object')for(const k of Object.keys(p.purchased))if(p.purchased[k]===true&&k.length<40)purchased[k]=true;
  return{id:p.id,name:str(p.name,100).trim()||'Untitled project',notes:str(p.notes,2000),buyBrand:BRAND[p.buyBrand]?p.buyBrand:'dmc',
-  items,decisions:dec,purchased,status:PSTAT.some(x=>x[0]===p.status)?p.status:'planning',created:str(p.created,40)||nowISO(),updated:str(p.updated,40)||nowISO()}}
+  items,decisions:dec,purchased,status:PSTAT.some(x=>x[0]===p.status)?p.status:'planning',...(p.demo===true?{demo:true}:{}),created:str(p.created,40)||nowISO(),updated:str(p.updated,40)||nowISO()}}
 function migrate(d){ // returns {data, skipped} or null if not Floss Fox data
  if(!d||typeof d!=='object'||!Array.isArray(d.projects))return null;
  const ver=d.schema===undefined?1:d.schema;if(typeof ver!=='number'||ver>SCHEMA)return{tooNew:true};
@@ -70,6 +70,7 @@ function save(){if(!canSave){pstatus('Not saved: browser storage is unavailable 
  catch(e){const full=e&&(e.name==='QuotaExceededError'||e.code===22);pstatus(full?'Not saved: browser storage is full. Download a backup, then delete old projects.':'Not saved: browser storage refused the change. Download a backup to keep your work.');return false}}
 const proj=id=>store.projects.find(p=>p.id===id);
 function touch(p){p.updated=nowISO();save()}
+function edited(p){if(typeof undoBy!=='undefined')delete undoBy[p.id]}
 
 // ---- Plan: derived only (never stored) ----
 function plainWhy(it,r){const f=fam(it.code),c=lab(it.code);if(f!=='solid')return`This is a ${f} thread, so there's no automatic brand swap. Buy the original DMC ${c} (set the brand to DMC).`;
@@ -124,7 +125,7 @@ function receive(p,key,n){const P=plan(p),l=P.lines.find(x=>x.key===key);if(!l)r
 const foxSvg=cls=>{const l=document.querySelector('header .logo');return l?l.outerHTML.replace('class="logo"',`class="${cls}" aria-hidden="true"`).replace(/role="img" aria-label="[^"]*"/,''):''};
 function renderList(){const L=$('projList');$('projCount').textContent=store.projects.length?`(${store.projects.length})`:'';
  L.innerHTML=store.projects.length?store.projects.slice().sort((a,b)=>b.updated.localeCompare(a.updated)).map(p=>{const P=plan(p);
-  return`<li><span><span class="pname">${esc(p.name)}</span><br><small class="mut">${s2(p.items.length)} · <span class="pst">${esc((PSTAT.find(x=>x[0]===p.status)||PSTAT[0])[1])}</span> · ${P.ready?'<b class="ok-msg">✓ Ready to stitch</b>':`${P.sum.sufficient} of ${P.sum.total} ready${P.sum.toBuy?` · ${P.sum.toBuy} to buy`:''}${P.sum.review?` · ${P.sum.review} need attention`:''}`} · updated ${esc(p.updated.slice(0,10))}</small></span><span class="row" style="margin:0"><button type="button" class="pri" data-open="${esc(p.id)}">Open<span class="sr"> ${esc(p.name)}</span></button><button type="button" class="ghost" data-del="${esc(p.id)}">Delete<span class="sr"> ${esc(p.name)}</span></button></span></li>`}).join('')+'<li class="storeline" style="display:block;border:0">Saved in this browser only. Open <b>Back up my projects</b> below to keep a copy.</li>'
+  return`<li><span><span class="pname">${esc(p.name)}</span>${p.demo?' <span class="tag demotag">Demo</span>':''}<br><small class="mut">${s2(p.items.length)} · <span class="pst">${esc((PSTAT.find(x=>x[0]===p.status)||PSTAT[0])[1])}</span> · ${P.ready?'<b class="ok-msg">✓ Ready to stitch</b>':`${P.sum.sufficient} of ${P.sum.total} ready${P.sum.toBuy?` · ${P.sum.toBuy} to buy`:''}${P.sum.review?` · ${P.sum.review} need attention`:''}`} · updated ${esc(p.updated.slice(0,10))}</small></span><span class="row" style="margin:0"><button type="button" class="pri" data-open="${esc(p.id)}">Open<span class="sr"> ${esc(p.name)}</span></button><button type="button" class="ghost" data-del="${esc(p.id)}">Delete<span class="sr"> ${esc(p.name)}</span></button></span></li>`}).join('')+'<li class="storeline" style="display:block;border:0">Saved in this browser only. Open <b>Back up my projects</b> below to keep a copy.</li>'
   :`<li class="empty">${ORG()}<b>No projects yet</b>Paste your colors on the <i>Find My Floss</i> tab, then save them as a project to check what you have.<div class="row" style="justify-content:center"><button type="button" class="pri" id="emptyAdd">Add my colors</button></div></li>`;
  L.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openProject(b.dataset.open));
  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delProject(b.dataset.del));const ea=$('emptyAdd');if(ea)ea.onclick=()=>{showView('convert');$('inp').focus()}}
@@ -149,7 +150,7 @@ function card(p,P,t){const it=t.it,d=t.d,c=esc(it.code),e=DMC[it.code],f=fam(it.
  return`<li class="tcard st-${t.state}${t.kind?' k-'+t.kind:''}" id="card-${c}" data-code="${c}" data-search="${esc((lab(it.code)+' '+e.name+' '+(t.r.ok?t.r.to:'')).toLowerCase())}"><div class="main"><div class="top">
  <span class="bigsw" style="background:${e.hex}" title="Approximate DMC color"></span>
  <div class="ident"><div class="code">DMC ${L}${f!=='solid'?` <span class="tag">${f}</span>`:''}</div><div class="cname">${esc(cap(e.name))}${P.dest!=='dmc'&&t.r.ok?` · use <b>${BRAND[P.dest]} ${esc(disp(P.dest,t.r.to))}</b>`:''}</div>
- <div class="need">${it.qty===null?'<span class="unk">Amount needed: not entered</span>':`${plural(it.qty,'skein')} needed${asmTxt(it.qty,asmOf(it))}`}</div>
+ <div class="need">${it.qty===null?'<span class="unk">Amount needed: not entered</span>':`${plural(it.qty,'skein')} needed${asmTxt(it.qty,asmOf(it))}`}${it.stitchCount?` <span class="stc">· ${it.stitchCount.toLocaleString('en-US')} stitches</span>`:''}</div>
  <div class="stat ${t.state}${t.kind?' k-'+t.kind:''}"><span aria-hidden="true">${si[0]}</span> ${si[1]}</div></div>
  <button type="button" class="sec exp" id="x-${c}" data-exp="${c}" aria-expanded="${open}" aria-controls="det-${c}">${open?'Hide details':'Details'}<span class="sr"> for DMC ${L}</span></button></div>
  <div class="seg" role="radiogroup" aria-label="Do you have DMC ${L}?">${['have','buy','check'].map(s=>`<label><input type="radio" name="st-${c}" id="st-${c}-${s}" value="${s}" data-st="${c}" ${d.status===s?'checked':''}><span>${STLBL[s]}</span></label>`).join('')}</div></div>
@@ -169,19 +170,37 @@ function nextSteps(P){const k={};P.threads.forEach(t=>{if(t.state==='review')k[t
  if(k.other)o.push(['att',`${s2(k.other)} need${k.other===1?'s':''} a second look.`,k.other===1?'Show it':'Show them','att']);
  if(s.awaiting)o.push(['wait',`${plural(s.awaiting,'thread')} ${s.awaiting===1?'was':'were'} bought but ${s.awaiting===1?"hasn't":"haven't"} been checked in yet.`,'Check them in','shop']);
  if(s.toBuy)o.push(['buy',`${s2(s.toBuy)} to buy.`,'Shop my list','shop']);return o}
-// 1.7: compare with My Thread Collection (counts owned / short / missing separately; quantities used when known)
-function renderCmp(p){const el=$('pCmp'),T=window.FlossFoxThreadsUI;if(!el||!T)return;const n=Object.keys(T.data().threads).length;
+// 1.7: compare with My Thread Collection. Each project is compared with the whole collection on its own (nothing is reserved).
+// Buckets: owned (verified: amount needed is stated and covered) | unverified (owned, but amount needed unknown or assumed) | short | missing.
+// "Use my collection" shows a preview first and can be undone; it changes only this project's Have/Need choices, never the collection.
+const STW={have:'Have enough',buy:'Need to buy',check:'Not sure'},stWord=d=>d.status?STW[d.status]:'Not checked',ownWord=d=>d.owned===null?'—':plural(d.owned,'skein');
+let cmpPreview=null;const undoBy={};
+function cmpPlan(p,T){const r=T.compare(p.items,{demo:!!p.demo}),ch=[];
+ const want=(x,status,owned,why)=>{const d=p.decisions[x.code];if(d.status!==status||d.owned!==owned)ch.push({code:x.code,from:{status:d.status,owned:d.owned},to:{status,owned},why})};
+ r.owned.forEach(x=>want(x,'have',x.have,'owned'));r.unverified.forEach(x=>want(x,'check',x.have,'owned, quantity not verified'));
+ r.short.forEach(x=>want(x,'buy',x.have,'short'));r.missing.forEach(x=>want(x,'buy',null,'missing'));return{r,ch}}
+function renderCmp(p){const el=$('pCmp'),T=window.FlossFoxThreadsUI;if(!el||!T)return;const n=T.count({demo:!!p.demo});
  if(!p.items.length){el.innerHTML='';return}
- if(!n){el.innerHTML=`<div class="pcmp"><b>Compare with my thread collection</b><p class="hint">Your collection is empty. Add the threads you own in <button type="button" class="ghost small" id="pGoThreads">My Thread Collection</button>, then come back here.</p></div>`;$('pGoThreads').onclick=()=>showView('threads');return}
- const r=T.compare(p.items),L=a=>a.map(x=>`DMC ${esc(lab(x.code))}${x.need!==null&&x.need!==undefined?` (need ${x.assumed>=x.need?`assumed ${plural(x.need,'skein')}`:plural(x.need,'skein')}, have ${plural(x.have,'skein')}${x.partial?' + a partial':''})`:''}`).join(', ');
- el.innerHTML=`<div class="pcmp" id="pCmpBox"><b>Compared with my thread collection</b><div class="cnt"><span id="cmpOwned">✓ <b>${r.owned.length}</b> owned</span><span id="cmpShort">◐ <b>${r.short.length}</b> short</span><span id="cmpMissing">✗ <b>${r.missing.length}</b> missing</span></div>
+ const U=undoBy[p.id],undoBtn=U?`<div class="row"><button type="button" class="sec" id="pUndoColl">Undo “Use my collection”</button><span class="hint">Puts back the ${s2(U.length)} it changed.</span></div>`:'';
+ if(!n){el.innerHTML=`<div class="pcmp"><b>Compare with my thread collection</b><p class="hint">${p.demo?'There are no demo threads in the collection.':`Your collection is empty. Add the threads you own in <button type="button" class="ghost small" id="pGoThreads">My Thread Collection</button>, then come back here.`}</p>${undoBtn}</div>`;const g=$('pGoThreads');if(g)g.onclick=()=>showView('threads');bindUndo(p);return}
+ const {r,ch}=cmpPlan(p,T),need=x=>x.need===null||x.need===undefined?'amount needed not entered':x.assumed>=x.need?`amount needed not given (assumed ${plural(x.need,'skein')})`:`need ${plural(x.need,'skein')}`;
+ const L=a=>a.map(x=>`DMC ${esc(lab(x.code))} (${need(x)}, have ${plural(x.have,'skein')}${x.partial?' + a partial':''})`).join(', ');
+ el.innerHTML=`<div class="pcmp" id="pCmpBox"><b>Compared with my ${p.demo?'demo threads':'thread collection'}</b><div class="cnt"><span id="cmpOwned">✓ <b>${r.owned.length}</b> owned</span><span id="cmpUnver">? <b>${r.unverified.length}</b> owned, quantity not verified</span><span id="cmpShort">◐ <b>${r.short.length}</b> short</span><span id="cmpMissing">✗ <b>${r.missing.length}</b> missing</span></div>
+ ${r.unverified.length?`<p class="small"><b>Color owned, quantity not verified:</b> ${L(r.unverified)}. Add the amount your pattern needs to check it.</p>`:''}
  ${r.short.length?`<p class="small"><b>Short:</b> ${L(r.short)}</p>`:''}${r.missing.length?`<p class="small"><b>Missing:</b> ${r.missing.map(x=>'DMC '+esc(lab(x.code))).join(', ')}</p>`:''}
+ <p class="hint">Each project is checked against your whole collection; floss isn't reserved between projects.</p>
  <div id="pCmpTip" class="piptip" hidden></div>
- <div class="row"><button type="button" class="sec" id="pUseColl">Use my collection for this project</button></div><p class="hint">This sets each color to <b>Have enough</b> or <b>Need to buy</b> (short colors count what you have), so the shopping list below shows only what's missing or short. You can still change any color by hand.</p></div>`;
+ ${cmpPreview===p.id?`<div class="notes" id="pCmpPrev"><b>${ch.length?`This will change ${s2(ch.length)} in this project:`:'Nothing to change: this project already matches your collection.'}</b>${ch.length?`<ul>${ch.map(c=>`<li>DMC ${esc(lab(c.code))} (${esc(c.why)}): ${stWord(c.from)} → <b>${stWord(c.to)}</b>${c.from.owned!==c.to.owned?`; you already have: ${ownWord(c.from)} → ${ownWord(c.to)}`:''}</li>`).join('')}</ul>`:''}<p class="hint">Your thread collection is not changed. You can undo this afterwards.</p><div class="row">${ch.length?'<button type="button" class="pri" id="pApplyColl">Apply these changes</button>':''}<button type="button" class="ghost" id="pCancelColl">${ch.length?'Cancel':'Close'}</button></div></div>`
+  :`<div class="row"><button type="button" class="sec" id="pUseColl">Use my collection for this project…</button></div><p class="hint">Shows what would change first. Owned colors become <b>Have enough</b> only when the amount needed is known; otherwise <b>Not sure</b>. Short and missing colors become <b>Need to buy</b>.</p>`}${undoBtn}</div>`;
  if(T.tip)T.tip('compare',$('pCmpTip'));
- $('pUseColl').onclick=()=>{const r2=T.compare(p.items);r2.owned.forEach(x=>{const d=p.decisions[x.code];d.status='have';d.owned=x.need?x.have:d.owned});
-  r2.short.forEach(x=>{const d=p.decisions[x.code];d.status='buy';d.owned=x.have});r2.missing.forEach(x=>{const d=p.decisions[x.code];d.status='buy';d.owned=null});
-  touch(p);renderEditor();renderList();if(T.tipDone)T.tipDone('compare');pstatus(`Used your collection: ${r2.owned.length} owned, ${r2.short.length} short, ${r2.missing.length} missing.`)}}
+ const u=$('pUseColl');if(u)u.onclick=()=>{cmpPreview=p.id;renderCmp(p);const pv=$('pCmpPrev');if(pv){pv.scrollIntoView({block:'nearest'});const b=$('pApplyColl')||$('pCancelColl');b.focus()}};
+ const c=$('pCancelColl');if(c)c.onclick=()=>{cmpPreview=null;renderCmp(p);$('pUseColl').focus()};
+ const a=$('pApplyColl');if(a)a.onclick=()=>{if(a.disabled)return;a.disabled=true;const now=cmpPlan(p,T).ch;
+  now.forEach(x=>{const d=p.decisions[x.code];d.status=x.to.status;d.owned=x.to.owned});undoBy[p.id]=now;cmpPreview=null;
+  touch(p);renderEditor();renderList();if(T.tipDone)T.tipDone('compare');const o=$('pUndoColl');if(o)o.focus();pstatus(`Used your collection: changed ${s2(now.length)}. You can undo this.`)};
+ bindUndo(p)}
+function bindUndo(p){const b=$('pUndoColl');if(!b)return;b.onclick=()=>{const U=undoBy[p.id];if(!U)return;
+ U.forEach(x=>{const d=p.decisions[x.code];if(d){d.status=x.from.status;d.owned=x.from.owned}});delete undoBy[p.id];touch(p);renderEditor();renderList();const u=$('pUseColl');if(u)u.focus();pstatus(`Undone: ${s2(U.length)} put back as they were.`)}}
 function renderEditor(){if(mode==='shop')return renderShop();const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;return}
  const focusId=document.activeElement&&document.activeElement.id,y=window.scrollY,P=plan(p);
  const unchecked=p.items.filter(it=>!p.decisions[it.code].status).length;
@@ -274,7 +293,7 @@ function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;
  E.querySelectorAll('[data-sx]').forEach(b=>b.onclick=()=>{const c=b.dataset.sx;if(!confirm(`Undo checking in DMC ${lab(c)}? It goes back on your shopping list.`))return;p.decisions[c].recv=null;touch(p);re(`DMC ${lab(c)} is back on your shopping list.`)});
  const ss=$('shSearch');if(ss){const run=()=>{const q=ss.value.trim().toLowerCase();let n=0;E.querySelectorAll('#shList .scard').forEach(c=>{const sh=!q||c.dataset.q.includes(q);c.hidden=!sh;if(sh)n++});const nr=$('shNoRes');nr.hidden=!q||!!n;nr.textContent=`Nothing on your list matches “${ss.value}”.`;$('shSearchClear').hidden=!q};ss.oninput=run;$('shSearchClear').onclick=()=>{ss.value='';run();ss.focus()}}
  bindOut(p,'s');window.scrollTo(0,y);if(focusId){const f=document.getElementById(focusId);if(f)f.focus({preventScroll:true})}}
-function bindEditor(p){const E=$('projEdit'),re=()=>{touch(p);renderEditor();renderList()};
+function bindEditor(p){const E=$('projEdit'),re=()=>{edited(p);touch(p);renderEditor();renderList()};
  $('pClose').onclick=closeProject;$('pShop').onclick=()=>openShop(p);$('pDelete').onclick=()=>delProject(p.id);
  $('pName').onchange=()=>{p.name=$('pName').value.trim().slice(0,100)||'Untitled project';touch(p);renderList();renderPlan(p)};
  $('pNotes').onchange=()=>{p.notes=$('pNotes').value.slice(0,2000);touch(p);renderPlan(p)};
@@ -339,5 +358,7 @@ $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg')
  $('copymsg').innerHTML=(ok?`✓ Saved "${esc(p.name)}" in this browser.`:`Saved for now only: this browser isn't letting Floss Fox store projects, so download a backup from My projects.`)+` <button type="button" class="pri small" id="openSaved">Check what you have →</button>`;$('newProjName').value='';renderList();
  $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('copymsg'))};
 load();renderList();
-window.FlossFoxProjects={plan,planText,csv,migrate,_store:()=>store,KEY,showView,open:id=>{showView('projects');openProject(id)},add:p=>{const m=normProject(p);if(!m)return null;store.projects.push(m);save();renderList();return m.id}}; // for tests and debugging
+window.FlossFoxProjects={plan,planText,csv,migrate,_store:()=>store,KEY,canSave:()=>canSave,
+ replaceAll:data=>{store={schema:SCHEMA,projects:data.projects};canSave=true;storeMsg('');openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false;const ok=save();renderList();return ok},
+ removeDemo:()=>{const n=store.projects.filter(x=>x.demo).length;store.projects=store.projects.filter(x=>!x.demo);if(openId&&!proj(openId)){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}save();renderList();return n},showView,open:id=>{showView('projects');openProject(id)},add:p=>{const m=normProject(p);if(!m)return null;store.projects.push(m);save();renderList();return m.id}}; // for tests and debugging
 })();
