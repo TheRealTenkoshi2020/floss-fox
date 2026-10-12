@@ -27,7 +27,7 @@ window.FLOSS_FOX_SHOP={
    approvalState:'applied',approvedForProduction:false,approvedForPreview:false,
    allowedDomains:['leisurearts.com'],trackingHosts:['www.awin1.com'],destinationParam:'ued',rel:'sponsored noopener',
    termsReviewedAt:null,termsEvidence:null,trackingLinkSource:null,verifiedAt:null,disclosureOverride:null,
-   activationNotes:'Applied via Awin (per Myke). Not confirmed joined. Mostly patterns/books: check floss range before any category link.',categoryLandings:[],offers:[]},
+   activationNotes:'Applied via Awin (per Myke). Not confirmed joined. Checked Oct 11, 2026 (leisurearts.com): the Floss category lists no products and DMC appears only inside kits, so it does NOT carry DMC floss. Keep disabled as a floss merchant; candidate for patterns later (2.0B/C).',categoryLandings:[],offers:[]},
   {merchantId:'michaels',displayName:'Michaels',affiliateNetwork:'unknown',programId:null,
    approvalState:'researching',approvedForProduction:false,approvedForPreview:false,
    allowedDomains:['michaels.com'],trackingHosts:[],destinationParam:null,rel:'sponsored noopener',

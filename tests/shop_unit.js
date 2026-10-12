@@ -78,6 +78,8 @@ const big=sel([need({code:'310'}),need({code:'321',from:['321']})],cfg([real()])
 const hrefs=[...big.items.flatMap(i=>i.links.map(l=>l.href||'')),...big.categories.map(c=>c.href)].join(' ');
 ok('V1 hrefs never carry thread codes from the list, project names, ids or quantities (only the curated URL)', !/321|qty|project|clickref|pref1/i.test(hrefs), hrefs);
 const src=fs.readFileSync(path.join(__dirname,'../shop/offers.js'),'utf8')+fs.readFileSync(path.join(__dirname,'../shop/ui.js'),'utf8');const code=src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'');
-ok('V2 shop code has no network, storage or tracking calls', !/fetch\(|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|document\.cookie|new Image|iframe|preconnect|prefetch|innerHTML/.test(code));
+const pipStore=(code.match(/localStorage\.[a-zA-Z]+\([^)]*\)/g)||[]);
+ok('V2b only storage use is the Pip-tip dismiss flag (2.0A)', pipStore.length===2&&pipStore.every(x=>/^localStorage\.(getItem|setItem)\(PIPX\(\)/.test(x)), pipStore);
+ok('V2 shop code has no network, storage or tracking calls', !/fetch\(|XMLHttpRequest|sendBeacon|localStorage(?!\.(?:getItem|setItem)\(PIPX\(\))|sessionStorage|document\.cookie|new Image|iframe|preconnect|prefetch|innerHTML/.test(code));
 ok('V3 no price, stock or "best" claims in shop UI copy', !/in stock|ships|free shipping|lowest|cheapest|best value|save \d|%\s*off/i.test(src));
 console.log(`\n${pass} passed, ${fail} failed`);process.exit(fail?1:0);
