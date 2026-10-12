@@ -125,7 +125,7 @@ function receive(p,key,n){const P=plan(p),l=P.lines.find(x=>x.key===key);if(!l)r
 const foxSvg=cls=>{const l=document.querySelector('header .logo');return l?l.outerHTML.replace('class="logo"',`class="${cls}" aria-hidden="true"`).replace(/role="img" aria-label="[^"]*"/,''):''};
 function renderList(){const L=$('projList');$('projCount').textContent=store.projects.length?`(${store.projects.length})`:'';
  L.innerHTML=store.projects.length?store.projects.slice().sort((a,b)=>b.updated.localeCompare(a.updated)).map(p=>{const P=plan(p);
-  return`<li><span><span class="pname">${esc(p.name)}</span>${p.demo?' <span class="tag demotag">Demo</span>':''}<br><small class="mut">${s2(p.items.length)} · <span class="pst">${esc((PSTAT.find(x=>x[0]===p.status)||PSTAT[0])[1])}</span> · ${P.ready?'<b class="ok-msg">✓ Ready to stitch</b>':`${P.sum.sufficient} of ${P.sum.total} ready${P.sum.toBuy?` · ${P.sum.toBuy} to buy`:''}${P.sum.review?` · ${P.sum.review} need attention`:''}`} · updated ${esc(p.updated.slice(0,10))}</small></span><span class="row" style="margin:0"><button type="button" class="pri" data-open="${esc(p.id)}">Open<span class="sr"> ${esc(p.name)}</span></button><button type="button" class="ghost" data-del="${esc(p.id)}">Delete<span class="sr"> ${esc(p.name)}</span></button></span></li>`}).join('')+'<li class="storeline" style="display:block;border:0">Saved in this browser only. Open <b>Back up my projects</b> below to keep a copy.</li>'
+  return`<li><span><span class="pname">${esc(p.name)}</span>${p.demo?' <span class="tag demotag">Demo</span>':''}<br><small class="mut">${s2(p.items.length)}${(n=>n?` · <span class="stc">${n.toLocaleString('en-US')} stitches</span>`:'')(p.items.reduce((a,i)=>a+(i.stitchCount||0),0))} · <span class="pst">${esc((PSTAT.find(x=>x[0]===p.status)||PSTAT[0])[1])}</span> · ${P.ready?'<b class="ok-msg">✓ Ready to stitch</b>':`${P.sum.sufficient} of ${P.sum.total} ready${P.sum.toBuy?` · ${P.sum.toBuy} to buy`:''}${P.sum.review?` · ${P.sum.review} need attention`:''}`} · updated ${esc(p.updated.slice(0,10))}</small></span><span class="row" style="margin:0"><button type="button" class="pri" data-open="${esc(p.id)}">Open<span class="sr"> ${esc(p.name)}</span></button><button type="button" class="ghost" data-del="${esc(p.id)}">Delete<span class="sr"> ${esc(p.name)}</span></button></span></li>`}).join('')+'<li class="storeline" style="display:block;border:0">Saved in this browser only. Open <b>Back up my projects</b> below to keep a copy.</li>'
   :`<li class="empty">${ORG()}<b>No projects yet</b>Paste your colors on the <i>Find My Floss</i> tab, then save them as a project to check what you have.<div class="row" style="justify-content:center"><button type="button" class="pri" id="emptyAdd">Add my colors</button></div></li>`;
  L.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openProject(b.dataset.open));
  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delProject(b.dataset.del));const ea=$('emptyAdd');if(ea)ea.onclick=()=>{showView('convert');$('inp').focus()}}
@@ -326,21 +326,58 @@ function csv(p){const P=plan(p),q=v=>{v=v===null||v===undefined?'':String(v);if(
  P.threads.forEach(t=>{const it=t.it,d=t.d,r=t.r,line=P.lines.find(l=>l.from.includes(it.code));
   rows.push([p.name,lab(it.code),DMC[it.code].name,it.qty===null?'UNKNOWN':it.qty,(a=>a===0?'yes':a>=it.qty?'assumed':'partly assumed')(asmOf(it)),d.status||'not checked',d.owned===null?'':d.owned,BRAND[P.dest],r.ok?disp(P.dest,r.to):'',r.ok?r.prov:'',line?t.rem+(line.from.length>1?` (shared line total ${line.q})`:''):'',line?(line.bought?'yes':'no'):'',t.recv||'',SN[t.state],t.why,it.qty===null?'':asmOf(it),it.stitchCount==null?'':it.stitchCount])});
  return rows.map(r=>r.map(q).join(',')).join('\r\n')+'\r\n'}
-function backup(){const d={app:'floss-fox',schema:SCHEMA,exported:nowISO(),projects:store.projects};download(JSON.stringify(d,null,2),'floss-fox-backup-'+nowISO().slice(0,10)+'.json','application/json');pstatus(`Backup downloaded with ${store.projects.length} project(s). Keep the file somewhere safe.`)}
+// Full backup, version 1: projects (top-level array, so 1.6 can still restore the projects) + thread collection + small prefs.
+// Demo items are never exported. Old project-only backups (no kind) are still accepted.
+const PFX=KEY.replace(/\.v1$/,''),PREKEY=PFX+'.preimport.v1',BK_VERSION=1;
+const PREF_KEYS={pip:PFX+'.pip.v1',hints:PFX+'.hints.v1',tips:PFX+'.tips.v1',fabric:PFX+'.fabric.v1'};
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const TUI=()=>window.FlossFoxThreadsUI;
+function fullBackup(){const T=TUI(),prefs={};for(const k in PREF_KEYS){const v=lsGet(PREF_KEYS[k]);if(v!==null)prefs[k]=v}
+ return{app:'floss-fox',kind:'full-backup',version:BK_VERSION,schema:SCHEMA,exported:nowISO(),projects:store.projects.filter(p=>!p.demo),threads:T?T.exportData():{schema:1,threads:{}},prefs}}
+function backup(){const d=fullBackup(),nt=Object.keys(d.threads.threads).length;download(JSON.stringify(d,null,2),'floss-fox-backup-'+nowISO().slice(0,10)+'.json','application/json');
+ pstatus(`Backup downloaded with ${d.projects.length} project(s) and ${nt} thread color${nt===1?'':'s'}. Keep the file somewhere safe.`)}
+const PREF_OK={pip:v=>v==='shown'||v==='hidden',hints:v=>v==='on'||v==='off',tips:v=>{try{const a=JSON.parse(v);return Array.isArray(a)&&a.every(x=>typeof x==='string')}catch(e){return false}},fabric:v=>{try{const o=JSON.parse(v);return!!o&&typeof o==='object'&&!Array.isArray(o)}catch(e){return false}}};
+// returns {projects, threads|null, prefs, skipped, full} or {err}
+function checkBackup(d){if(!d||typeof d!=='object'||d.app!=='floss-fox')return{err:'bad'};
+ const full=d.kind==='full-backup';if(d.kind!==undefined&&!full)return{err:'bad'};
+ if(full&&(typeof d.version!=='number'||d.version>BK_VERSION))return{err:typeof d.version==='number'?'new':'bad'};
+ const m=migrate(d);if(!m)return{err:'bad'};if(m.tooNew)return{err:'new'};let threads=null,tsk=0,prefs={};
+ if(full){const T=TUI();if(!T)return{err:'bad'};const tm=T.core.migrate(d.threads);if(!tm)return{err:'bad'};if(tm.tooNew)return{err:'new'};threads=tm.data.threads;tsk=tm.skipped;
+  if(d.prefs&&typeof d.prefs==='object')for(const k in PREF_KEYS)if(typeof d.prefs[k]==='string'&&PREF_OK[k](d.prefs[k]))prefs[k]=d.prefs[k]}
+ return{projects:m.data.projects,threads,prefs,skipped:m.skipped+tsk,full}}
+function snapshot(){const keys=[KEY,TUI()?TUI().KEY:PFX+'.threads.v1',...Object.values(PREF_KEYS)],o={};keys.forEach(k=>{o[k]=lsGet(k)});return{at:nowISO(),keys:o}}
+function undoImportRow(){const el=$('undoImport');if(!el)return;let s=null;try{s=JSON.parse(lsGet(PREKEY)||'null')}catch(e){}
+ if(!s||!s.keys){el.hidden=true;el.innerHTML='';return}el.hidden=false;
+ el.innerHTML=`<span class="hint">Your data from before the last import (${esc(new Date(s.at).toLocaleString())}) is kept in this browser.</span> <button type="button" class="sec small" id="undoImportBtn">Undo last import</button>`;
+ $('undoImportBtn').onclick=()=>{if(!confirm('Undo the last import? Your projects, thread collection and preferences go back to exactly how they were before it. Anything changed since the import is lost.'))return;
+  try{for(const k in s.keys){if(s.keys[k]===null)localStorage.removeItem(k);else localStorage.setItem(k,s.keys[k])}localStorage.removeItem(PREKEY)}catch(e){pstatus('Undo failed: browser storage refused the change. Nothing else was changed.');return}
+  location.hash='#projects';location.reload()}}
 const RPIP=p=>`<picture><source type="image/webp" srcset="assets/pip/pip-${p}-160.webp"><img class="rpip" data-pose="${p}" src="assets/pip/pip-${p}-160.png" width="160" height="240" alt=""></picture>`;
-function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBox').open=true;if(file.size>5e6){R.hidden=false;R.innerHTML='<b class="warn">That file is too large to be a Floss Fox backup.</b>';return}
+function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBox').open=true;if(file.size>5e6){R.hidden=false;R.innerHTML='<b class="warn">That file is too large to be a Floss Fox backup. Nothing was changed.</b>';return}
  R.hidden=false;R.innerHTML=RPIP('thinking')+'<p>Let me check this backup…</p>'; // shown only while the file is really being read and checked
- file.text().then(t=>{let d;try{d=JSON.parse(t)}catch(e){d=null}const m=d&&d.app==='floss-fox'?migrate(d):null;
-  if(!m||m.tooNew){pendingRestore=null;R.hidden=false;R.innerHTML=RPIP('puzzled')+`<b class="warn">${m&&m.tooNew?'This backup was made by a newer version of Floss Fox and can\'t be restored here.':'This file isn\'t a valid Floss Fox backup. Nothing was changed.'}</b>`;pstatus('Restore failed: nothing changed.');return}
-  pendingRestore=m.data.projects;const clash=pendingRestore.filter(p=>proj(p.id)).length;R.hidden=false;
-  R.innerHTML=RPIP('presenting')+`<p><b>I checked it. Backup contains ${pendingRestore.length} project(s)</b>${m.skipped?`; ${m.skipped} damaged or duplicate entr${m.skipped>1?'ies were':'y was'} skipped`:''}. ${clash?`${clash} already exist here (same project).`:'None of them already exist here.'}</p>
-  ${clash?`<fieldset><legend>For projects that already exist:</legend><label><input type="radio" name="rmode" value="replace" checked> Replace mine with the backup version</label><br><label><input type="radio" name="rmode" value="skip"> Keep mine, skip those</label><br><label><input type="radio" name="rmode" value="copy"> Keep both (import as a renamed copy)</label></fieldset>`:''}
+ file.text().then(t=>{let d;try{d=JSON.parse(t)}catch(e){d=null}const c=checkBackup(d);
+  if(c.err){pendingRestore=null;R.hidden=false;R.innerHTML=RPIP('puzzled')+`<b class="warn">${c.err==='new'?'This backup was made by a newer version of Floss Fox and can\'t be restored here. Nothing was changed.':'This file isn\'t a valid Floss Fox backup (it may be damaged or from another app). Nothing was changed.'}</b>`;pstatus('Restore failed: nothing changed.');return}
+  pendingRestore=c.projects;const clash=pendingRestore.filter(p=>proj(p.id)).length,T=TUI(),mine=T?T.data().threads:{};
+  const nt=c.threads?Object.keys(c.threads).length:0,tclash=c.threads?Object.keys(c.threads).filter(k=>mine[k]).length:0,np=Object.keys(c.prefs).length;
+  R.innerHTML=RPIP('presenting')+`<p><b>I checked it. Backup contains ${pendingRestore.length} project(s)</b>${c.full?` and <b>${nt} thread color${nt===1?'':'s'}</b>${np?` plus ${np} preference${np===1?'':'s'}`:''}`:' (an older projects-only backup: your thread collection is not touched)'}${c.skipped?`; ${c.skipped} damaged or duplicate entr${c.skipped>1?'ies were':'y was'} skipped`:''}. ${clash?`${clash} project(s) already exist here (same project).`:'None of the projects already exist here.'}${c.full&&tclash?` ${tclash} color(s) are already in your collection.`:''}</p>
+  <fieldset id="imodeSet"><legend>How to import:</legend><label><input type="radio" name="imode" value="merge" checked> <b>Merge</b>: add what's new, keep everything you already have${c.full?' (your skein counts are kept for colors you already have)':''}</label><br><label><input type="radio" name="imode" value="replace"> <b>Replace</b>: make my ${c.full?'projects and thread collection':'projects'} exactly match the backup</label></fieldset>
+  ${clash?`<fieldset id="rmodeSet"><legend>When merging, for projects that already exist:</legend><label><input type="radio" name="rmode" value="replace" checked> Replace mine with the backup version</label><br><label><input type="radio" name="rmode" value="skip"> Keep mine, skip those</label><br><label><input type="radio" name="rmode" value="copy"> Keep both (import as a renamed copy)</label></fieldset>`:''}
+  <p class="hint">A copy of your current data is kept first, so you can undo the import.</p>
   <div class="row"><button type="button" class="pri" id="rGo">Restore</button><button type="button" class="sec" id="rCancel">Cancel</button></div>`;
   $('rCancel').onclick=()=>{pendingRestore=null;R.hidden=true;pstatus('Restore cancelled.')};
-  $('rGo').onclick=()=>{const modeEl=document.querySelector('input[name=rmode]:checked'),mode=modeEl?modeEl.value:'replace';let add=0,rep=0,skip=0,cp=0;
-   pendingRestore.forEach(p=>{const i=store.projects.findIndex(x=>x.id===p.id);if(i<0){store.projects.push(p);add++}else if(mode==='replace'){store.projects[i]=p;rep++}else if(mode==='skip')skip++;else{store.projects.push({...p,id:newId(),name:(p.name+' (restored copy)').slice(0,100)});cp++}});
-   pendingRestore=null;R.hidden=true;const ok=save();renderList();if(openId)renderEditor();pstatus(`Restore ${ok?'done':'applied but NOT saved'}: ${add} added, ${rep} replaced, ${skip} skipped, ${cp} copied.`);if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('projStatus'))}})
-  .catch(()=>{R.hidden=false;R.innerHTML='<b class="warn">Couldn\'t read that file.</b>'})}
+  $('rGo').onclick=()=>{const im=(document.querySelector('input[name=imode]:checked')||{}).value||'merge';
+   if(im==='replace'&&!confirm(`Replace your data with this backup? Your ${store.projects.filter(p=>!p.demo).length} project(s)${c.full?` and ${Object.keys(mine).length} thread color(s)`:''} will be replaced by the backup's ${pendingRestore.length} project(s)${c.full?` and ${nt} color(s)`:''}. You can undo this afterwards.`))return;
+   try{localStorage.setItem(PREKEY,JSON.stringify(snapshot()))}catch(e){if(!confirm('A safety copy of your current data couldn\'t be saved in this browser (storage full or blocked), so this import can\'t be undone. Import anyway?'))return}
+   let add=0,rep=0,skip=0,cp=0,ta=0;
+   if(im==='replace'){store.projects=store.projects.filter(p=>p.demo).concat(pendingRestore);rep=pendingRestore.length}
+   else{const modeEl=document.querySelector('input[name=rmode]:checked'),mode=modeEl?modeEl.value:'replace';
+    pendingRestore.forEach(p=>{const i=store.projects.findIndex(x=>x.id===p.id);if(i<0){store.projects.push(p);add++}else if(mode==='replace'){store.projects[i]=p;rep++}else if(mode==='skip')skip++;else{store.projects.push({...p,id:newId(),name:(p.name+' (restored copy)').slice(0,100)});cp++}})}
+   let tok=true;
+   if(c.full&&T){if(im==='replace'){tok=T.replaceAll({threads:c.threads});ta=nt}else{const merged=Object.assign({},c.threads,mine);ta=Object.keys(c.threads).filter(k=>!mine[k]).length;tok=T.replaceAll({threads:merged})}
+    if(im==='replace')for(const k in c.prefs){try{localStorage.setItem(PREF_KEYS[k],c.prefs[k])}catch(e){}}}
+   pendingRestore=null;R.hidden=true;const ok=save()&&tok;renderList();if(openId&&proj(openId))renderEditor();undoImportRow();
+   pstatus(`Restore ${ok?'done':'applied but NOT saved'} (${im}): ${add} added, ${rep} replaced, ${skip} skipped, ${cp} copied${c.full?`; ${ta} thread color(s) ${im==='replace'?'restored':'added'}`:''}.`);if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('projStatus'))}})
+  .catch(()=>{R.hidden=false;R.innerHTML='<b class="warn">Couldn\'t read that file. Nothing was changed.</b>'})}
 
 // ---- Wiring ----
 function showView(v){const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp']};
@@ -349,7 +386,7 @@ function showView(v){const V={convert:['convertView','tabConvert'],threads:['thr
  if(v==='threads'&&T)T.render();if(v==='projects'){renderList();if(openId&&proj(openId)){renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true}else{$('projEdit').hidden=true;$('projListCard').hidden=false}}window.scrollTo(0,0)}
 $('tabConvert').onclick=()=>showView('convert');$('tabProjects').onclick=()=>showView('projects');$('tabThreads').onclick=()=>showView('threads');$('tabHelp').onclick=()=>showView('help');
 $('newEmpty').onclick=()=>{if($('newEmpty').disabled)return;$('newEmpty').disabled=true;setTimeout(()=>$('newEmpty').disabled=false,600);const p={id:newId(),name:'Untitled project',notes:'',buyBrand:'dmc',status:'planning',items:[],decisions:{},purchased:{},created:nowISO(),updated:nowISO()};store.projects.push(p);save();renderList();openProject(p.id)};
-$('backupBtn').onclick=backup;$('restoreFile').onchange=e=>{restoreFile(e.target.files[0]);e.target.value=''};
+$('backupBtn').onclick=backup;undoImportRow();$('restoreFile').onchange=e=>{restoreFile(e.target.files[0]);e.target.value=''};
 let saving=false;
 $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg').textContent='Nothing to save yet. Add your colors first.';return}saving=true;setTimeout(()=>saving=false,800);
  const ex=window.isExample&&window.isExample();
@@ -358,7 +395,7 @@ $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg')
  $('copymsg').innerHTML=(ok?`✓ Saved "${esc(p.name)}" in this browser.`:`Saved for now only: this browser isn't letting Floss Fox store projects, so download a backup from My projects.`)+` <button type="button" class="pri small" id="openSaved">Check what you have →</button>`;$('newProjName').value='';renderList();
  $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('copymsg'))};
 load();renderList();
-window.FlossFoxProjects={plan,planText,csv,migrate,_store:()=>store,KEY,canSave:()=>canSave,
+window.FlossFoxProjects={plan,planText,csv,migrate,backup,restoreFile,checkBackup,PREKEY,_store:()=>store,KEY,canSave:()=>canSave,
  replaceAll:data=>{store={schema:SCHEMA,projects:data.projects};canSave=true;storeMsg('');openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false;const ok=save();renderList();return ok},
  removeDemo:()=>{const n=store.projects.filter(x=>x.demo).length;store.projects=store.projects.filter(x=>!x.demo);if(openId&&!proj(openId)){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}save();renderList();return n},showView,open:id=>{showView('projects');openProject(id)},add:p=>{const m=normProject(p);if(!m)return null;store.projects.push(m);save();renderList();return m.id}}; // for tests and debugging
 })();

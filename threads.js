@@ -128,5 +128,7 @@ $('thSearch').oninput=()=>{q=$('thSearch').value;filter()};
 $('thImport').onclick=()=>{const P=window.FlossFoxProjects&&FlossFoxProjects._store();if(!P)return;let a=0;
  P.projects.forEach(p=>p.items.forEach(it=>{const d=p.decisions[it.code];if(d&&(d.status==='have'||d.recv)&&!data.threads[it.code]){const own=d.owned!==null&&d.owned>=1?Math.floor(d.owned):(it.qty||1);data.threads[it.code]={n:Math.min(999,own),partial:d.owned!==null&&d.owned%1>0,restock:false,updated:new Date().toISOString()};a++}}));
  save();render();say(a?`Added ${a} color${a===1?'':'s'} you marked Have enough (or received) in your projects. Colors already in your collection were left alone.`:'Nothing new to add from your projects.')};
+const bk=$('thBackup');if(bk)bk.onclick=()=>{const P=window.FlossFoxProjects;if(P&&P.backup){P.backup();say('Backup downloaded (projects and thread collection).')}};
+const rs=$('thRestore');if(rs)rs.onclick=()=>{const P=window.FlossFoxProjects;if(!P)return;P.showView('projects');$('backupBox').open=true;$('backupBox').scrollIntoView({block:'nearest'});$('restoreFile').click()};
 render();
 })(this);

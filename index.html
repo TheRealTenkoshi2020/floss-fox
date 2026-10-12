@@ -312,16 +312,16 @@ img[src*="assets/pip/"]{object-fit:contain}body.pip-hidden-all .orgpip,body.pip-
 <div id="thErr"></div><p id="thStatus" class="hint" role="status" aria-live="polite"></p>
 <p id="thSum" class="thsum"></p>
 <div id="thTools" class="toolbar"><div class="searchrow"><label class="sr" for="thSearch">Find a color in my collection</label><input type="search" id="thSearch" placeholder="Find a DMC number, e.g. 310" autocomplete="off" inputmode="search"></div><div class="chipsf" id="thFilt" role="group" aria-label="Show"></div></div>
-<ul class="cards" id="thList"></ul><p class="hint" id="thNoRes" hidden></p></div></div>
+<ul class="cards" id="thList"></ul><p class="hint" id="thNoRes" hidden></p></div><p class="hint noprint" id="thBackupRow">Your collection is saved in this browser only. <button type="button" class="ghost small" id="thBackup">Download a backup</button> <button type="button" class="ghost small" id="thRestore">Restore from a backup…</button></p></div>
 <div id="projectsView" hidden>
 <div id="storeMsg" class="errbox" role="alert" hidden></div>
 <div class="card noprint" id="projListCard"><h2>My projects</h2>
 <ul id="projList" class="projlist"></ul>
 <div class="row"><button class="sec" type="button" id="newEmpty">Start an empty project</button></div>
-<details class="backup" id="backupBox"><summary>Back up my projects</summary>
+<details class="backup" id="backupBox"><summary>Back up my projects and threads</summary>
 <p class="hint">Your projects are saved in this browser, on this device. They aren't synced, and clearing browser data can remove them. Download a backup now and then and keep the file somewhere safe.</p>
 <div class="row"><button class="sec" type="button" id="backupBtn">Download a backup</button><label class="sec filebtn" for="restoreFile">Restore from a backup…</label><input type="file" id="restoreFile" accept=".json,application/json" class="sr"></div>
-<div id="restorePanel" class="notes" hidden></div></details>
+<div id="restorePanel" class="notes" hidden></div><div id="undoImport" class="row" hidden></div></details>
 <p id="projStatus" class="hint" role="status" aria-live="polite"></p></div>
 <div class="card" id="projEdit" hidden></div>
 </div>
