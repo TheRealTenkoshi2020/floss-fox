@@ -15,6 +15,8 @@ header h1{margin:0;font-size:1.8rem}header h1 span{color:var(--lime)}header p{ma
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 10px #7a4b2a12;padding:16px;margin-bottom:16px}
 textarea{width:100%;min-height:150px;background:#fff;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:15px ui-monospace,monospace}
 textarea:focus{outline:2px solid var(--lime)}
+textarea#inp{resize:vertical;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.inpcount{margin:.25rem 0 0;min-height:0}.inpcount:empty{display:none}
+.fixlist li{margin-bottom:.6rem}.fixrow{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.35rem;align-items:center}.fixrow input{flex:1 1 12rem;min-width:0;font-family:var(--mono)}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
 button{border:0;border-radius:999px;padding:10px 18px;font-weight:600;font-size:15px;cursor:pointer}
 .pri{background:var(--lime);color:#fff}.pri:hover{background:#9a4522}button:focus-visible{outline:3px solid #e9a77f;outline-offset:2px}.sec{background:var(--card);color:var(--pink);border:1.5px solid var(--pink)}.sec:hover{background:#eef2ea}
@@ -259,14 +261,16 @@ img[src*="assets/pip/"]{object-fit:contain}body.pip-hidden-all .orgpip,body.pip-
 <div class="herogrid"><aside id="pip" class="pip" aria-label="Pip, your helper"><div class="pipfig" id="pipFig"><button type="button" class="piphi" id="pipHi" aria-label="Say hi to Pip"><picture><source id="pipSrc" type="image/webp" srcset="assets/pip/pip-greeting-160.webp 160w, assets/pip/pip-greeting-320.webp 320w, assets/pip/pip-greeting-480.webp 480w" sizes="(min-width:880px) 170px, 84px"><img id="pipImg" data-art="greeting" src="assets/pip/pip-greeting-320.png" srcset="assets/pip/pip-greeting-160.png 160w, assets/pip/pip-greeting-320.png 320w, assets/pip/pip-greeting-480.png 480w" sizes="(min-width:880px) 170px, 84px" width="320" height="465" alt="" decoding="async"></picture></button></div><p class="pipbubble" id="pipMsg"></p><button class="piptog" id="pipToggle" type="button" aria-controls="pipFig pipMsg" aria-expanded="true">Hide Pip</button></aside><div class="heromain">
 <div id="exampleBanner" class="banner" role="status" hidden><span><b>You're trying an example.</b> These colors are a sample, not your thread. Nothing is saved unless you choose to.</span> <button type="button" class="sec small" id="exitExample">Back to my list</button></div>
 <label for="inp" class="biglabel">Paste your DMC color list</label>
-<textarea id="inp" placeholder="310, 321, 666, 823" aria-describedby="inpHint"></textarea>
+<textarea id="inp" placeholder="310, 321, 666, 823" aria-describedby="inpHint inpCount"></textarea>
 
-<div class="row"><button class="pri" id="go">Add my colors</button><button class="sec" id="sample">Try an example</button><button class="ghost" id="clear">Clear</button><button class="ghost" id="openProj" type="button">Open my projects</button></div>
+<div class="row"><button class="pri" id="go">Add my colors</button><button class="sec" id="sample">Try an example</button><button class="ghost" id="clear">Clear</button><button class="ghost" id="openProj" type="button">Open my projects</button></div><p class="hint inpcount" id="inpCount" aria-live="polite"></p>
 <p class="hint" id="inpHint">One color per line, or separated by commas. Know how many skeins? Add it like <code>310 x2</code>.</p>
 <details class="pastehelp"><summary>What can I paste?</summary>
 <ul><li>DMC numbers: <code>310</code>, <code>DMC 321 Red</code>, plus <code>Blanc</code>, <code>Ecru</code> and <code>B5200</code></li>
 <li>Skein amounts: <code>310 x2</code>, <code>310 ×2</code>, <code>310x2</code>, <code>310 (2)</code> or <code>310 2 skeins</code></li>
 <li>Don't know the amount? Write <code>310 x?</code>. If you leave the amount off, Floss Fox counts 1 skein and marks it "assumed".</li>
+<li>Pattern legends work too: <code>1 DMC 03 Tin - Medium 1160</code> reads as DMC 03 with 1160 stitches (the row number is skipped). Long lists of 100+ colors are fine.</li>
+<li>If a line can't be read, it's listed under <i>Your colors</i> with buttons to fix it. Nothing is thrown away.</li>
 <li>Not supported yet: other brands' numbers, PDFs and photos. Paste DMC numbers only.</li></ul></details>
 </div></div>
 </section>
@@ -314,7 +318,7 @@ img[src*="assets/pip/"]{object-fit:contain}body.pip-hidden-all .orgpip,body.pip-
 <p><b>Prices</b> (USD estimates, checked <span id="pdate"></span>): <span id="psrc"></span>. Sources: <a href="https://business.walmart.com/browse/arts-crafts/embroidery-floss/2809790_6337649_8167029">Walmart Business</a>, <a href="https://herrschners.com/dmc-6-strand-embroidery-floss/">Herrschners</a>, <a href="https://www.lovecrafts.com/en-us/p/dmc-6-strand-embroidery-floss?sku=10185707">LoveCrafts</a>, <a href="https://artpatt.com/blog/dmc-vs-anchor-floss-comparison">ArtPatt</a>, <a href="https://www.amazon.com/dp/B0036ZWESW">Amazon (Sullivans)</a>.</p>
 </details><p><span class="paw">🐾</span> Conversion data credit: <a href="https://www.cyberstitchers.com/">Cyberstitchers</a>. Thank you for maintaining these charts!</p><p class="artcredit" style="font-size:.8rem;color:#575d58">Pip art created with Grok Imagine.</p></footer>
 </div>
-<script src="retailers.js"></script>
+<script src="retailers.js"></script><script src="parse.js"></script>
 <script>
 const APP_NAME="Floss Fox"; // rename here
 // ---- Retailer links (config in retailers.js) ----
@@ -343,23 +347,8 @@ const asmTxt=(q,a)=>q===null||!a?'':(a>=q?' (assumed)':` (${a} assumed)`);const 
 const qtxt=it=>it.qty===null?'? (quantity unknown)':it.qty+asmTxt(it.qty,asmOf(it));const qn=q=>q===null?'?':q;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fam=c=>{const n=DMC[c].name.toLowerCase();return /metallic/.test(n)?'metallic':/variegated/.test(n)?'variegated':'solid'};
-// ---- Parsing: never partially accept a piece of input ----
-function parse(text){const items=[],errs=[];
- text.split(/[\n,;]+/).forEach(orig=>{const t=orig.trim();if(!t)return;
-  let r=t.replace(/×/g,'x').replace(/^dmc\b\s*/i,'').replace(/^#\s*/,'');
-  const m=r.match(/^(B5200|ecru|white|blanc|\d{1,4})(?=$|[\sx(#])/i);
-  if(!m){errs.push({t,kind:'code',why:'not recognised as a DMC number'});return}
-  let code=m[1].toUpperCase();r=r.slice(m[0].length);
-  if(code==='BLANC')code='WHITE';if(/^\d$/.test(code))code='0'+code;
-  let qty=null;const N='(-?[\\d.]+|\\?)';const qre=[new RegExp('^\\s*x\\s*'+N,'i'),new RegExp('\\bx\\s*'+N,'i'),new RegExp('\\(\\s*'+N+'\\s*\\)'),new RegExp(N+'\\s*(?:skeins?|sk)\\b','i'),/(-?[\d.]+)\s*x\b/i,/(?:^|\s)(\?)(?=\s|$)/];
-  for(const q of qre){const mm=r.match(q);if(mm){qty=mm[1];r=r.replace(mm[0],' ');break}}
-  if(/\d/.test(r)){errs.push({t,kind:'multi',why:'contains more than one number. Put each colour on its own line or separate with commas'});return}
-  if(/\?|\bskeins?\b|\bsk\b|\bx\b|\b(one|two|three|four|five|six|seven|eight|nine|ten|half)\b/i.test(r)){errs.push({t,kind:'qty',why:'couldn\'t read the quantity. Use a number like "x2", or "x?" if you don\'t know'});return}
-  const stated=qty!==null;if(qty==='?')qty=null;else if(qty===null)qty='1';
-  if(qty!==null&&(!/^\d+$/.test(qty)||+qty<1)){errs.push({t,kind:'qty',why:`quantity "${qty}" isn't a whole number of skeins (1 or more)`});return}
-  if(!DMC[code]){errs.push({t,kind:'code',why:`DMC ${code} isn't in the chart data`});return}
-  const q=qty===null?null:+qty;const ex=items.find(i=>i.code===code);const asm=stated?0:1;if(ex){ex.qty=(ex.qty===null||q===null)?null:ex.qty+q;ex.assumed=ex.qty===null?0:ex.assumed+asm;ex.stated=ex.assumed===0;ex.src.push(t)}else items.push({code,qty:q,stated,assumed:q===null?0:asm,src:[t]})});
- return{items,errs}}
+// ---- Parsing (1.7): parse.js, checked against the chart; never drops a line ----
+const parse=FlossFoxParse.make(DMC);
 // ---- Resolution per destination brand ----
 const choice={};const checked=new Set();
 function resolve(it,dest,pick){const c=it.code,f=fam(c);
@@ -383,9 +372,13 @@ function anchorCell(it){const c=it.code,o=DMC[c].anchor,f=fam(c);
  const opts=(disputed?['<option value="">Choose…</option>']:[]).concat(o.map(a=>`<option value="${esc(a)}"${(choice[c]||(!disputed&&o[0]))===a?' selected':''}>Anchor ${esc(a)}</option>`));
  return `<select class="pick" data-code="${esc(c)}" aria-label="Anchor choice for DMC ${esc(c)}">${opts.join('')}</select> <span class="tag">${disputed?'needs review':o.length+' chart options'}</span>`+(disputed?`<br><small class="warn">${esc(WHITE_DISPUTE)}</small>`:'')}
 function renderTable(){const {items,errs}=state;
- $('errs').innerHTML=errs.length?`<div class="errbox"><b>${errs.length} line${errs.length>1?'s':''} couldn't be read.</b> Fix ${errs.length>1?'them':'it'} in the box above, then tap <i>Add my colors</i> again.<ul>${errs.map(e=>`<li><mark class="badline">"${esc(e.t)}"</mark>: ${esc(e.why)}</li>`).join('')}</ul></div>`:'';
+ $('errs').innerHTML=errs.length?`<div class="errbox"><b>${errs.length} line${errs.length>1?'s':''} couldn't be read.</b> Nothing was thrown away: fix ${errs.length>1?'each one':'it'} here (or in the box above), and Floss Fox reads your list again.<ul class="fixlist">${errs.map((e,i)=>`<li><mark class="badline">"${esc(e.t)}"</mark><span class="mut small"> (line ${e.line})</span>: ${esc(e.why)}.<div class="fixrow noprint">${(e.fixes||[]).map((f,j)=>`<button type="button" class="sec small" data-fix="${i}" data-alt="${j}">${esc(f.label)}</button>`).join('')}<label class="sr" for="fx-${i}">Corrected text for line ${e.line}</label><input type="text" id="fx-${i}" value="${esc(e.t)}" autocomplete="off" spellcheck="false"><button type="button" class="pri small" data-fix="${i}">Use this</button><button type="button" class="ghost small" data-fix="${i}" data-rm="1">Remove line</button></div></li>`).join('')}</ul></div>`:'';
+ $('errs').querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const e=state.errs[+b.dataset.fix];if(!e)return;const v=$('inp').value;
+  if(v!==state.text){pipRun(true);return}
+  const rep=b.dataset.rm?'':b.dataset.alt!==undefined?e.fixes[+b.dataset.alt].text:$('fx-'+b.dataset.fix).value;
+  $('inp').value=v.slice(0,e.start)+rep+v.slice(e.end);fitInp();pipRun(true);const n=$('errs').querySelector('[data-fix]');(n||$('results').querySelector('h2')).focus()});
  $('tbl').innerHTML=items.length?`<table><thead><tr><th>DMC</th><th>Anchor (chart)</th><th>Sullivans (official chart)</th></tr></thead><tbody>${items.map(it=>{const e=DMC[it.code],f=fam(it.code);
-  return `<tr><td>${sw(e.hex)}<b>DMC ${esc(lab(it.code))}</b> ${f!=='solid'?`<span class="tag">${f}</span>`:''}<br><small class="mut">${esc(e.name)} · ×${qtxt(it)} · from "${it.src.map(esc).join('", "')}"</small></td>
+  return `<tr><td>${sw(e.hex)}<b>DMC ${esc(lab(it.code))}</b> ${f!=='solid'?`<span class="tag">${f}</span>`:''}<br><small class="mut">${esc(e.name)} · ×${qtxt(it)}${it.stitches?` · ${it.stitches.toLocaleString('en-US')} stitches`:''} · from "${it.src.map(esc).join('", "')}"</small></td>
   <td><span class="lbl">Anchor (chart)</span>${anchorCell(it)}</td><td><span class="lbl">Sullivans (official chart)</span>${f!=='solid'?`<span class="warn">${f}: not substituted</span>`:SULL[it.code]?`<b>${SULL[it.code]}</b>`:'<span class="warn">No match</span>'}</td></tr>`}).join('')}</tbody></table>`:'';
  document.querySelectorAll('.pick').forEach(s=>s.onchange=()=>{choice[s.dataset.code]=s.value||undefined;renderList()});
  const skn=items.reduce((a,i)=>a+(i.qty||0),0),unk=items.filter(i=>i.qty===null).length,asm=items.reduce((a,i)=>a+(i.qty===null?0:asmOf(i)),0);
@@ -412,16 +405,20 @@ function listText(){const L=buildList(),out=[`${APP_NAME} shopping list: buying 
  if(L.review.length){out.push('','Needs review (not included):');L.review.forEach(({it,r})=>out.push(`- DMC ${lab(it.code)} x${qn(it.qty)}: ${r.why}`))}
  if(state.errs.length){out.push('','Input problems:');state.errs.forEach(e=>out.push(`- "${e.t}": ${e.why}`))}
  out.push('','Estimated costs:');costRows().forEach(([a,b])=>out.push(`- ${a}: ${b}`));out.push(`(Prices checked ${PRICES.checked}; estimates only.)`);return out.join('\n')}
-function run(submitted){state=parse($('inp').value);renderTable();renderList();$('status').textContent=state.items.length?`Found ${state.items.length} colors${state.errs.length?`, ${state.errs.length} need a fix`:''}`:''}
+function run(submitted){state=parse($('inp').value);state.text=$('inp').value;renderTable();renderList();$('status').textContent=state.items.length?`Found ${state.items.length} colors${state.errs.length?`, ${state.errs.length} need a fix`:''}`:''}
+/* 1.7: the box grows with the list (up to ~60% of the screen, then scrolls) and counts lines, so long lists are visibly all there */
+function fitInp(){const t=$('inp');t.style.height='';const max=Math.max(160,Math.round(innerHeight*0.6));if(t.scrollHeight>t.clientHeight+2)t.style.height=Math.min(t.scrollHeight+4,max)+'px';
+ const n=t.value.split('\n').filter(l=>l.trim()).length;$('inpCount').textContent=n>1?`${n} lines in the box`+(t.scrollHeight>t.clientHeight+2?' (scroll inside the box to see them all)':''):''}
+$('inp').addEventListener('input',fitInp);addEventListener('resize',fitInp);
 const ffEvt=sub=>document.dispatchEvent(new CustomEvent('flossfox:result',{detail:{submitted:sub}}));
 const pipRun=sub=>{run(sub);if(window.FlossFoxPip)FlossFoxPip.result(state,sub);ffEvt(sub)};
 const toResults=()=>{if(!state.items.length&&!state.errs.length)return;const h=$('results').querySelector('h2');h.tabIndex=-1;$('results').scrollIntoView({block:'start'});h.focus({preventScroll:true})};
-$('go').onclick=()=>{pipRun(true);toResults()};$('dest').onchange=()=>{renderTable();renderList();if(window.FlossFoxPip)FlossFoxPip.result(state,false);ffEvt(false)};$('clear').onclick=()=>{$('inp').value='';pipRun(false)};
+$('go').onclick=()=>{pipRun(true);toResults()};$('dest').onchange=()=>{renderTable();renderList();if(window.FlossFoxPip)FlossFoxPip.result(state,false);ffEvt(false)};$('clear').onclick=()=>{$('inp').value='';fitInp();pipRun(false)};
 const SAMPLE="DMC 310 Black x2\n321 Red\n3865 (2)\n blanc, 3799, 415, 762\nDMC 699 Green 3 skeins\n740, 742, 798, 813\n3354\n01";let exampleOn=false,draft='';
-let exampleText=SAMPLE;function startExample(t){if(!exampleOn){draft=$('inp').value;exampleOn=true}exampleText=t;$('inp').value=t;$('exampleBanner').hidden=false;$('exitExample').textContent=draft.trim()?'Back to my list':'Close example';pipRun(true)}
+let exampleText=SAMPLE;function startExample(t){if(!exampleOn){draft=$('inp').value;exampleOn=true}exampleText=t;$('inp').value=t;fitInp();$('exampleBanner').hidden=false;$('exitExample').textContent=draft.trim()?'Back to my list':'Close example';pipRun(true)}
 window.FlossFoxExample=startExample;
 $('sample').onclick=()=>{startExample(SAMPLE);if(!fromHook)toResults()};let fromHook=false;
-$('exitExample').onclick=()=>{exampleOn=false;$('exampleBanner').hidden=true;$('inp').value=draft;draft='';pipRun(false);$('inp').focus()};
+$('exitExample').onclick=()=>{exampleOn=false;$('exampleBanner').hidden=true;$('inp').value=draft;fitInp();draft='';pipRun(false);$('inp').focus()};
 window.FlossFoxAlt=()=>{const L=buildList();return{brand:BRAND[L.dest],matched:L.dest==='dmc'?0:L.lines.reduce((a,g)=>a+g.from.length,0),total:state.items.length,review:L.review.length}};
 window.isExample=()=>exampleOn&&$('inp').value===exampleText;
 window.FlossFoxAltFor=d=>state.items.filter(it=>resolve(it,d).ok).length;

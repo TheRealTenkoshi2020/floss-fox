@@ -29,7 +29,8 @@ function pstatus(t){$('projStatus').textContent=t}
 function normItem(it){if(!it||typeof it!=='object'||typeof it.code!=='string'||!DMC[it.code])return null;
  const q=it.qty===null?null:(Number.isInteger(it.qty)&&it.qty>=1?it.qty:undefined);if(q===undefined)return null;
  const st=it.stated!==false,a=q===null?0:(Number.isInteger(it.assumed)&&it.assumed>=0&&it.assumed<=q?it.assumed:(st?0:q));
- return{code:it.code,qty:q,stated:a===0,assumed:a,src:Array.isArray(it.src)?it.src.filter(x=>typeof x==='string').slice(0,20).map(x=>x.slice(0,200)):[]}}
+ return{code:it.code,qty:q,stated:a===0,assumed:a,src:Array.isArray(it.src)?it.src.filter(x=>typeof x==='string').slice(0,20).map(x=>x.slice(0,200)):[],
+ stitches:Number.isInteger(it.stitches)&&it.stitches>=1&&it.stitches<=10000000?it.stitches:null}} // 1.7: optional stitch count (older data has none -> null; no schema change)
 function normDecision(code,d){d=d&&typeof d==='object'?d:{};const out={status:STATUSES.includes(d.status)?d.status:null,
  owned:(typeof d.owned==='number'&&isFinite(d.owned)&&d.owned>=0)?Math.round(d.owned*100)/100:null,
  anchor:(typeof d.anchor==='string'&&DMC[code].anchor.includes(d.anchor))?d.anchor:null,
@@ -38,7 +39,7 @@ function normDecision(code,d){d=d&&typeof d==='object'?d:{};const out={status:ST
 function normProject(p){if(!p||typeof p!=='object'||typeof p.id!=='string'||!p.id||p.id.length>80||!Array.isArray(p.items))return null;
  const items=[],dec={};
  for(const raw of p.items){const it=normItem(raw);if(!it)return null;const ex=items.find(i=>i.code===it.code);
-  if(ex){ex.qty=(ex.qty===null||it.qty===null)?null:ex.qty+it.qty;ex.src=ex.src.concat(it.src)}else items.push(it)}
+  if(ex){ex.qty=(ex.qty===null||it.qty===null)?null:ex.qty+it.qty;ex.src=ex.src.concat(it.src);if(it.stitches!==null)ex.stitches=(ex.stitches||0)+it.stitches}else items.push(it)}
  items.forEach(it=>dec[it.code]=normDecision(it.code,p.decisions&&p.decisions[it.code]));
  const purchased={};if(p.purchased&&typeof p.purchased==='object')for(const k of Object.keys(p.purchased))if(p.purchased[k]===true&&k.length<40)purchased[k]=true;
  return{id:p.id,name:str(p.name,100).trim()||'Untitled project',notes:str(p.notes,2000),buyBrand:BRAND[p.buyBrand]?p.buyBrand:'dmc',
@@ -275,7 +276,7 @@ function bindEditor(p){const E=$('projEdit'),re=()=>{touch(p);renderEditor();ren
   if(v===''){d.owned=null;re();return}const n=Number(v);if(!isFinite(n)||n<0){pstatus(`"${v}" isn't a valid amount, so nothing changed.`);i.value=d.owned===null?'':d.owned;return}d.owned=Math.round(n*100)/100;re()});
  E.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const c=b.dataset.rm;if(!confirm(`Remove DMC ${lab(c)} from this project?`))return;p.items=p.items.filter(x=>x.code!==c);delete p.decisions[c];expanded.delete(c);re()});
  $('pAddBtn').onclick=()=>{const {items,errs}=parse($('pAdd').value);items.forEach(n=>{const ex=p.items.find(x=>x.code===n.code);
-  if(ex){ex.qty=(ex.qty===null||n.qty===null)?null:ex.qty+n.qty;ex.src=ex.src.concat(n.src);ex.assumed=ex.qty===null?0:asmOf(ex)+asmOf(n);ex.stated=ex.assumed===0}else{p.items.push({code:n.code,qty:n.qty,stated:n.stated,assumed:asmOf(n),src:n.src});p.decisions[n.code]=normDecision(n.code,{})}});
+  if(ex){ex.qty=(ex.qty===null||n.qty===null)?null:ex.qty+n.qty;ex.src=ex.src.concat(n.src);ex.assumed=ex.qty===null?0:asmOf(ex)+asmOf(n);ex.stated=ex.assumed===0;if(n.stitches)ex.stitches=(ex.stitches||0)+n.stitches}else{p.items.push({code:n.code,qty:n.qty,stated:n.stated,assumed:asmOf(n),src:n.src,stitches:n.stitches||null});p.decisions[n.code]=normDecision(n.code,{})}});
   touch(p);renderEditor();renderList();$('pAddBox').open=true;$('pAddErr').innerHTML=errs.length?`<div class="errbox"><b>${errs.length} couldn't be added:</b><ul>${errs.map(e=>`<li>"${esc(e.t)}": ${esc(e.why)}</li>`).join('')}</ul></div>`:'';if(errs.length)$('pAdd').value=errs.map(e=>e.t).join('\n');pstatus(`Added ${s2(items.length)}.`);if(items.length&&window.FlossFoxPip)FlossFoxPip.saved($('pMsg'),`Added ${s2(items.length)}`)}}
 
 // ---- Export / backup / restore ----
@@ -313,7 +314,7 @@ $('backupBtn').onclick=backup;$('restoreFile').onchange=e=>{restoreFile(e.target
 let saving=false;
 $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg').textContent='Nothing to save yet. Add your colors first.';return}saving=true;setTimeout(()=>saving=false,800);
  const ex=window.isExample&&window.isExample();
- const p={id:newId(),name:($('newProjName').value.trim()||(ex?'Example project':'Untitled project')).slice(0,100),notes:'',buyBrand:$('dest').value,items:state.items.map(i=>({code:i.code,qty:i.qty,stated:i.stated!==false,assumed:asmOf(i),src:i.src.slice()})),decisions:{},purchased:{},created:nowISO(),updated:nowISO()};
+ const p={id:newId(),name:($('newProjName').value.trim()||(ex?'Example project':'Untitled project')).slice(0,100),notes:'',buyBrand:$('dest').value,items:state.items.map(i=>({code:i.code,qty:i.qty,stated:i.stated!==false,assumed:asmOf(i),src:i.src.slice(),stitches:i.stitches||null})),decisions:{},purchased:{},created:nowISO(),updated:nowISO()};
  p.items.forEach(i=>p.decisions[i.code]=normDecision(i.code,{anchor:choice[i.code]||null}));store.projects.push(p);const ok=save();
  $('copymsg').innerHTML=(ok?`✓ Saved "${esc(p.name)}" in this browser.`:`Saved for now only: this browser isn't letting Floss Fox store projects, so download a backup from My projects.`)+` <button type="button" class="pri small" id="openSaved">Check what you have →</button>`;$('newProjName').value='';renderList();
  $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('copymsg'))};

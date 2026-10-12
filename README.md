@@ -10,6 +10,7 @@ Static DMC → Anchor floss converter. No build step: open `index.html`.
 ## Tests
 Headless regression suite: `python3 -m http.server 8765` in this folder, then
 `python tests/regression.py http://localhost:8765/` (needs `pip install playwright` and Chrome at /usr/bin/google-chrome, or pass `--chrome PATH`).
+Parser unit tests: `node tests/parse_unit.js`. Paste checks (24-color list at 360/390/1280): `python tests/parse_e2e.py http://localhost:8765/`.
 Run against the live site with `python tests/regression.py https://therealtenkoshi2020.github.io/floss-fox/`. Add `--shots DIR` to save screenshots.
 
 ## Projects storage
