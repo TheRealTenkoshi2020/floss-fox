@@ -120,7 +120,7 @@ function context(){
  if(s.items.length)return{key:'results',text:`I found ${plural(s.items.length,'color')}. Your results and shopping list are below.`};
  return{key:'empty',text:'Your list is empty. Start by typing or pasting your DMC numbers into the box.'}}
 const TOPICS=[
- ['enter','How do I enter my colors?','Type or paste DMC numbers into the box on Add colors, one per line or separated by commas, then tap Add my colors. Add amounts like 310 x2, or 310 x? if you don\'t know. Blanc, Ecru and B5200 work too.'],
+ ['enter','How do I enter my colors?','Type or paste DMC numbers into the box on Find My Floss, one per line or separated by commas, then tap Add my colors. Add amounts like 310 x2, or 310 x? if you don\'t know. Blanc, Ecru and B5200 work too.'],
  ['results','What does this result mean?','Your colors lists every DMC color I recognized, with its Anchor and Sullivans chart matches. Lines I couldn\'t read appear in red so you can fix them. Repeats are combined, and amounts marked "assumed" had no number, so I counted 1 skein.'],
  ['alts','What are thread alternatives?','Other brands, Sullivans and Anchor, that published charts match to your DMC colors. Choose one in Brand to buy on the shopping list. Chart matches are close, not exact, and metallic or variegated threads aren\'t swapped. Cost figures are rough estimates.'],
  ['shop','How do I use my shopping list?','Tick colors as you shop, or Print or Copy the list. Save it as a project to mark what you already have; then Shop my list in My projects gives you a store checklist, and you can download a spreadsheet (CSV).'],
