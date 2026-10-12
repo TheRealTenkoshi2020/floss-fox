@@ -56,7 +56,7 @@ with sync_playwright() as p:
     conv(pg, '310 x2\nDMC 310 Black 3 skeins', 'anchor'); ok('duplicates summed', shop(pg) == ['Anchor 403 × 5 (for DMC 310 · chart)'], shop(pg))
     for t, exp in [('310 ×2', '× 2'), ('310x2', '× 2'), ('310 x 2', '× 2'), ('310 (2)', '× 2'), ('310 2 skeins', '× 2')]:
         conv(pg, t, 'dmc'); ok(f'qty format {t!r}', len(shop(pg)) == 1 and exp in shop(pg)[0], shop(pg))
-    conv(pg, '310', 'dmc'); ok('no qty -> 1 (assumed) shown', '1 (assumed)' in pg.inner_text('#tbl'), pg.inner_text('#tbl')[:200])
+    conv(pg, '310', 'dmc'); ok('no qty -> 1 (assumed) shown', 'assumed 1 skein' in pg.inner_text('#tbl'), pg.inner_text('#tbl')[:200])
     conv(pg, '310 x2.5, 310 x0, 310 x-2, 310 two skeins, 310 x'); e = pg.inner_text('#errs')
     ok('invalid quantities rejected with original text', all(s in e for s in ['"310 x2.5"', '"310 x0"', '"310 x-2"', '"310 two skeins"', '"310 x"']) and pg.locator('#shopcard').is_hidden(), e)
     conv(pg, '310 x?', 'dmc'); ok('x? = unknown quantity', shop(pg) and '× ?' in shop(pg)[0] and 'unknown' in pg.inner_text('#totals').lower(), (shop(pg), pg.inner_text('#totals')))
@@ -492,7 +492,7 @@ with sync_playwright() as p:
     sub2('310, 321'); ok('Q1h no repeat claim without repeats', 'repeat' not in pst(q2)[2])
     sub2('310 x2, 321, 310'); smy = q2.inner_text('#summary')
     ok('Q2 assumed amounts visible in the summary', 'Found 2 colors · 4 skeins (2 assumed — no amount given)' in smy, smy)
-    tb = q2.inner_text('#tbl'); ok('Q2b per-line assumed markers (310: 3 with 1 assumed, 321: 1 assumed)', '×3 (1 assumed)' in tb and '×1 (assumed)' in tb, tb[:300])
+    tb = q2.inner_text('#tbl'); ok('Q2b per-line assumed markers (310: 3 with 1 assumed, 321: 1 assumed)', '2 skeins + assumed 1 skein' in tb and 'assumed 1 skein' in tb, tb[:300])
     ok('Q2c shopping list carries the flag', 'DMC 310 × 3 (1 assumed)' in q2.inner_text('#shop') and 'DMC 321 × 1 (assumed)' in q2.inner_text('#shop'), q2.inner_text('#shop')[:300])
     sub2('310 x?, 310'); ok('Q2d unknown stays unknown when merged with an assumed line', q2.evaluate('state.items[0].qty') is None and 'assumed' not in q2.inner_text('#tbl') and 'amount unknown' in q2.inner_text('#summary'))
     sub2('310 x2, 321 x1'); ok('Q2e fully stated list shows no assumed note', 'assumed' not in q2.inner_text('#summary'))
