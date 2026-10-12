@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pip's Fabric Calculator: cross stitch fabric size · Floss Fox</title>
+<meta name="description" content="Free cross stitch fabric calculator: enter your pattern's stitch count, pick Aida or evenweave and how much extra fabric you want, and get your finished design size and the fabric to cut, in inches and centimeters.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="canonical" href="https://therealtenkoshi2020.github.io/floss-fox/fabric.html"><style>
+:root{--bg:#f7f1e6;--card:#fffaf2;--line:#e6dccb;--txt:#3b2f28;--mut:#6f6257;--lime:#b4532a;--pink:#5f7a5c;--blush:#f3d9cf}
+*{box-sizing:border-box}body{margin:0;background:var(--bg) radial-gradient(#e9dfcd 1px,transparent 1px) 0 0/14px 14px;color:var(--txt);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+header h1{margin:0;font-size:1.8rem}header h1 span{color:var(--lime)}header p{margin:4px 0 18px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 10px #7a4b2a12;padding:16px;margin-bottom:16px}
+textarea{width:100%;min-height:150px;background:#fff;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:15px ui-monospace,monospace}
+textarea:focus{outline:2px solid var(--lime)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+button{border:0;border-radius:999px;padding:10px 18px;font-weight:600;font-size:15px;cursor:pointer}
+.pri{background:var(--lime);color:#fff}.pri:hover{background:#9a4522}button:focus-visible{outline:3px solid #e9a77f;outline-offset:2px}.sec{background:var(--card);color:var(--pink);border:1.5px solid var(--pink)}.sec:hover{background:#eef2ea}
+.hint{color:var(--mut);font-size:.88rem;margin:6px 0 0}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--mut);font-weight:600;font-size:.85rem}
+.sw{display:inline-block;width:22px;height:22px;border-radius:6px;border:1px solid #0003;vertical-align:middle;margin-right:6px}
+.alt{display:inline-flex;align-items:center;margin:2px 10px 2px 0;font-size:.9rem;color:var(--mut)}
+.tag{font-size:.75rem;padding:1px 7px;border-radius:999px;background:var(--blush);color:#7a3a22;margin-left:4px}
+.warn{color:#a3361b;font-weight:600}header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header .logo{width:52px;height:52px;flex:none}header .t{flex:1;min-width:200px}h2::before{content:'🦊 ';font-size:.9em}footer .paw{color:var(--lime)}h2{margin:0 0 10px;font-size:1.15rem}h2 small{color:var(--mut);font-weight:400}
+ul.shop{list-style:none;padding:0;margin:0;columns:2}ul.shop li{padding:4px 0;break-inside:avoid}
+ul.shop input{accent-color:var(--pink);width:18px;height:18px;vertical-align:middle;margin-right:6px}
+footer{color:var(--mut);font-size:.8rem}footer a{color:#9a4522}
+@media(max-width:640px){thead{display:none}tr{display:block;border-bottom:1px solid var(--line);padding:8px 0}td{display:block;border:0;padding:3px 0}ul.shop{columns:1}header h1{font-size:1.5rem}}
+@media print{h2::before{content:''}header{display:block}header .logo{display:none}body{background:#fff;color:#000}.noprint,header p,#results,footer{display:none!important}.card{border:0;background:#fff;padding:0}
+#shopcard{display:block!important}ul.shop{columns:2}.sw{border:1px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tag{color:#000;border-color:#000}}
+ .card h2::before{content:''} .card p,.card li{max-width:65ch}
+.fc h1{font-size:1.5rem;margin:0 0 4px}.fc .intro{margin:0 0 12px;color:var(--mut)}
+.fcgrid{display:grid;gap:16px}@media(min-width:880px){.fcgrid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start}.fcres{position:sticky;top:12px}}
+fieldset{border:0;padding:0;margin:0 0 14px;min-width:0}legend{font-weight:700;font-size:1.02rem;margin-bottom:6px;padding:0}
+.step{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--pink);color:#fff;font-size:.8rem;align-items:center;justify-content:center;margin-right:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}label.f{display:block;font-weight:600;font-size:.92rem}
+input[type=text],input[type=number],select{width:100%;min-height:44px;font:inherit;font-size:1.05rem;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--txt)}
+input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #e9a77f;outline-offset:2px}
+input[aria-invalid=true]{border-color:#a3361b;background:#fff6f3}.err{color:#a3361b;font-size:.88rem;margin:4px 0 0;font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:6px}.seg label{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1.5px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font-weight:600;font-size:.95rem}
+.seg input{width:18px;height:18px;accent-color:var(--pink);margin:0}.seg label:has(input:checked){border-color:var(--pink);background:#eef2ea}.seg label:has(input:focus-visible){outline:3px solid #e9a77f;outline-offset:2px}
+.note{background:#eef2ea;border-radius:10px;padding:8px 12px;font-size:.92rem;margin:8px 0 0}
+.fcres .big{background:#fff;border:2px solid var(--lime);border-radius:14px;padding:12px 14px;margin:0 0 12px}
+.fcres h2{font-size:1.05rem;margin:0 0 4px}.fcres h2::before{content:''}.fcres .num{font-size:1.9rem;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}.fcres .sub{color:var(--mut);font-size:.95rem;font-variant-numeric:tabular-nums}
+.fcres .design{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:0 0 12px}.fcres .design .num{font-size:1.4rem}
+details.others summary,details.tips summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:650}
+.otab td,.otab th{font-variant-numeric:tabular-nums;padding:6px}.tip{display:flex;gap:10px;align-items:flex-start;margin:8px 0}.tip img{width:56px;height:auto;flex:none;object-fit:contain}
+.unitsw{display:flex;justify-content:flex-end;margin:0 0 8px}
+@media(max-width:640px){.otab thead{display:table-header-group}.otab tr{display:table-row}.otab td{display:table-cell;border-bottom:1px solid var(--line)}}
+@media print{.fcin,.unitsw,details.tips,.row,.fcnav{display:none!important}details.others{display:block}.fcres .big{border-color:#000}}
+.fc button{min-height:44px}.brand span{color:var(--lime)}
+.fcnav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.fcnav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:var(--txt);text-decoration:none;font-weight:650;border:1.5px solid var(--line);background:var(--card)}.fcnav a[aria-current=page]{background:var(--pink);color:#fff;border-color:var(--pink)}
+</style></head>
+<body><div class="wrap"><header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><p class="brand" style="margin:0;font-size:1.5rem;font-weight:800">Floss <span>Fox</span></p><p><a href="index.html" style="color:#9a4522">← Back to the converter</a></p></div></header>
+<nav class="fcnav noprint" aria-label="Main"><a href="index.html">🧵 Add colors</a><a href="index.html#projects">📁 My projects</a><a href="fabric.html" aria-current="page">📐 Fabric calculator</a><a href="index.html#help">💬 Help</a></nav>
+<main class="fc" id="fc">
+<h1>Pip's Fabric Calculator</h1><p class="intro">Let's find the perfect fabric size for your project!</p>
+<div class="fcgrid">
+<form class="card fcin" id="fcForm" novalidate onsubmit="return false">
+<fieldset><legend><span class="step" aria-hidden="true">1</span>Pattern size</legend>
+<div class="two"><div><label class="f" for="fcW">Width (stitches)</label><input type="text" inputmode="numeric" id="fcW" value="140" autocomplete="off" aria-describedby="fcWerr fcWhint"><p class="err" id="fcWerr" role="alert"></p></div>
+<div><label class="f" for="fcH">Height (stitches)</label><input type="text" inputmode="numeric" id="fcH" value="100" autocomplete="off" aria-describedby="fcHerr fcWhint"><p class="err" id="fcHerr" role="alert"></p></div></div>
+<p class="hint" id="fcWhint">These numbers are usually on the pattern cover or info sheet (for example "140 × 100 stitches"). Whole numbers, 1 to 2000.</p></fieldset>
+<fieldset><legend><span class="step" aria-hidden="true">2</span>Fabric</legend>
+<label class="f" for="fcCount">Fabric type and count</label>
+<select id="fcCount"><optgroup label="Aida (usually over one)"><option value="aida:11">11-count Aida</option><option value="aida:14" selected>14-count Aida</option><option value="aida:16">16-count Aida</option><option value="aida:18">18-count Aida</option></optgroup>
+<optgroup label="Evenweave or linen (usually over two)"><option value="even:25">25-count evenweave/linen</option><option value="even:28">28-count evenweave/linen</option><option value="even:32">32-count evenweave/linen</option><option value="even:36">36-count evenweave/linen</option></optgroup>
+<optgroup label="Other"><option value="custom">Custom count…</option></optgroup></select>
+<div id="fcCustomBox" hidden><label class="f" for="fcCustom" style="margin-top:8px">Custom count (threads or squares per inch)</label><input type="text" inputmode="decimal" id="fcCustom" value="" aria-describedby="fcCustomErr"><p class="err" id="fcCustomErr" role="alert"></p></div>
+<div style="margin-top:10px" role="radiogroup" aria-labelledby="fcOverL"><span class="f" id="fcOverL" style="font-weight:600;font-size:.92rem">Stitch over</span>
+<div class="seg"><label><input type="radio" name="fcOver" value="1" checked> One thread</label><label><input type="radio" name="fcOver" value="2"> Two threads</label></div></div>
+<p class="note" id="fcOverNote" aria-live="polite" hidden></p></fieldset>
+<fieldset><legend><span class="step" aria-hidden="true">3</span>Extra fabric (on each side)</legend>
+<div class="seg" role="radiogroup" aria-label="Extra fabric on each side"><label><input type="radio" name="fcMargin" value="small"> <span>Small finish 1&quot;</span></label><label><input type="radio" name="fcMargin" value="hoop"> <span>Hoop or decorative 2&quot;</span></label><label><input type="radio" name="fcMargin" value="framing" checked> <span>Framing 3&quot;</span></label><label><input type="radio" name="fcMargin" value="custom"> Custom</label></div>
+<div id="fcMarginBox" hidden><label class="f" for="fcMarginC" style="margin-top:8px">Extra fabric on each side (<span class="u">in</span>)</label><input type="text" inputmode="decimal" id="fcMarginC" aria-describedby="fcMarginErr"><p class="err" id="fcMarginErr" role="alert"></p></div>
+<p class="hint" id="fcMarginHint">Per side: this much is added on the left, right, top and bottom. These are starting points, not guarantees; check what your framer or finish needs.</p></fieldset>
+</form>
+<section class="fcres" aria-labelledby="fcResH"><h2 class="sr" id="fcResH" style="position:absolute;left:-9999px">Results</h2>
+<div class="unitsw noprint"><div class="seg" role="radiogroup" aria-label="Units"><label><input type="radio" name="fcUnit" value="in" checked> Inches</label><label><input type="radio" name="fcUnit" value="cm"> Centimeters</label></div></div>
+<div class="big" id="fcCut"><h2>Fabric to cut</h2><p class="num" id="fcCutNum" aria-live="polite">–</p><p class="sub" id="fcCutSub"></p>
+<p class="hint">This size includes extra fabric around your stitching, so you'll have room to finish your project.</p></div>
+<div class="design" id="fcDesign"><h2>Your finished design</h2><p class="num" id="fcDesNum">–</p><p class="sub" id="fcDesSub">Stitched area only, without extra fabric.</p></div>
+<p class="err" id="fcFix" role="status"></p>
+<div class="row noprint"><button type="button" class="sec" id="fcCopy">Copy results</button><button type="button" class="sec" id="fcPrint">Print</button></div><p class="hint" id="fcMsg" role="status" aria-live="polite"></p>
+<details class="others card" id="fcOthers"><summary>See other fabric sizes</summary><p class="hint">Finished design size (no extra fabric) for your pattern on common counts. Aida is over one; evenweave is over two, so 28-count evenweave gives the same size as 14-count Aida.</p><div id="fcOtherTab"></div></details>
+<details class="tips card noprint" id="fcTips"><summary>Pip's tips</summary>
+<div class="tip"><img src="assets/pip/pip-needle-160.png" width="160" height="250" alt="" loading="lazy" decoding="async"><p><b>Where are the stitch counts?</b> Look on the pattern cover, the info sheet or the first chart page for something like "Stitches: 140 w × 100 h".</p></div>
+<div class="tip"><img src="assets/pip/pip-discovery-160.png" width="160" height="243" alt="" loading="lazy" decoding="async"><p><b>What does count mean?</b> It's how many squares (Aida) or threads (evenweave/linen) fit in one inch. Higher count = smaller stitches = smaller finished design.</p></div>
+<div class="tip"><img src="assets/pip/pip-organizing-160.png" width="160" height="189" alt="" loading="lazy" decoding="async"><p><b>Why extra fabric?</b> You need room around the design to hold it in a hoop and to frame or finish it later.</p></div>
+<div class="tip"><img src="assets/pip/pip-presenting-160.png" width="160" height="222" alt="" loading="lazy" decoding="async"><p><b>What do the results mean?</b> "Your finished design" is the stitched area. "Fabric to cut" adds your extra fabric on every side and rounds up to the next ¼ inch.</p></div></details>
+</section></div>
+<section class="card"><h2>How this cross stitch fabric calculator works</h2><p>Divide the number of stitches by the stitches per inch of your fabric. On Aida, stitches per inch equals the count; on evenweave or linen stitched over two threads, it's half the count (28-count over two = 14 stitches per inch). Then add the extra fabric twice, once for each side, to get the fabric to cut. Floss Fox rounds the fabric to cut up to the next ¼ inch so you never come up short, and works out centimeters from that rounded inch value. Everything runs in your browser; nothing is sent anywhere.</p></section>
+</main>
+<footer><p><a href="index.html">Converter</a> · <a href="fabric.html">Fabric calculator</a> · <a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · Works offline in this page; nothing is sent anywhere.</p></footer></div>
+<script src="fabric/calc.js"></script><script src="fabric/ui.js"></script></body></html>
