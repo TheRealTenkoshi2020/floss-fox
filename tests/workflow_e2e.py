@@ -93,7 +93,9 @@ with sync_playwright() as p:
             ok(f'W16 {T} {v}: all {cnt} visible buttons/inputs at least 44px tall', cnt > 5 and not small, small[:12])
             fs = g.evaluate("Math.min(...[...document.querySelectorAll('body p, body li, body label')].filter(e=>e.offsetParent&&e.textContent.trim()).map(e=>parseFloat(getComputedStyle(e).fontSize)))")
             ok(f'W17 {T} {v}: smallest text >= 12px (step chips 12.2px and art credit 12.8px are the smallest, unchanged from 1.6)', fs >= 12, fs)
-        g.click('#tabThreads'); g.evaluate('window.scrollTo(0,document.body.scrollHeight)'); g.wait_for_timeout(80)
+        g.click('#tabThreads'); g.evaluate('window.scrollTo({top:document.body.scrollHeight,behavior:"instant"})')
+        try: g.wait_for_function('window.scrollY>0||document.body.scrollHeight<=innerHeight+10', timeout=3000)
+        except Exception: pass  # html has scroll-behavior:smooth; WebKit may finish the scroll later
         ok(f'W18 {T} collection scrolls to the end', g.evaluate('window.scrollY') > 0 or g.evaluate('document.body.scrollHeight') <= 800 + 10)
         shot('05-restored')
         ctx.close(); shutil.rmtree(prof, ignore_errors=True)
