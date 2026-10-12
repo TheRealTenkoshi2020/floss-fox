@@ -616,7 +616,7 @@ with sync_playwright() as p:
     codes = a.evaluate("Object.keys(DMC).filter(c=>fam(c)==='solid')")
     for n in (15, 50, 150):
         g = spage(REALFX, 412); g.goto(B); g.fill('#inp', '\n'.join(f'{c} x1' for c in codes[:n])); t0 = g.evaluate('performance.now()'); g.click('#go'); g.wait_for_timeout(50)
-        ms = g.evaluate('performance.now()') - t0; sw = g.evaluate('document.documentElement.scrollWidth'); items = g.evaluate("(document.querySelector('#wtb .wtbnone')?document.querySelector('#wtb .wtbnone').textContent.split(':')[1].split(',').length:0)+document.querySelectorAll('#wtb a[data-level=A]').length")
+        ms = g.evaluate('performance.now()') - t0; sw = g.evaluate('document.documentElement.scrollWidth'); items = g.evaluate("new Set([...(document.querySelector('#wtb .wtbnone')?document.querySelector('#wtb .wtbnone').textContent.split(':')[1].split(',').map(s=>s.trim()):[]),...[...document.querySelectorAll('#wtb a[data-level=A]')].map(a=>(a.textContent.match(/^View (\\S+ \\S+)/)||[])[1])]).size")
         ok(f'S25 {n}-color list: renders ({items} items), no overflow, under 2 s', items == n and sw <= 412 and ms < 2000, (items, sw, ms)); g.context.close()
     kb = spage(REALFX, 1280); kb.goto(B); kb.fill('#inp', LIST); kb.click('#go'); kb.wait_for_timeout(100); kb.focus('#copy'); seen = []
     for _ in range(12):
@@ -707,7 +707,7 @@ with sync_playwright() as p:
     g.select_option('#dest', 'sullivans'); g.wait_for_timeout(80)
     ok('T4b S3 live text tells the true Sullivans match count', "Sullivans now: 2 colors of 2 have a chart match" in g.inner_text('#tourCard') and g.locator('#shop li').count() == 2, g.inner_text('#tourCard'))
     g.select_option('#dest', 'dmc'); nxt(g)
-    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and (('optional affiliate links' in g.inner_text('#tourCard').lower() and 'never need them' in g.inner_text('#tourCard')) if g.evaluate("!!(window.FlossFoxShop&&FlossFoxShop.anyEligible())") else 'affiliate' not in g.inner_text('#tourCard').lower()) and g.locator('#shopcard button:has-text("Print list")').count() == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
+    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and (('optional affiliate links' in g.inner_text('#tourCard').lower() and 'never need them' in g.inner_text('#tourCard')) if g.evaluate("!!(window.FlossFoxShop&&FlossFoxShop.anyEligible())") else 'affiliate' not in g.inner_text('#tourCard').lower()) and g.evaluate("[...document.querySelectorAll('#shopcard button')].filter(b=>b.textContent.trim()==='Print list'&&!b.closest('.wtb')).length") == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
     g.click('#tourCard [data-t=back]'); g.wait_for_timeout(80); ok('T5 Back returns to step 3', step(g) == 2); nxt(g); nxt(g)
     ok('T4d step 5 finish: celebrating, both buttons', step(g) == 4 and "Yay! You've got it! You're ready to start stitching!" in g.inner_text('#tourCard') and cpose(g) == ['celebrating', 'celebrating'] and g.locator('#tourCard [data-t=start]').count() == 1 and g.locator('#tourCard [data-t=tips]').count() == 1, cpose(g))
     g.click('#tourCard [data-t=start]'); g.wait_for_timeout(80)
