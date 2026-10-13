@@ -3,7 +3,7 @@ Static DMC → Anchor floss converter. No build step: open `index.html`.
 
 - Rename: change `APP_NAME` in index.html.
 - Affiliate disclosure: set `SHOW_AFFILIATE_DISCLOSURE = true` in index.html once links exist.
-- Live at https://therealtenkoshi2020.github.io/floss-fox/ . Contact via GitHub Issues.
+- Live at https://flossfox.com/ . Contact via GitHub Issues.
 - `?sample` auto-fills an example list (handy for testing).
 - Data: Cyberstitchers conversion charts (see footer/About).
 
@@ -12,7 +12,8 @@ Headless regression suite: `python3 -m http.server 8765` in this folder, then
 `python tests/regression.py http://localhost:8765/` (needs `pip install playwright` and Chrome at /usr/bin/google-chrome, or pass `--chrome PATH`).
 Parser unit tests: `node tests/parse_unit.js`. Paste checks (24-color list at 360/390/1280): `python tests/parse_e2e.py http://localhost:8765/`.
 Collection + projects checks: `node tests/threads_unit.js`, `python tests/collection_e2e.py http://localhost:8765/`.
-Run against the live site with `python tests/regression.py https://therealtenkoshi2020.github.io/floss-fox/`. Add `--shots DIR` to save screenshots.
+Run against the live site with `python tests/regression.py https://flossfox.com/`. Add `--shots DIR` to save screenshots.
+Custom-domain checks: `python tests/domain_check.py [BASE_URL]`. Dev detection is `floss-fox-dev` in the base URL, so https://flossfox.com/ and localhost are treated as production.
 
 ## Projects storage
 Projects are stored in `localStorage` under `flossfox.v1` (schema 1, see `projects.js`). Unreadable or newer-schema data is never overwritten. Backups are JSON (`app: "floss-fox"`).

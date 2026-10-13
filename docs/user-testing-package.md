@@ -12,7 +12,7 @@ Find out whether a stitcher can use Floss Fox to answer **"Can I start this proj
 - **Bring:** one real pattern key (thread list) and access to their own floss, or use the provided materials.
 
 ## 3. Setup (moderator)
-- **Live site:** https://therealtenkoshi2020.github.io/floss-fox/. Use the participant's own device and browser where possible, and note the device, browser and screen width.
+- **Live site:** https://flossfox.com/. Use the participant's own device and browser where possible, and note the device, browser and screen width.
 - **Fallback list** if they have no pattern: `310 x2, 415, 817, 948, 3863 x?, 413, 815, 898, 3771, BLANC`
 - **Timing:** about 30–40 minutes per person. Use a stopwatch and the note sheet (section 6).
 - **Moderator rules:** don't explain features unless the participant is stuck for 2 minutes or asks to give up. Log each time you help. Ask them to think aloud.
