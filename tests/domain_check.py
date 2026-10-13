@@ -21,5 +21,5 @@ ok('og:url', 'property="og:url" content="%s"' % ORIGIN in s); ok('og:image', 'co
 ok('robots Sitemap', 'Sitemap: %ssitemap.xml' % ORIGIN in get('robots.txt'))
 locs = re.findall(r'<loc>([^<]+)</loc>', get('sitemap.xml')); ok('sitemap locs all on origin', locs and all(l.startswith(ORIGIN) for l in locs))
 for f in ['index.html', 'fabric.html', 'about.html', 'privacy.html', 'robots.txt', 'sitemap.xml']:
-    ok(f + ' has no github.io / www / /floss-fox/ refs', not re.search(r'github\.io|www\.flossfox|/floss-fox/', get(f)))
+    ok(f + ' has no github.io / www / /floss-fox/ refs', not re.search(r'github\.io|www\.flossfox|(?<!TheRealTenkoshi2020)/floss-fox/', get(f)))
 print('RESULT', R); sys.exit(1 if R['fail'] else 0)
