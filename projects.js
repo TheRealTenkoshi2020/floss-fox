@@ -163,7 +163,7 @@ function renderList(){const L=$('projList');$('projCount').textContent=store.pro
  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delProject(b.dataset.del));const ea=$('emptyAdd');if(ea)ea.onclick=()=>{showView('convert');$('inp').focus()}}
 async function delProject(id){const p=proj(id);if(!p)return;
  const ok=await FlossFoxConfirm.ask({pose:'thinking',title:`Wave goodbye to "${p.name}"?`,
-  body:"Pip tilts her head. Are you sure? This can't be undone unless you have a backup.",go:'Delete'});
+  body:"Pip tilts their head. Are you sure? This can't be undone unless you have a backup.",go:'Delete'});
  if(!ok)return;
  store.projects=store.projects.filter(x=>x.id!==id);save();if(openId===id){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}renderList();pstatus(`Deleted "${p.name}".`)}
 function openProject(id,m){if(openId!==id){expanded.clear();filt='all';query='';shopPanel=null}openId=id;mode=m||'edit';renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true;window.scrollTo(0,0);pstatus(`Opened "${proj(id).name}".`)}
@@ -366,7 +366,7 @@ function bindEditor(p){const E=$('projEdit'),re=()=>{edited(p);touch(p);renderEd
   if(v===''){d.owned=null;d.ownedSource=null;d.ownedPartial=false;re();return}const n=Number(v);if(!isFinite(n)||n<0){pstatus(`"${v}" isn't a valid amount, so nothing changed.`);i.value=d.owned===null?'':d.owned;return}if(n>CAP()&&!confirm(`You have ${n} skeins of DMC ${lab(i.dataset.own)}? That's more than ${CAP()}. OK keeps ${n}.`)){i.value=d.owned===null?'':d.owned;pstatus('Nothing changed.');return}d.owned=Math.round(n*100)/100;d.ownedSource='user';d.ownedPartial=false;re()});
  E.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{const c=b.dataset.rm,L=lab(c);
   const ok=await FlossFoxConfirm.ask({pose:'thinking',title:`Wave goodbye to DMC ${L}?`,
-   body:'Pip tilts her head. Are you sure? It leaves this project (your collection is unchanged).'});
+   body:'Pip tilts their head. Are you sure? It leaves this project (your collection is unchanged).'});
   if(!ok)return;p.items=p.items.filter(x=>x.code!==c);delete p.decisions[c];expanded.delete(c);re()});
  $('pAddBtn').onclick=()=>{const {items,errs}=parse($('pAdd').value);items.forEach(n=>{const ex=p.items.find(x=>x.code===n.code);
   if(ex){ex.qty=(ex.qty===null||n.qty===null)?null:ex.qty+n.qty;ex.src=ex.src.concat(n.src);ex.stitchCountReviewed=false;ex.assumed=ex.qty===null?0:asmOf(ex)+asmOf(n);ex.stated=ex.assumed===0;ex.stitchCount=ex.stitchCount!=null&&n.stitchCount!=null&&ex.stitchCount+n.stitchCount<=SK.MAX_STITCHES?ex.stitchCount+n.stitchCount:null}else{p.items.push({code:n.code,qty:n.qty,stated:n.stated,assumed:asmOf(n),src:n.src,stitchCount:n.stitchCount||null});p.decisions[n.code]=normDecision(n.code,{})}});

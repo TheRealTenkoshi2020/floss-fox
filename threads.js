@@ -88,7 +88,7 @@ function keepFocus(id){const f=document.getElementById(id);if(f){if(f.disabled){
 const stamp=e=>{e.updated=new Date().toISOString()};
 async function removeDemo(){const n=Object.keys(data.demo||{}).length,P=window.FlossFoxProjects,np=P?P._store().projects.filter(x=>x.demo).length:0;
  const ok=await FlossFoxConfirm.ask({pose:'thinking',title:'Wave goodbye to the demo data?',
-  body:`Pip tilts her head. That clears ${n} demo thread${n===1?'':'s'} and ${np} demo project${np===1?'':'s'}. Your own threads and projects stay put.`});
+  body:`Pip tilts their head. That clears ${n} demo thread${n===1?'':'s'} and ${np} demo project${np===1?'':'s'}. Your own threads and projects stay put.`});
  if(!ok)return;
  delete data.demo;save();const rp=P&&P.removeDemo?P.removeDemo():0;render();say(`Demo data removed (${n} threads, ${rp} project${rp===1?'':'s'}). Your own data is unchanged.`);$('thAdd').focus()}
 function bind(){const L=$('thList');
@@ -101,7 +101,7 @@ function bind(){const L=$('thList');
  L.querySelectorAll('[data-verify]').forEach(b=>b.onclick=()=>{const c=b.dataset.verify,e=MM(b)[c];e.confirmed=true;stamp(e);save();render();keepFocus('tn-'+(b.dataset.m==='d'?'d_':'')+c.replace(/[^\w]/g,'_'));say(`Confirmed ${e.n} full skein${e.n===1?'':'s'} of DMC ${lab(c)}.`)});
  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const c=b.dataset.del,M=MM(b),demo=b.dataset.m==='d',L=lab(c);
   const ok=await FlossFoxConfirm.ask({pose:'thinking',title:demo?`Wave goodbye to demo DMC ${L}?`:`Wave goodbye to DMC ${L}?`,
-   body:demo?'Pip tilts her head. Demo threads are just for trying Floss Fox — you can load them again anytime.':'Pip tilts her head. Are you sure? You can add it back anytime.'});
+   body:demo?'Pip tilts their head. Demo threads are just for trying Floss Fox — you can load them again anytime.':'Pip tilts their head. Are you sure? You can add it back anytime.'});
   if(!ok)return;delete M[c];if(data.demo&&!Object.keys(data.demo).length)delete data.demo;save();render();say(`Removed DMC ${L}.`);$('thAdd').focus()});
  const rd=$('thRemoveDemo');if(rd)rd.onclick=removeDemo;
  $('thFilt').querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{show=b.dataset.show;render();const nb=$('thFilt').querySelector(`[data-show="${show}"]`);if(nb)nb.focus()})}
