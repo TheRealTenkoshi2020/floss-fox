@@ -1,5 +1,5 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v1.8.1-v2b1';
+const CACHE = 'flossfox-v1.8.1-v2b2';
 const CORE = [
   './',
   "about.html",
@@ -16,6 +16,9 @@ const CORE = [
   "threads.js",
   "bulk-paste-review.js",
   "bulk-review.js",
+  "project-requirements.js",
+  "combined-shopping-plan.js",
+  "planner.js",
   "tour.js",
   "assets/icons/icon-192.png",
   "assets/icons/apple-touch-icon.png",
