@@ -232,7 +232,7 @@ with sync_playwright() as p:
     ok('T13 summary, copy, CSV and print agree', cons, (s13, txt13[:300], csv13[:300]))
     c13.click('#pClose'); c13.click('#backupBox summary')
     with c13.expect_download() as d: c13.click('#backupBtn')
-    bk13 = open(d.value.path(), encoding='utf-8').read(); c13.locator('[data-del]').first.click()
+    bk13 = open(d.value.path(), encoding='utf-8').read(); c13.locator('[data-del]').first.click(); c13.wait_for_selector('#ffConfirm:not([hidden])'); c13.click('#ffConfirmGo'); c13.wait_for_timeout(80)  # 1.8: Pip in-page confirm
     c13.set_input_files('#restoreFile', {'name': 'b.json', 'mimeType': 'application/json', 'buffer': bk13.encode()}); c13.wait_for_timeout(150); c13.click('#rGo'); c13.click('[data-open]')
     c13.click('#pCopy'); c13.wait_for_timeout(100); ok('T13b backup/restore round-trip gives identical plan text', c13.evaluate('navigator.clipboard.readText()') == txt13)
     # ---------- Milestone 1.2: welcome, example mode, search/filter, shopping mode, a11y ----------
