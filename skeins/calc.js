@@ -1,12 +1,16 @@
 /* Pip's Skein Estimator. Pure functions; no DOM, storage, network or AI.
-   DMC cotton: 8m x 6 strands; usable 15/18; path 6/effectiveCount inches.
-   The path/tail assumptions are approximate, not DMC coverage guarantees.
+   DMC cotton: 8m x 6 strands; provisional community baseline, not a guarantee.
+   2100 full crosses at 14/inch with 2 strands, scaled by size/strand count.
+   See EVIDENCE.md and evidence.json. Sample use already includes discarded tails.
    Browser: FlossFoxSkeins. Node: require('./skeins/calc.js'). */
 (function(root){
 'use strict';
-const MODEL='pip-dmc-full-cross-v1',VERSION=1,MAX_STITCHES=10000000;
+const MODEL='pip-dmc-full-cross-community-v2',VERSION=1,MAX_STITCHES=10000000;
+// VERSION describes saved settings, which remain compatible. MODEL changes the
+// check fingerprint so saved stock decisions can ask for review after recalculation.
+const BASIS=Object.freeze({referenceCount:14,referenceStrands:2,fullCrossesPerSkein:2100,researchDate:'2026-10-14',sourceGroups:5});
 const DEFAULTS=Object.freeze({version:VERSION,enabled:false,fabric:'aida',count:14,over:1,strands:2,extraPercent:20,fullCrosses:false});
-const EXTRAS=[0,10,20,30,50];
+const EXTRAS=[0,10,20,30,50,100];
 const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 function wholeInput(value,min,max,label){
  const s=String(value==null?'':value).trim();
@@ -45,8 +49,9 @@ function compute(n,s,strands){
  if(!Number.isInteger(n)||n<0||n>MAX_STITCHES)return{kind:'review',reason:'Enter the full-cross stitch count for this color.'};
  const ss=strands===undefined||strands===null?s.strands:strands;
  if(!Number.isInteger(ss)||ss<1||ss>6)return{kind:'review',reason:'Check this color’s strand instruction.'};
- const base=n*ss*(6/valid.effective)*0.0254/40,planning=base*(1+s.extraPercent/100);
- return{kind:'estimate',model:MODEL,base,planning,whole:ceilWhole(planning),strands:ss,effective:valid.effective,extraPercent:s.extraPercent};
+ const coverage=BASIS.fullCrossesPerSkein*(valid.effective/BASIS.referenceCount)*(BASIS.referenceStrands/ss);
+ const base=n/coverage,planning=base*(1+s.extraPercent/100);
+ return{kind:'estimate',model:MODEL,base,planning,whole:ceilWhole(planning),coverage,strands:ss,effective:valid.effective,extraPercent:s.extraPercent};
 }
 function estimate(it,s,known,family){
  if(!s||s.enabled!==true)return{kind:'off'};
@@ -95,7 +100,7 @@ function compareProject(items,s,known,fam,collection,dest){
  return result;
 }
 const fmt=n=>n===0?'0':n<0.01?'less than 0.01':String(Number(n.toFixed(2)));
-const assumptions=s=>{const v=validate(s);return v.ok?`DMC cotton · full crosses · ${s.count}-count ${s.fabric==='aida'?'Aida':'linen/evenweave'} over ${s.over} · ${v.effective} stitches/inch · ${s.strands} strands by default · ${s.extraPercent}% extra`:v.error};
+const assumptions=s=>{const v=validate(s);return v.ok?`DMC cotton · full crosses · ${s.count}-count ${s.fabric==='aida'?'Aida':'linen/evenweave'} over ${s.over} · ${v.effective} stitches/inch · ${s.strands} strands by default · ${s.extraPercent}% extra · provisional community baseline (small sample)`:v.error};
 function text(p,known,fam){
  const s=p.skeinEstimator;if(!s||s.enabled!==true)return'';
  const rows=p.items.map(it=>({it,r:requirement(it,s,known,fam(it.code),p.buyBrand)}));
@@ -105,9 +110,9 @@ function text(p,known,fam){
  }
  const omitted=rows.filter(x=>x.r.estimate.kind!=='estimate').length;
  if(omitted)o.push(`${omitted} color(s) omitted: the estimate is incomplete.`);
- o.push('Actual use varies with tension, carries, isolated stitches, starts and unpicking. Ordinary tail waste is modeled; the selected extra is an additional contingency.');
+ o.push('The provisional baseline comes from a small community sample; other stitch sizes and strand counts are scaled estimates. Sample use includes tails. Extra is an additional allowance for carries, frequent starts and unpicking; it cannot guarantee enough thread.');
  return o.join('\n');
 }
-const api={MODEL,VERSION,MAX_STITCHES,DEFAULTS,EXTRAS,wholeInput,validate,normalize,ceilWhole,compute,estimate,requirement,fingerprint,compareStock,compareProject,fmt,assumptions,text};
+const api={MODEL,VERSION,MAX_STITCHES,BASIS,DEFAULTS,EXTRAS,wholeInput,validate,normalize,ceilWhole,compute,estimate,requirement,fingerprint,compareStock,compareProject,fmt,assumptions,text};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.FlossFoxSkeins=api;
 })(typeof window!=='undefined'?window:this);

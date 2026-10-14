@@ -10,7 +10,27 @@ function test(name,fn){try{fn();passed++;console.log('PASS',name)}catch(e){conso
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-10,`${a} != ${b}`);
 const fam=c=>/metallic/.test(DMC[c].name)?'metallic':/variegated/.test(DMC[c].name)?'variegated':'solid';
 const est=(it=row(),s=settings)=>S.estimate(it,s,DMC,fam(it.code));
-test('independent dimensional example',()=>{const e=est();near(e.base,1.3062857142857143);near(e.planning,1.5675428571428571);assert.equal(e.whole,2)});
+test('community baseline example and purchasing allowance',()=>{const e=est();near(e.base,8/7);near(e.planning,48/35);near(e.coverage,2100);assert.equal(e.whole,2)});
+const evidence=JSON.parse(fs.readFileSync(__dirname+'/../skeins/evidence.json','utf8'));
+test('source arithmetic reproduces provisional mean without extra votes for chart rows',()=>{
+ const average=a=>a.reduce((n,x)=>n+x,0)/a.length;
+ const groups=evidence.groups.map(g=>average(g.points.map(p=>{
+  const m=p.measurement;
+  const raw=m?(m.stitchesRange?average(m.stitchesRange):m.stitches)*48/m.singleStrandLengthMetres:p.stitchesPerYardOfSkein?p.stitchesPerYardOfSkein*8/0.9144:p.stitchesPerSkein;
+  near(raw,p.stitchesPerSkein);
+  return raw*14/p.effectiveCount*p.strands/2;
+ })));
+ assert.equal(groups.length,5);groups.forEach((v,i)=>near(v,evidence.result.groupNormalizedYields14[i]));
+ near(average(groups),2108.3511162956484);near(average(groups),evidence.result.mean14);
+ assert.equal(Math.round(average(groups)/100)*100,S.BASIS.fullCrossesPerSkein);
+ assert.equal(new Set(evidence.groups.map(g=>g.id)).size,5);
+ assert.equal(evidence.groups.filter(g=>g.kind==='whole-skein measurement').length,2);
+ assert.equal(evidence.model,S.MODEL);
+});
+test('planning coverage is 1750/2000/2250 at two strands, without a second tail factor',()=>{
+ for(const [count,coverage]of [[14,1750],[16,2000],[18,2250]]){const e=est(row('310',coverage),{...settings,count});near(e.planning,1);assert.equal(e.whole,1)}
+});
+test('larger allowance is valid and still needs rounding per color',()=>{const e=est(row('310',1051),{...settings,extraPercent:100});assert.equal(e.whole,2);near(est(row('310',1050),{...settings,extraPercent:100}).planning,1)});
 test('over-two equivalence and over-one difference',()=>{near(est(row(),{...settings,fabric:'even',count:28,over:2}).planning,est().planning);near(est(row(),{...settings,fabric:'even',count:28,over:1}).planning,est().planning/2)});
 test('per-color strands take precedence',()=>near(est({...row(),strandCount:3}).planning,est().planning*1.5));
 test('extra is applied once',()=>near(est().planning,est(row(),{...settings,extraPercent:0}).planning*1.2));
@@ -62,6 +82,7 @@ test('unknown provenance and partials cannot generate confident shortage',()=>{c
 test('manual Have enough remains checked and receives recheck note',()=>{const p=project();Object.assign(p.decisions['310'],{status:'have',owned:1});const r=P.plan(p);assert.equal(r.have.length,1);assert.equal(r.ready,true);assert.equal(r.threads[0].recheck,true)});
 test('manual Have enough on an assumed row survives missing estimate inputs',()=>{const p=project([row('310',null)]);p.decisions['310'].status='have';assert.equal(P.plan(p).have.length,1);assert.equal(P.plan(p).checkFirst.length,0);assert.equal(P.plan(p).threads[0].recheck,true)});
 test('checked fingerprint clears note until input changes',()=>{const p=project();const e=est(p.items[0]);Object.assign(p.decisions['310'],{status:'have',estimateChecked:S.fingerprint(p.items[0],settings,e)});assert.equal(P.plan(p).threads[0].recheck,false);p.items[0].stitchCount++;assert.equal(P.plan(p).threads[0].recheck,true)});
+test('older model fingerprint asks for review while preserving manual Have enough',()=>{const p=project(),e=est(p.items[0]);Object.assign(p.decisions['310'],{status:'have',estimateChecked:S.fingerprint(p.items[0],settings,e).replace(S.MODEL,'pip-dmc-full-cross-v1')});const r=P.plan(p);assert.equal(r.have.length,1);assert.equal(r.threads[0].recheck,true)});
 test('unknown counts are check-first rather than default one-skein buy',()=>{const p=project([row('310',null)]);assert.equal(P.plan(p).checkFirst.length,1);assert.equal(P.plan(p).lines.length,0)});
 test('zero full-cross amount creates no purchase',()=>assert.equal(P.plan(project([row('310',0)])).lines.length,0));
 test('explicit requirement and estimate coexist without addition',()=>{const p=project([{...row(),qty:3,assumed:0,stated:true}]);assert.equal(P.plan(p).lines[0].q,3);assert.match(P.planText(p),/supplied requirement retained/)});
@@ -71,6 +92,7 @@ test('real parser merged missing counts cannot create a partial estimate',()=>{c
 test('complete-count review resolves partial parser aggregate and persists',()=>{const p=project(context.parse('310 900 stitches\n310').items);p.items[0].stitchCountReviewed=true;assert.equal(P.plan(p).lines[0].q,1);assert.equal(P.normProject(p).items[0].stitchCountReviewed,true)});
 test('legacy project keeps estimation off and original shopping',()=>{const p=project([row()],{skeinEstimator:undefined});assert.equal(p.skeinEstimator,undefined);assert.equal(P.plan(p).lines[0].q,1)});
 test('enabled settings survive normalization and backup validation',()=>{const p=project();const b=P.checkBackup({app:'floss-fox',schema:2,projects:[p]});assert.equal(b.projects[0].skeinEstimator.fullCrosses,true);assert.equal(P.plan(b.projects[0]).lines[0].q,2)});
+test('100% allowance survives actual project backup normalization',()=>{const p=project([row()],{skeinEstimator:{...settings,extraPercent:100}});const b=P.checkBackup({app:'floss-fox',schema:2,projects:[p]});assert.equal(b.projects[0].skeinEstimator.extraPercent,100);assert.equal(P.plan(b.projects[0]).lines[0].q,3)});
 test('newer settings survive import as reviewable invalid data',()=>{const p=project([row()],{skeinEstimator:{...settings,version:99}});assert.equal(p.skeinEstimator.version,99);assert.equal(P.plan(p).checkFirst.length,1)});
 test('per-row type and strands survive backup',()=>{const p=project([{...row(),strandCount:3,stitchType:'full'}]);assert.equal(P.checkBackup({app:'floss-fox',schema:2,projects:[p]}).projects[0].items[0].strandCount,3)});
 test('new estimate CSV preserves source, original quantity and assumptions',()=>{const p=project();const csv=P.csv(p);assert.match(csv,/quantity_source,supplied_skeins,pip_estimated_usage_skeins/);assert.match(csv,/estimated/);assert.match(csv,/20% extra/)});

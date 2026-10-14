@@ -1,0 +1,236 @@
+{
+  "schema": 1,
+  "researchDate": "2026-10-14",
+  "model": "pip-dmc-full-cross-community-v2",
+  "scope": "Standard 8 m, six-strand DMC cotton; full crosses. Core calibration: effective 14–18 count, two strands.",
+  "normalization": "yield14 = yieldAtReportedCount * 14 / effectiveCount * strands / 2. Proportional size/strand scaling is a model assumption.",
+  "weighting": "Equal weight per source group. Average the three normalized Lindy chart points first, so one chart has one vote. Reddit usernames were not retrieved; distinct sources are not verified distinct people.",
+  "groups": [
+    {
+      "id": "reddit-14-length",
+      "platform": "Reddit",
+      "date": "2025-06-17",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1ld12t8",
+      "title": "This is a full skein’s worth of stitches — measured-length comment",
+      "kind": "measured-length extrapolation",
+      "quality": "Self-report, rounded count; whole-skein yield not measured.",
+      "conditions": "One 1 m single strand folded for a two-strand loop start; about 40 full stitches per length on 14-count.",
+      "points": [
+        {
+          "effectiveCount": 14,
+          "strands": 2,
+          "stitchesPerSkein": 1920,
+          "derivation": "40 * 6 * 8",
+          "measurement": {
+            "stitches": 40,
+            "singleStrandLengthMetres": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "reddit-16-length",
+      "platform": "Reddit",
+      "date": "2023-03-28",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/124yihl",
+      "title": "How many stitches can you guys get out of skeins of DMC or hand dyeds like Weeks?",
+      "kind": "measured-length extrapolation",
+      "quality": "Self-report of 32–35 stitches per length; midpoint is our summarization, not a separately observed count.",
+      "conditions": "16-count or 32 over 2; 24 in single strand folded to two strands; loop start; Danish rows; little or no carrying.",
+      "points": [
+        {
+          "effectiveCount": 16,
+          "strands": 2,
+          "stitchesPerSkein": 2637.795275590551,
+          "range": [
+            2519.685039370079,
+            2755.905511811024
+          ],
+          "derivation": "midpoint(32,35) * (8 * 6 / (24 * 0.0254))",
+          "measurement": {
+            "stitchesRange": [
+              32,
+              35
+            ],
+            "singleStrandLengthMetres": 0.6096
+          }
+        }
+      ]
+    },
+    {
+      "id": "reddit-18-skein-2019",
+      "platform": "Reddit",
+      "date": "2019-09-30",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/dbeuc9",
+      "title": "One whole skein of DMC 927 is 2788 stitches on 18 ct, 2 over 1.",
+      "kind": "whole-skein measurement",
+      "quality": "Self-reported full-skein count; raw counting records not independently checked.",
+      "conditions": "18-count, two strands over one; DMC 927; large color block.",
+      "points": [
+        {
+          "effectiveCount": 18,
+          "strands": 2,
+          "stitchesPerSkein": 2788
+        }
+      ]
+    },
+    {
+      "id": "reddit-18-skein-2024",
+      "platform": "Reddit",
+      "date": "2024-06-23",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1dmthpn",
+      "title": "Experiment: How Many Stitches in a Skein of DMC Floss?",
+      "kind": "whole-skein measurement",
+      "quality": "Self-report; retrieved clarification explicitly states 18-count, two strands over one. Video not independently analyzed.",
+      "conditions": "18-count, two strands over one; DMC; efficient loop starts; used threads to very short ends; 13 cut pieces.",
+      "points": [
+        {
+          "effectiveCount": 18,
+          "strands": 2,
+          "stitchesPerSkein": 2920
+        }
+      ]
+    },
+    {
+      "id": "lindy-chart",
+      "platform": "Creator blog",
+      "date": "2021-10-20",
+      "url": "https://www.lindystitches.com/blogs/news/how-many-skeins-of-floss-will-i-need",
+      "chartUrl": "https://cdn.shopify.com/s/files/1/0410/4110/0965/files/How_many_skeins_of_floss_will_I_need_chart_600x600.png?v=1634755463",
+      "title": "How Many Skeins of Floss Will I Need?",
+      "kind": "measured-and-estimated chart",
+      "quality": "Creator says chart combines counting own stitches and estimation. No raw trial lengths, repeats or stitch counts. We visually inspected the original chart; treat as lower-quality calibration evidence.",
+      "conditions": "Two-strand rows for 14/28 over 2, 16/32 over 2 and 18/36 over 2; 210, 250 and 275 stitches per yard of six-strand floss. Exact 8 m skein gives 8/0.9144 yards, not exactly 8.7.",
+      "points": [
+        {
+          "effectiveCount": 14,
+          "strands": 2,
+          "stitchesPerYardOfSkein": 210,
+          "stitchesPerSkein": 1837.270341207349
+        },
+        {
+          "effectiveCount": 16,
+          "strands": 2,
+          "stitchesPerYardOfSkein": 250,
+          "stitchesPerSkein": 2187.2265966754157
+        },
+        {
+          "effectiveCount": 18,
+          "strands": 2,
+          "stitchesPerYardOfSkein": 275,
+          "stitchesPerSkein": 2405.949256342957
+        }
+      ]
+    }
+  ],
+  "result": {
+    "groupNormalizedYields14": [
+      1920,
+      2308.0708661417325,
+      2168.4444444444443,
+      2271.1111111111113,
+      1874.1291597809534
+    ],
+    "mean14": 2108.3511162956484,
+    "median14": 2168.4444444444443,
+    "groupRange14": [
+      1874.1291597809534,
+      2308.0708661417325
+    ],
+    "roundedBaseline14": 2100,
+    "defaultExtraPercent": 20,
+    "defaultPlanningCoverage14": 1750,
+    "redditOnlyMean14": 2166.906605424322,
+    "wholeSkein18OnlyMean": 2854
+  },
+  "excluded": [
+    {
+      "id": "reddit-18-linen-2025",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1ld12t8",
+      "reported": "Approximately 2,300 full crosses from one skein on 36-count linen.",
+      "reason": "Useful context. Two strands/DMC/over two are suggested by the pattern discussion and a commenter, but the retrieved OP text does not explicitly confirm all these actual materials/settings. Keep out of strict mean.",
+      "conditionalYield14": 1788.888888888889
+    },
+    {
+      "id": "reddit-16-linen-2024",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/18ymsil",
+      "reported": "Almost 2,900 full crosses on 32-count linen over two, with efficient loop starts.",
+      "reason": "Actual strand count not explicitly confirmed in retrieved text; loop start alone does not prove two strands. Do not normalize into the mean."
+    },
+    {
+      "id": "reddit-18-mixed-2026",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1rwd52x/fo_a_single_skein_of_floss/",
+      "reported": "2,900 full crosses plus 50 half stitches; 18-count, two strands. Starting skein 1.82 g, scraps 0.09 g.",
+      "reason": "Mixed stitch types. Retain as an efficient-stitching benchmark; do not convert half stitches into an invented full-cross equivalent."
+    },
+    {
+      "id": "reddit-14-rule-1700",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1kl2lnj",
+      "reported": "About 1,700 stitches per skein on 14-count.",
+      "reason": "Unsourced rule of thumb; no firsthand measurement or explicit strand count."
+    },
+    {
+      "id": "reddit-14-rule-1000-1500",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1tpba5h/chat_color_chart_given_but_how_many_skeins_will_i/",
+      "reported": "1,000–1,500 per DMC skein at 14-count, two strands over one.",
+      "reason": "Rule of thumb; no measurement described. Signals potentially much higher consumption than selected efficient reports."
+    },
+    {
+      "id": "reddit-18-rule-2050",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1dmthpn",
+      "reported": "Approximately 2,050 at 18-count, two strands over one, from another commenter.",
+      "reason": "Author explicitly says estimate was not experimentally measured."
+    },
+    {
+      "id": "reddit-20-guess",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/c6vogq",
+      "reported": "Guesses 2,500+ stitches on 20-count, two strands; plans with 2,000.",
+      "reason": "Explicit guess; outside 14–18, two-strand calibration scope."
+    },
+    {
+      "id": "reddit-33in-budget",
+      "url": "https://www.reddit.com/r/CrossStitch/comments/1ufgq1j/chat_floss_use_estimates/",
+      "reported": "Budgets 20 stitches from a doubled 33-inch cut.",
+      "reason": "Conservative personal budget; fabric count and full measurement conditions unavailable."
+    },
+    {
+      "id": "eponases",
+      "url": "https://www.eponases.com/blog/2014/01/cross-stitch-stitches-per-skein/",
+      "reported": "404 stitches per 1 m cut; forecasts 3,232 per skein, rounded down to 3,000 on 18-count.",
+      "reason": "Author does not explicitly give strand count. The accompanying 25-count/one-strand commenter has only an open-ended 4,000+ value and unconfirmed over setting."
+    },
+    {
+      "id": "forum-25-one-strand",
+      "url": "https://www.crossstitchforum.com/viewtopic.php?t=26314",
+      "reported": "Measured 45 stitches per one-strand cut; 16 cuts * 6 strands => 4,320 full crosses on 25-count, one over one; plans with 4,000.",
+      "reason": "Useful firsthand cross-country evidence, but outside core count/strand conditions; retain separately. Conditional size/strand scaling implies only 1,209.6 at 14-count/two strands, showing the limitation of a pooled efficient baseline."
+    },
+    {
+      "id": "other-calculators",
+      "urls": [
+        "https://lordlibidan.com/how-many-stitches-can-you-get-out-of-a-8m-skein/",
+        "https://www.thread-bare.com/tools/cross-stitch-skein-estimator",
+        "https://www.mismatch.co.uk/cross.htm"
+      ],
+      "reason": "Context/cross-check only. Do not count repeated calculator figures as fresh community measurements; Lord Libidan's test table does not explicitly state strands in the retrieved article."
+    }
+  ],
+  "searchCoverage": {
+    "platformsSearched": [
+      "Reddit r/CrossStitch",
+      "YouTube/FlossTube",
+      "Facebook public-index search",
+      "Instagram public-index search",
+      "TikTok public-index search",
+      "creator blogs",
+      "cross-stitch forums"
+    ],
+    "limitations": [
+      "Reddit direct page fetching was unavailable; use indexed post/comment text with explicit source links. No usernames retrieved, so no verified person-level deduplication.",
+      "No independently usable numerical yield report was verified from Facebook, Instagram or YouTube; do not claim those platforms validate this average.",
+      "TikTok retrieval was blocked by robots.txt.",
+      "Repeated retrievals of one post count once. Votes, likes and views have zero numerical weight.",
+      "Search-selected anecdotes favor efficient blocks, not a representative random sample of stitchers or confetti-heavy projects."
+    ]
+  }
+}
