@@ -1,11 +1,34 @@
 /* Inherits Floss Fox's existing colors, type, buttons and spacing. */
-.skein-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0}
-.skein-panel>summary{font-weight:650;min-height:44px;display:flex;align-items:center;gap:8px}
+.skein-panel{background:linear-gradient(180deg,#fffdf8 0%,var(--card) 48%);border:2px solid var(--lime);border-radius:14px;padding:0;margin:14px 0;box-shadow:0 3px 14px #7a4b2a18;overflow:hidden}
+.skein-panel[open]{box-shadow:0 4px 18px #b4532a22}
+.skein-panel>.skein-body{padding:0 14px 14px}
+.skein-panel>summary.skein-summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 14px;font-weight:650;background:linear-gradient(135deg,#fdf1ea 0%,#fffaf2 55%,#f1f5ee 100%);border-bottom:1px solid transparent}
+.skein-panel[open]>summary.skein-summary{border-bottom-color:var(--line)}
+.skein-panel>summary.skein-summary::-webkit-details-marker{display:none}
+.skein-summary-mark{flex:none;width:44px;height:44px;border-radius:12px;background:#fff;border:1.5px solid #e9b9a4;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 1px 4px #7a4b2a14}
+.skein-summary-mark img{width:36px;height:auto;display:block}
+.skein-summary-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.skein-summary-title{font-size:1.02rem;line-height:1.25;color:var(--txt)}
+.skein-summary-title .skein-on{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--lime);color:#fff;font-size:.72rem;font-weight:750;vertical-align:middle}
+.skein-summary-desc{font-size:.86rem;font-weight:500;color:var(--mut);line-height:1.3}
+.skein-summary-chev{flex:none;width:28px;height:28px;border-radius:999px;border:1.5px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:transform .15s ease}
+.skein-panel[open] .skein-summary-chev{transform:rotate(180deg);background:var(--lime);color:#fff}
 .skein-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .skein-fields label{display:block}.skein-fields input,.skein-fields select{width:100%;min-height:44px;font:inherit}
-.skein-confirm{display:flex;align-items:center;gap:8px;min-height:44px;margin:8px 0}.skein-confirm input{width:20px;height:20px;flex:none}
+.skein-toggles{display:grid;gap:10px;margin:12px 0}
+.skein-toggle{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px 12px;align-items:start;margin:0;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer}
+.skein-toggle:has(input:checked){border-color:#e9b9a4;background:#fdf1ea}
+.skein-toggle input{position:absolute;opacity:0;width:1px;height:1px}
+.skein-switch{grid-row:1 / span 2;align-self:center;width:48px;height:28px;border-radius:999px;background:#d8cfc0;border:1.5px solid #cbbba6;position:relative;flex:none;transition:background .15s ease,border-color .15s ease}
+.skein-switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:transform .15s ease}
+.skein-toggle input:checked+.skein-switch{background:var(--lime);border-color:#9a4522}
+.skein-toggle input:checked+.skein-switch::after{transform:translateX(20px)}
+.skein-toggle input:focus-visible+.skein-switch{outline:3px solid #e9a77f;outline-offset:2px}
+.skein-toggle-title{display:block;font-weight:700;font-size:.95rem;line-height:1.25;color:var(--txt)}
+.skein-toggle-hint{display:block;margin-top:3px;font-size:.84rem;line-height:1.35;color:var(--mut);font-weight:500}
 .skein-results{list-style:none;padding:0;margin:12px 0}.skein-results li{padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 .skein-results small{display:block}.skein-assumptions{overflow-wrap:anywhere}.skein-message{display:flex;gap:10px;align-items:center}.skein-message img{width:64px;height:auto;flex:none}.skein-message p{margin:0}
 .skein-note{display:block;font-size:.88rem;margin-top:3px}.skein-error:empty{display:none}.skein-count{max-width:100%}.skein-panel a{color:var(--lime)}
-@media(max-width:440px){.skein-fields{grid-template-columns:1fr}}
+@media(max-width:440px){.skein-fields{grid-template-columns:1fr}.skein-summary-mark{width:40px;height:40px}.skein-summary-mark img{width:32px}}
+@media(prefers-reduced-motion:reduce){.skein-summary-chev,.skein-switch,.skein-switch::after{transition:none}}
 @media print{.skein-panel{display:none!important}.skein-print{white-space:pre-wrap;font-size:.9rem;break-inside:auto}}
