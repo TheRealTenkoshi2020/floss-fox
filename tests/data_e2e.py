@@ -133,7 +133,7 @@ with sync_playwright() as p:
     g.context.close()
 
     # ---- U: Use my collection: preview, apply, undo; owned-not-verified ----
-    coll = {'schema': 1, 'threads': {'310': {'n': 2, 'partial': False, 'restock': False, 'updated': ''}, '321': {'n': 1, 'partial': False, 'restock': False, 'updated': ''}, '815': {'n': 1, 'partial': False, 'restock': False, 'updated': ''}}}
+    coll = {'schema': 1, 'threads': {'310': {'n': 2, 'partial': False, 'restock': False, 'updated': '', 'confirmed': True}, '321': {'n': 1, 'partial': False, 'restock': False, 'updated': ''}, '815': {'n': 1, 'partial': False, 'restock': False, 'updated': ''}}}
     pr = {**rp, 'id': 'u-1', 'name': 'Undo test', 'items': [{'code': '310', 'qty': 2, 'stated': True, 'assumed': 0, 'src': ['310 x2'], 'stitchCount': 1500},
           {'code': '321', 'qty': 3, 'stated': True, 'assumed': 0, 'src': ['321 x3']}, {'code': '815', 'qty': 1, 'stated': False, 'assumed': 1, 'src': ['815']}, {'code': '699', 'qty': 1, 'stated': True, 'assumed': 0, 'src': ['699 x1']}],
           'decisions': {'699': {'status': 'have', 'owned': 1, 'anchor': None, 'recv': None}}}

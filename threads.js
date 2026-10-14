@@ -35,7 +35,7 @@ function core(DMC){
  // project color vs collection: owned | short | missing
  // owned = amount needed is stated and covered; unverified = owned but the amount needed is unknown or (partly) assumed
  function verdict(e,need,assumed){if(!e||state(e)==='out')return'missing';if(need===null||need===undefined)return'unverified';
-  const a=assumed||0,stated=need-a;if(a>0)return e.n>=stated?'unverified':'short';return e.n>=need?'owned':'short'}
+  const a=assumed||0,stated=need-a;if(a>0)return e.n>=stated?'unverified':'short';return e.n>=need?(e.confirmed===true?'owned':'unverified'):'short'}
  // each project is compared with the whole collection on its own: nothing is reserved between projects
  function compare(items,data,opts){const r={owned:[],unverified:[],short:[],missing:[]};const M=opts&&opts.demo?data.demo||{}:data.threads;
   for(const it of items){const e=M[it.code];const v=verdict(e,it.qty,it.assumed);r[v].push({code:it.code,need:it.qty,assumed:it.assumed||0,have:e?e.n:0,partial:!!(e&&e.partial)})}return r}
@@ -133,7 +133,7 @@ window.FlossFoxThreadsUI={render,data:()=>data,KEY,TIPKEY,tip,tipDone:n=>tipSeen
 $('thAddBtn').onclick=addNow;$('thAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!/\n/.test($('thAdd').value)){e.preventDefault();addNow()}});
 $('thSearch').oninput=()=>{q=$('thSearch').value;filter()};
 $('thImport').onclick=()=>{const P=window.FlossFoxProjects&&FlossFoxProjects._store();if(!P)return;let a=0;
- P.projects.forEach(p=>p.items.forEach(it=>{const d=p.decisions[it.code];if(d&&(d.status==='have'||d.recv)&&!data.threads[it.code]){const own=d.owned!==null&&d.owned>=1?Math.floor(d.owned):(it.qty||1);data.threads[it.code]={n:Math.min(999,own),partial:d.owned!==null&&d.owned%1>0,restock:false,updated:new Date().toISOString()};a++}}));
+ P.projects.forEach(p=>p.items.forEach(it=>{const d=p.decisions[it.code];if(d&&(d.status==='have'||d.recv)&&!data.threads[it.code]){const ex=d.owned!==null&&d.owned!==undefined,own=ex?Math.floor(d.owned):(it.qty||1);data.threads[it.code]={n:Math.min(999,own),partial:ex&&d.owned%1>0,restock:false,updated:new Date().toISOString(),...(ex&&d.ownedSource!=='unverified'?{confirmed:true}:{})};a++}}));
  save();render();say(a?`Added ${a} color${a===1?'':'s'} you marked Have enough (or received) in your projects. Colors already in your collection were left alone.`:'Nothing new to add from your projects.')};
 const bk=$('thBackup');if(bk)bk.onclick=()=>{const P=window.FlossFoxProjects;if(P&&P.backup){P.backup();say('Backup downloaded (projects and thread collection).')}};
 const rs=$('thRestore');if(rs)rs.onclick=()=>{const P=window.FlossFoxProjects;if(!P)return;P.showView('projects');$('backupBox').open=true;$('backupBox').scrollIntoView({block:'nearest'});$('restoreFile').click()};

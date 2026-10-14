@@ -13,7 +13,7 @@ t('− never goes below 0',()=>{C.step(d,'321',-5);return d.threads['321'].n===0
 t('+ capped at 999',()=>{d.threads['321'].n=998;C.step(d,'321',5);return d.threads['321'].n===999});
 t('states: stock / partial / out',()=>C.state({n:2,partial:false})==='stock'&&C.state({n:0,partial:true})==='partial'&&C.state({n:0,partial:false})==='out'&&C.state(undefined)==='out');
 // compare
-const coll={schema:1,threads:{'310':{n:2,partial:false,restock:false},'321':{n:1,partial:true,restock:false},'666':{n:0,partial:false,restock:true},'815':{n:0,partial:true,restock:false}}};
+const coll={schema:1,threads:{'310':{n:2,partial:false,restock:false,confirmed:true},'321':{n:1,partial:true,restock:false},'666':{n:0,partial:false,restock:true},'815':{n:0,partial:true,restock:false}}};
 const cmp=C.compare([{code:'310',qty:2},{code:'321',qty:2},{code:'666',qty:1},{code:'815',qty:null},{code:'3865',qty:1},{code:'310',qty:3}].slice(0,5),coll);
 t('owned when skeins >= need',()=>cmp.owned.some(x=>x.code==='310'));
 t('short when some but fewer than needed (partial does not count as a full skein)',()=>cmp.short.length===1&&cmp.short[0].code==='321'&&cmp.short[0].have===1&&cmp.short[0].partial);
@@ -40,4 +40,7 @@ t('migrate: newer schema refused (left untouched)',()=>C.migrate({schema:2,threa
 t('migrate: not collection data -> null',()=>C.migrate(null)===null&&C.migrate({projects:[]})===null&&C.migrate({threads:[]})===null&&C.migrate('x')===null);
 t('migrate: no schema field treated as v1',()=>C.migrate({threads:{'310':{n:1}}}).data.threads['310'].n===1);
 t('core has no DOM/storage/network outside the UI part',()=>{const s=fs.readFileSync(__dirname+'/../threads.js','utf8');const core=s.slice(0,s.indexOf('// ---------------- UI'));return !/document\.|localStorage|fetch\(|XMLHttpRequest|sendBeacon/.test(core.replace(/\/\*[\s\S]*?\*\//g,''))});
+// 1.8.1 S-001: unconfirmed stock (added without an amount) is never verified 'owned'
+t('S-001 unconfirmed 1 skein vs stated x1 = unverified, not owned',()=>{const x=C.empty();C.add(x,parse('310').items);const r=C.compare(parse('310 x1').items,x);return x.threads['310'].confirmed!==true&&r.unverified.length===1&&r.owned.length===0});
+t('S-001 confirmed stock vs stated need stays owned',()=>{const x=C.empty();C.add(x,parse('310 x2').items);return C.compare(parse('310 x1').items,x).owned.length===1});
 console.log(`\nthreads_unit: ${pass} passed, ${fail} failed`);process.exit(fail?1:0);
