@@ -86,8 +86,10 @@ function okCap(c,k,M){M=M||data.threads;const cur=M[c]?M[c].n:0;if(k<=CAP()||k<=
  const yes=confirm(`${k} full skeins of DMC ${lab(c)}? That's more than ${CAP()} of one color. OK keeps ${k}.`);if(!yes)say(`Nothing changed: DMC ${lab(c)} stays at ${cur}.`);return yes}
 function keepFocus(id){const f=document.getElementById(id);if(f){if(f.disabled){const o=document.getElementById(id.replace(/^tm-/,'tp-'));if(o)o.focus()}else f.focus()}}
 const stamp=e=>{e.updated=new Date().toISOString()};
-function removeDemo(){const n=Object.keys(data.demo||{}).length,P=window.FlossFoxProjects,np=P?P._store().projects.filter(x=>x.demo).length:0;
- if(!confirm(`Remove demo data? This removes ${n} demo thread${n===1?'':'s'} and ${np} demo project${np===1?'':'s'}. Your own threads and projects are not touched.`))return;
+async function removeDemo(){const n=Object.keys(data.demo||{}).length,P=window.FlossFoxProjects,np=P?P._store().projects.filter(x=>x.demo).length:0;
+ const ok=await FlossFoxConfirm.ask({pose:'thinking',title:'Wave goodbye to the demo data?',
+  body:`Pip tilts her head. That clears ${n} demo thread${n===1?'':'s'} and ${np} demo project${np===1?'':'s'}. Your own threads and projects stay put.`});
+ if(!ok)return;
  delete data.demo;save();const rp=P&&P.removeDemo?P.removeDemo():0;render();say(`Demo data removed (${n} threads, ${rp} project${rp===1?'':'s'}). Your own data is unchanged.`);$('thAdd').focus()}
 function bind(){const L=$('thList');
  L.querySelectorAll('[data-n]').forEach(i=>i.onchange=()=>{const c=i.dataset.n,M=MM(i),v=i.value.trim(),e=M[c];
@@ -97,7 +99,10 @@ function bind(){const L=$('thList');
  L.querySelectorAll('[data-part]').forEach(x=>x.onchange=()=>{const c=x.dataset.part,e=MM(x)[c];e.partial=x.checked;stamp(e);save();render();keepFocus(x.id)});
  L.querySelectorAll('[data-rs]').forEach(x=>x.onchange=()=>{const c=x.dataset.rs,e=MM(x)[c];e.restock=x.checked;stamp(e);save();render();keepFocus(x.id)});
  L.querySelectorAll('[data-verify]').forEach(b=>b.onclick=()=>{const c=b.dataset.verify,e=MM(b)[c];e.confirmed=true;stamp(e);save();render();keepFocus('tn-'+(b.dataset.m==='d'?'d_':'')+c.replace(/[^\w]/g,'_'));say(`Confirmed ${e.n} full skein${e.n===1?'':'s'} of DMC ${lab(c)}.`)});
- L.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const c=b.dataset.del,M=MM(b);if(!confirm(`Remove ${b.dataset.m==='d'?'demo ':''}DMC ${lab(c)} from your collection?`))return;delete M[c];if(data.demo&&!Object.keys(data.demo).length)delete data.demo;save();render();say(`Removed DMC ${lab(c)}.`);$('thAdd').focus()});
+ L.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const c=b.dataset.del,M=MM(b),demo=b.dataset.m==='d',L=lab(c);
+  const ok=await FlossFoxConfirm.ask({pose:'thinking',title:demo?`Wave goodbye to demo DMC ${L}?`:`Wave goodbye to DMC ${L}?`,
+   body:demo?'Pip tilts her head. Demo threads are just for trying Floss Fox — you can load them again anytime.':'Pip tilts her head. Are you sure? You can add it back anytime.'});
+  if(!ok)return;delete M[c];if(data.demo&&!Object.keys(data.demo).length)delete data.demo;save();render();say(`Removed DMC ${L}.`);$('thAdd').focus()});
  const rd=$('thRemoveDemo');if(rd)rd.onclick=removeDemo;
  $('thFilt').querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{show=b.dataset.show;render();const nb=$('thFilt').querySelector(`[data-show="${show}"]`);if(nb)nb.focus()})}
 function addNow(){const t=$('thAdd').value;if(!t.trim()){say('Type or paste DMC numbers first.');return}
