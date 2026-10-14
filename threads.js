@@ -15,7 +15,7 @@ function core(DMC){
  const known=c=>Object.prototype.hasOwnProperty.call(DMC,c);
  function normEntry(code,e){if(!known(code)||!e||typeof e!=='object')return null;
   const n=Number.isInteger(e.n)&&e.n>=0?Math.min(e.n,MAXN):null;if(n===null)return null;
-  return{n,partial:e.partial===true,restock:e.restock===true,updated:typeof e.updated==='string'?e.updated.slice(0,40):''}}
+  return{n,partial:e.partial===true,restock:e.restock===true,updated:typeof e.updated==='string'?e.updated.slice(0,40):'',...(e.confirmed===true?{confirmed:true}:{})}}
  // -> {data, skipped} | {tooNew:true} | null (not collection data)
  function migrate(d){if(!d||typeof d!=='object'||!d.threads||typeof d.threads!=='object'||Array.isArray(d.threads))return null;
   const v=d.schema===undefined?1:d.schema;if(typeof v!=='number'||v>SCHEMA)return{tooNew:true};
@@ -27,9 +27,10 @@ function core(DMC){
  // add skeins (duplicates merge). items: [{code, qty|null}] from the parser; null/assumed -> 1
  function add(data,items,opts){let added=0,merged=0;const seen=new Set();const M=opts&&opts.demo?(data.demo||(data.demo={})):data.threads;
   for(const it of items){if(!known(it.code))continue;const q=Number.isInteger(it.qty)&&it.qty>0?it.qty:1;const e=M[it.code];
-   if(e){e.n=Math.min(MAXN,e.n+q);e.updated=now();if(!seen.has(it.code))merged++}else{M[it.code]={n:Math.min(MAXN,q),partial:false,restock:false,updated:now()};added++}seen.add(it.code)}
+   const confirmed=Number.isInteger(it.qty)&&it.qty>0&&it.stated!==false&&!(it.assumed>0);
+   if(e){e.n=Math.min(MAXN,e.n+q);e.updated=now();if(!confirmed)delete e.confirmed;if(!seen.has(it.code))merged++}else{M[it.code]={n:Math.min(MAXN,q),partial:false,restock:false,updated:now(),...(confirmed?{confirmed:true}:{})};added++}seen.add(it.code)}
   return{added,merged}}
- function step(data,code,d,opts){const e=(opts&&opts.demo?data.demo||{}:data.threads)[code];if(!e)return null;e.n=Math.max(0,Math.min(MAXN,e.n+d));e.updated=now();return e.n}
+ function step(data,code,d,opts){const e=(opts&&opts.demo?data.demo||{}:data.threads)[code];if(!e)return null;e.n=Math.max(0,Math.min(MAXN,e.n+d));e.confirmed=true;e.updated=now();return e.n}
  const state=e=>!e||(e.n===0&&!e.partial)?'out':e.n===0?'partial':'stock';
  // project color vs collection: owned | short | missing
  // owned = amount needed is stated and covered; unverified = owned but the amount needed is unknown or (partly) assumed
@@ -66,7 +67,7 @@ function row(c,dm){const M=dm?data.demo:data.threads,e=M[c],s=C.state(e),id=(dm?
  return`<li class="tcard th st-${s==='out'?'buy':s==='partial'?'awaiting':'have'}${dm?' demo':''}" data-code="${esc(c)}"${m} data-q="${esc((lab(c)+' '+nm(c)).toLowerCase())}">
  <div class="thtop">${sw(DMC[c].hex)}<div class="thname"><b>DMC ${L}</b>${dm?' <span class="tag demotag">Demo</span>':''} <small class="mut">${esc(nm(c))}</small><br><small class="thst">${ST[s]}${e.restock?' · <b>restock</b>':''}</small></div>
  <div class="stepper" role="group" aria-label="Full skeins of ${dm?'demo ':''}DMC ${L}"><button type="button" class="sec" id="tm-${id}"${m} data-step="-1" data-c="${esc(c)}" aria-label="One fewer skein of ${dm?'demo ':''}DMC ${L}"${e.n?'':' disabled'}>−</button><input type="number" class="thn" id="tn-${id}"${m} data-n="${esc(c)}" value="${e.n}" min="0" max="999" step="1" inputmode="numeric" aria-label="Full skeins of ${dm?'demo ':''}DMC ${L}"><button type="button" class="sec" id="tp-${id}"${m} data-step="1" data-c="${esc(c)}" aria-label="One more skein of ${dm?'demo ':''}DMC ${L}">+</button></div></div>
- <div class="thopts"><label><input type="checkbox" id="tpa-${id}"${m} data-part="${esc(c)}"${e.partial?' checked':''}> Partial skein</label><label><input type="checkbox" id="tr-${id}"${m} data-rs="${esc(c)}"${e.restock?' checked':''}> Restock</label><button type="button" class="ghost small"${m} data-del="${esc(c)}">Remove</button></div></li>`}
+ <div class="thopts"><label><input type="checkbox" id="tpa-${id}"${m} data-part="${esc(c)}"${e.partial?' checked':''}> Partial skein</label><label><input type="checkbox" id="tr-${id}"${m} data-rs="${esc(c)}"${e.restock?' checked':''}> Restock</label><button type="button" class="ghost small"${m} data-del="${esc(c)}">Remove</button></div>${e.n>0&&e.confirmed!==true?`<p class="hint">Check this full-skein count before using it with Pip’s estimates. <button type="button" class="sec small" id="tv-${id}"${m} data-verify="${esc(c)}">Confirm ${e.n} full skein${e.n===1?'':'s'}</button></p>`:''}</li>`}
 const byCode=(a,b)=>{const na=/^\d+$/.test(a)?+a:1e6,nb=/^\d+$/.test(b)?+b:1e6;return na-nb||a.localeCompare(b)};
 function sorted(){return Object.keys(data.threads).sort(byCode)}
 function render(){const V=$('threadsView');if(!V)return;const codes=sorted(),T=data.threads,D=Object.keys(data.demo||{}).sort(byCode);
@@ -91,10 +92,11 @@ function removeDemo(){const n=Object.keys(data.demo||{}).length,P=window.FlossFo
 function bind(){const L=$('thList');
  L.querySelectorAll('[data-n]').forEach(i=>i.onchange=()=>{const c=i.dataset.n,M=MM(i),v=i.value.trim(),e=M[c];
   if(!/^\d+$/.test(v)){say(`"${v}" isn't a whole number of skeins (0 or more), so nothing changed.`);i.value=e.n;return}
-  const k=Math.min(999,+v);if(!okCap(c,k,M)){i.value=e.n;return}e.n=k;stamp(e);save();render();keepFocus(i.id);say(`DMC ${lab(c)}: ${k} full skein${k===1?'':'s'}.`)});
+  const k=Math.min(999,+v);if(!okCap(c,k,M)){i.value=e.n;return}e.n=k;e.confirmed=true;stamp(e);save();render();keepFocus(i.id);say(`DMC ${lab(c)}: ${k} full skein${k===1?'':'s'}.`)});
  L.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const c=b.dataset.c,M=MM(b),id=b.id;if(+b.dataset.step>0&&!okCap(c,M[c].n+1,M))return;C.step(data,c,+b.dataset.step,{demo:b.dataset.m==='d'});save();render();keepFocus(id);say(`DMC ${lab(c)}: ${M[c].n} full skein${M[c].n===1?'':'s'}.`)});
  L.querySelectorAll('[data-part]').forEach(x=>x.onchange=()=>{const c=x.dataset.part,e=MM(x)[c];e.partial=x.checked;stamp(e);save();render();keepFocus(x.id)});
  L.querySelectorAll('[data-rs]').forEach(x=>x.onchange=()=>{const c=x.dataset.rs,e=MM(x)[c];e.restock=x.checked;stamp(e);save();render();keepFocus(x.id)});
+ L.querySelectorAll('[data-verify]').forEach(b=>b.onclick=()=>{const c=b.dataset.verify,e=MM(b)[c];e.confirmed=true;stamp(e);save();render();keepFocus('tn-'+(b.dataset.m==='d'?'d_':'')+c.replace(/[^\w]/g,'_'));say(`Confirmed ${e.n} full skein${e.n===1?'':'s'} of DMC ${lab(c)}.`)});
  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const c=b.dataset.del,M=MM(b);if(!confirm(`Remove ${b.dataset.m==='d'?'demo ':''}DMC ${lab(c)} from your collection?`))return;delete M[c];if(data.demo&&!Object.keys(data.demo).length)delete data.demo;save();render();say(`Removed DMC ${lab(c)}.`);$('thAdd').focus()});
  const rd=$('thRemoveDemo');if(rd)rd.onclick=removeDemo;
  $('thFilt').querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{show=b.dataset.show;render();const nb=$('thFilt').querySelector(`[data-show="${show}"]`);if(nb)nb.focus()})}

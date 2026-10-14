@@ -1,0 +1,53 @@
+/* Project editor component; no independent storage or hidden inventory writes. */
+(function(root){
+'use strict';
+const S=root.FlossFoxSkeins;
+const escape=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initial(project,fabricPreference){
+ if(project.skeinEstimator)return{...project.skeinEstimator};
+ const d={...S.DEFAULTS};
+ try{const pref=JSON.parse(fabricPreference||'null');const f=pref&&pref.v===1&&pref.s;
+  if(f&&typeof f.fabric==='string'){const parts=f.fabric.split(':'),count=parts[0]==='custom'?Number(f.custom):Number(parts[1]);
+   const candidate={...d,fabric:parts[0]==='even'?'even':'aida',count,over:parts[0]==='even'?f.over:1};if(S.validate(candidate).ok)return candidate;
+  }
+ }catch(e){}
+ return d;
+}
+function html(project,known,fam,preference,pipVisible){
+ const s=initial(project,preference),active=s.enabled===true;
+ const rs=project.items.map(it=>({it,r:S.requirement(it,active?s:null,known,fam(it.code),project.buyBrand)}));
+ const estimated=rs.filter(x=>x.r.estimate.kind==='estimate'),missing=rs.filter(x=>x.r.estimate.kind==='review');
+ const guidance=active?(missing.length?'Some colors need a check. Their amounts stay unresolved.':'These amounts are estimates. I’ve added your selected extra allowance.'):'Check the fabric count and strands your pattern uses. No quantities change until you enable estimation.';
+ return`<details class="skein-panel noprint" id="pSkein"${active||!S.validate(s).ok?' open':''}><summary>Estimate skeins with Pip${active?' · on':''}</summary>
+ <div class="skein-message">${pipVisible?'<picture><source type="image/webp" srcset="assets/pip/pip-thinking-160.webp"><img src="assets/pip/pip-thinking-160.png" width="160" height="240" alt="" loading="lazy"></picture>':''}<p>${escape(guidance)}</p></div>
+ <p class="hint">Full crosses in standard DMC cotton. This estimates the complete pattern, not the thread left to finish a work in progress. Existing supplied skein amounts remain in use.</p>
+ <div class="skein-fields">
+ <div><label for="seFabric">Fabric type</label><select id="seFabric"><option value="aida"${s.fabric==='aida'?' selected':''}>Aida</option><option value="even"${s.fabric==='even'?' selected':''}>Linen / evenweave</option></select></div>
+ <div><label for="seCount">Fabric count (per inch)</label><input id="seCount" type="number" min="6" max="80" step="1" inputmode="numeric" value="${escape(s.count)}"></div>
+ <div><label for="seOver">Stitch over</label><select id="seOver"${s.fabric==='aida'?' disabled':''}><option value="1"${s.over===1?' selected':''}>1 ${s.fabric==='aida'?'Aida square':'fabric thread'}</option><option value="2"${s.over===2?' selected':''}>2 fabric threads (linen/evenweave)</option></select></div>
+ <div><label for="seStrands">Strands per finished cross</label><select id="seStrands">${[1,2,3,4,5,6].map(n=>`<option value="${n}"${s.strands===n?' selected':''}>${n} strand${n===1?'':'s'}</option>`).join('')}</select></div>
+ <div><label for="seExtra">Extra above ordinary tail waste</label><select id="seExtra">${S.EXTRAS.map(n=>`<option value="${n}"${s.extraPercent===n?' selected':''}>${n}% extra</option>`).join('')}</select></div></div>
+ <p class="hint">A single strand folded for a two-strand loop start counts as 2 strands. Per-color strand instructions in Details override this default.</p>
+ <label class="skein-confirm"><input type="checkbox" id="seFull"${s.fullCrosses===true?' checked':''}> For colors without a stitch-type instruction, I confirm these counts are full crosses. Specialty rows still need their own check.</label>
+ <label class="skein-confirm"><input type="checkbox" id="seEnabled"${active?' checked':''}> Use Pip’s estimates for missing or wholly assumed quantities in this project</label>
+ <p class="hint">${project.skeinEstimator?'Saved project settings.':'Starting settings — check them against your pattern.'} Your Have enough / Need to buy choices and thread collection are not changed.</p>
+ <div class="row"><button type="button" class="pri" id="seSave">${active?'Update estimates':'Save estimator choices'}</button><button type="button" class="ghost" id="seDefaults">Reset estimator controls</button></div>
+ <p id="seError" class="warn skein-error" role="alert">${S.validate(s).ok?'':escape(S.validate(s).error)}</p>
+ ${active?`<p class="hint skein-assumptions">${escape(S.assumptions(s))}</p><p class="hint">${estimated.length} of ${project.items.length} colors estimated${missing.length?` · ${missing.length} omitted; total incomplete`:''}. Whole-skein figures below are before stock, not additional purchases.</p><ul class="skein-results">${rs.map(({it,r})=>{const e=r.estimate;return`<li><b>DMC ${escape(it.code)}</b>${e.kind==='estimate'?` · ${it.stitchCount.toLocaleString('en-US')} full crosses<small>About ${S.fmt(e.base)} skeins used · about ${S.fmt(e.planning)} with extra · ${e.whole} whole skeins before stock · ${e.strands} strands</small><small>${r.source==='stated'||r.source==='partly-assumed'?'Your supplied requirement is retained.':r.source==='unavailable'?escape(r.reason):'Estimated quantity is used in this project’s preparation plan.'}</small>`:`<small>Check first: ${escape(e.reason||r.reason||'review settings')}</small>`}</li>`}).join('')}</ul>`:''}
+ <details><summary>How Pip estimates</summary><p class="hint">One DMC cotton skein contains 8 meters of six separable strands. The model allows for ordinary tails and a practical path across the front and back. The selected extra is an additional contingency. Tension, long carries, isolated stitches, frequent starts and unpicking change actual use; this cannot guarantee enough thread.</p><p class="hint"><a href="https://www.dmc.com/US/en/products/mouline-stranded-thread/mouline-special" target="_blank" rel="noopener noreferrer">DMC skein details</a> · <a href="https://www.mismatch.co.uk/cross.htm" target="_blank" rel="noopener noreferrer">Calculation basis (section 32)</a></p></details></details>`;
+}
+function bind(container,project,save,onSaved){
+ const get=id=>container.querySelector('#'+id),err=get('seError');if(!err)return;
+ get('seFabric').onchange=()=>{get('seOver').disabled=get('seFabric').value==='aida';if(get('seOver').disabled)get('seOver').value='1'};
+ get('seDefaults').onclick=()=>{const d=S.DEFAULTS;get('seFabric').value=d.fabric;get('seCount').value=d.count;get('seOver').value=d.over;get('seOver').disabled=true;get('seStrands').value=d.strands;get('seExtra').value=d.extraPercent;get('seFull').checked=false;get('seEnabled').checked=false;err.textContent='Controls reset. Save to change this project.'};
+ get('seSave').onclick=()=>{
+  const count=S.wholeInput(get('seCount').value,6,80,'fabric count');
+  if(!count.ok){err.textContent=count.error;get('seCount').setAttribute('aria-invalid','true');get('seCount').focus();return}
+  const candidate={version:S.VERSION,enabled:get('seEnabled').checked,fabric:get('seFabric').value,count:count.value,over:Number(get('seOver').value),strands:Number(get('seStrands').value),extraPercent:Number(get('seExtra').value),fullCrosses:get('seFull').checked};
+  const valid=S.validate(candidate);if(!valid.ok){err.textContent=valid.error;return}
+  if(candidate.enabled&&!candidate.fullCrosses&&!project.items.every(it=>it.stitchType==='full')){err.textContent='Confirm the full-cross counts before using estimates.';get('seFull').focus();return}
+  project.skeinEstimator=candidate;save(project);if(onSaved)onSaved(candidate.enabled?'Pip’s estimates updated. Your stock and manual choices were kept.':'Estimation is off. Original quantities are in use.');
+ };
+}
+root.FlossFoxSkeinsUI={initial,html,bind};
+})(typeof window!=='undefined'?window:this);

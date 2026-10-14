@@ -1,0 +1,11 @@
+/* Inherits Floss Fox's existing colors, type, buttons and spacing. */
+.skein-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0}
+.skein-panel>summary{font-weight:650;min-height:44px;display:flex;align-items:center;gap:8px}
+.skein-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.skein-fields label{display:block}.skein-fields input,.skein-fields select{width:100%;min-height:44px;font:inherit}
+.skein-confirm{display:flex;align-items:center;gap:8px;min-height:44px;margin:8px 0}.skein-confirm input{width:20px;height:20px;flex:none}
+.skein-results{list-style:none;padding:0;margin:12px 0}.skein-results li{padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.skein-results small{display:block}.skein-assumptions{overflow-wrap:anywhere}.skein-message{display:flex;gap:10px;align-items:center}.skein-message img{width:64px;height:auto;flex:none}.skein-message p{margin:0}
+.skein-note{display:block;font-size:.88rem;margin-top:3px}.skein-error:empty{display:none}.skein-count{max-width:100%}.skein-panel a{color:var(--lime)}
+@media(max-width:440px){.skein-fields{grid-template-columns:1fr}}
+@media print{.skein-panel{display:none!important}.skein-print{white-space:pre-wrap;font-size:.9rem;break-inside:auto}}

@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Floss Fox</title>
 <meta name="description" content="Floss Fox: paste a DMC thread list and get Anchor matches plus a printable shopping list. Free, no sign-up, works offline.">
-<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="canonical" href="https://flossfox.com/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="skeins/ui.css"><link rel="canonical" href="https://flossfox.com/">
 <meta property="og:type" content="website"><meta property="og:title" content="Floss Fox: DMC to Anchor floss converter">
 <meta property="og:description" content="Paste a DMC list, get Anchor matches and a printable shopping list. Free.">
 <meta property="og:url" content="https://flossfox.com/"><meta property="og:image" content="https://flossfox.com/og-image.png"><meta name="twitter:card" content="summary_large_image">
@@ -454,4 +454,4 @@ $('cov').textContent=Object.keys(DMC).length+' DMC codes, '+Object.values(DMC).f
 $('psrc').textContent=['dmc','anchor','sullivans','cxcSet'].map(k=>k+': '+PRICES[k].src).join(' · ');$('pdate').textContent=PRICES.checked;
 if(location.search==="?sample"){fromHook=true;$('sample').onclick();fromHook=false}
 </script>
-<script src="projects.js"></script><script src="threads.js"></script><script src="pip.js"></script><script src="tour.js"></script><script>/* 1.6: deep links from the fabric page nav; keep jump links clear of the (possibly wrapped) sticky nav */(function(){const n=document.querySelector("nav.tabs");if(n&&window.ResizeObserver)new ResizeObserver(()=>document.documentElement.style.setProperty("--navh",n.offsetHeight+"px")).observe(n);const m={"#projects":"tabProjects","#threads":"tabThreads","#help":"tabHelp"}[location.hash];if(m)addEventListener("load",()=>{const b=document.getElementById(m);if(b)b.click()})})();</script></body></html>
+<script src="skeins/calc.js"></script><script src="skeins/ui.js"></script><script src="projects.js"></script><script src="threads.js"></script><script src="pip.js"></script><script src="tour.js"></script><script>/* 1.6: deep links from the fabric page nav; keep jump links clear of the (possibly wrapped) sticky nav */(function(){const n=document.querySelector("nav.tabs");if(n&&window.ResizeObserver)new ResizeObserver(()=>document.documentElement.style.setProperty("--navh",n.offsetHeight+"px")).observe(n);const m={"#projects":"tabProjects","#threads":"tabThreads","#help":"tabHelp"}[location.hash];if(m)addEventListener("load",()=>{const b=document.getElementById(m);if(b)b.click()})})();</script></body></html>
