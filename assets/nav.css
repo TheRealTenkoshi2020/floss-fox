@@ -1,0 +1,11 @@
+/* Shared main nav pill style (index, fabric, about, privacy). Matches Fabric's .fcnav. */
+.fcnav a,nav.tabs>button,nav.tabs>a{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid #e6dccb;background:#fffaf2;color:#3b2f28;text-decoration:none;font-weight:650;box-sizing:border-box;min-width:0}
+.fcnav a[aria-current=page],nav.tabs>button[aria-pressed=true],nav.tabs>a[aria-current=page]{background:#5f7a5c;color:#fff;border-color:#5f7a5c}
+nav.tabs>button:hover:not([aria-pressed=true]),.fcnav a:hover:not([aria-current=page]){background:#f3ece0}
+.fcnav a:focus-visible,nav.tabs>button:focus-visible,nav.tabs>a:focus-visible{outline:3px solid #e9a77f;outline-offset:2px}
+nav.tabs span[aria-hidden]{display:inline!important}
+nav.tabs,.fcnav{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:560px){nav.tabs,.fcnav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ nav.tabs>*,.fcnav a{grid-column:auto!important;padding:2px 6px!important;font-size:.88rem!important;line-height:1.15;text-align:center;white-space:normal!important;overflow-wrap:anywhere}}
+@media print{.fcnav,nav.tabs{display:none!important}}
+nav.tabs>a.tablink{border:1.5px solid #e6dccb!important;background:#fffaf2!important;color:#3b2f28!important}

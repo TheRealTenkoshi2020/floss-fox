@@ -1,8 +1,9 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v2.0a-1';
+const CACHE = 'flossfox-v2.0a-2';
 const CORE = [
   './',
   "about.html",
+  "assets/nav.css",
   "fabric.html",
   "fabric/calc.js",
   "fabric/ui.js",
