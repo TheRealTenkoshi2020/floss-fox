@@ -1,5 +1,5 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v1.8.1-2';
+const CACHE = 'flossfox-v2.0a-1';
 const CORE = [
   './',
   "about.html",
@@ -8,12 +8,28 @@ const CORE = [
   "fabric/ui.js",
   "favicon.svg",
   "index.html",
+  "skeins/EVIDENCE.md",
+  "skeins/calc.js",
+  "skeins/evidence.json",
+  "skeins/ui.css",
+  "skeins/ui.js",
   "parse.js",
+  "confirm.js",
   "pip.js",
   "privacy.html",
   "projects.js",
-  "retailers.js",
+  "shop/merchants.js",
+  "shop/merchants.mock.js",
+  "shop/offers.js",
+  "shop/ui.js",
+  "shop/skein-preview-catalog.js",
+  "shop/skein-preview-ui.js",
   "threads.js",
+  "bulk-paste-review.js",
+  "bulk-review.js",
+  "project-requirements.js",
+  "combined-shopping-plan.js",
+  "planner.js",
   "tour.js",
   "assets/icons/icon-192.png",
   "assets/icons/apple-touch-icon.png",
@@ -36,6 +52,8 @@ const CORE = [
   "assets/pip/pip-duplicates-320.webp",
   "assets/pip/pip-face-icon-160.png",
   "assets/pip/pip-face-icon-160.webp",
+  "assets/pip/pip-face-icon-256.png",
+  "assets/pip/pip-face-icon-32.png",
   "assets/pip/pip-face-icon-320.webp",
   "assets/pip/pip-face-icon-64.png",
   "assets/pip/pip-goodbye-160.png",
@@ -98,12 +116,6 @@ const CORE = [
   "assets/pip/pip-thinking-160.png",
   "assets/pip/pip-thinking-160.webp",
   "assets/pip/pip-thinking-320.webp",
-  "confirm.js",
-  "skeins/calc.js",
-  "skeins/ui.js",
-  "skeins/ui.css",
-  "skeins/EVIDENCE.md",
-  "skeins/evidence.json",
   'manifest.webmanifest'
 ];
 self.addEventListener('install', e => {

@@ -1,0 +1,9 @@
+{
+  "description": "Synthetic fixture: shared DMC 310 across two selected projects. Do not import into real user accounts.",
+  "projects": [
+    {"id": "test-a", "name": "Example A", "items": [{"code": "310", "qty": 1, "assumed": 0, "stated": true}], "decisions": {}},
+    {"id": "test-b", "name": "Example B", "items": [{"code": "310", "qty": 1, "assumed": 0, "stated": true}], "decisions": {}}
+  ],
+  "collection": {"schema": 1, "threads": {"310": {"n": 1, "partial": false, "restock": false, "confirmed": true, "updated": "2026-10-14T00:00:00Z"}}},
+  "expected": {"code": "310", "knownRequired": 2, "additionalWholeSkeins": 1, "status": "buy"}
+}

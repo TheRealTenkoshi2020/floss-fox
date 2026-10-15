@@ -127,8 +127,6 @@ const cfNote=n=>`${s2(n)} still need${n===1?'s':''} checking before this list is
 // Pip celebrates once per real not-ready -> ready transition (pose only, no bubble: the headline right beside it already says it).
 const CEL=()=>{setTimeout(()=>{const f=document.getElementById('pCel');if(f){f.classList.remove('pip-cheer')}},4000);
  return`<span class="pcel pipfig pip-cheer" id="pCel" aria-hidden="true"><picture><source type="image/webp" srcset="assets/pip/pip-celebrating-160.webp 160w, assets/pip/pip-celebrating-320.webp 320w" sizes="64px"><img src="assets/pip/pip-celebrating-160.png" width="160" height="243" alt=""></picture></span>`};
-const FL=()=>window.FlossFoxLinks||{buyLinks:()=>'',retailersFor:()=>[]};
-const DISC=()=>`<p class="affdisc noprint"><b>Affiliate links:</b> Floss Fox may earn a small commission at no extra cost to you. <a href="about.html#affiliates">More info</a>${window.FLOSS_FOX_TEST_LINKS?' (Preview: test links, not tracked.)':''}</p>`;
 const CAP=()=>(window.FlossFoxParse&&FlossFoxParse.SKEIN_CAP)||20;
 const plural=(n,w,ws)=>`${n} ${n===1?w:(ws||w+'s')}`;
 // The estimate covers Need to buy only: check-first colors may already be owned, so pricing them would overstate the cost.
@@ -165,9 +163,9 @@ async function delProject(id){const p=proj(id);if(!p)return;
  const ok=await FlossFoxConfirm.ask({pose:'thinking',title:`Wave goodbye to "${p.name}"?`,
   body:"Pip tilts their head. Are you sure? This can't be undone unless you have a backup.",go:'Delete'});
  if(!ok)return;
- store.projects=store.projects.filter(x=>x.id!==id);save();if(openId===id){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}renderList();pstatus(`Deleted "${p.name}".`)}
-function openProject(id,m){if(openId!==id){expanded.clear();filt='all';query='';shopPanel=null}openId=id;mode=m||'edit';renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true;window.scrollTo(0,0);pstatus(`Opened "${proj(id).name}".`)}
-function closeProject(){if(window.FlossFoxThreadsUI)FlossFoxThreadsUI.tipDone('compare');openId=null;mode='edit';$('projEdit').hidden=true;$('projListCard').hidden=false;renderList()}
+ store.projects=store.projects.filter(x=>x.id!==id);save();if(openId===id){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}ensureShop();renderList();pstatus(`Deleted "${p.name}".`)}
+function openProject(id,m){{const pc=$('planCard');if(pc&&!pc.hidden){pc.hidden=true;pc.innerHTML=''}}if(openId!==id){expanded.clear();filt='all';query='';shopPanel=null}openId=id;mode=m||'edit';renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true;window.scrollTo(0,0);pstatus(`Opened "${proj(id).name}".`)}
+function closeProject(){setTimeout(ensureShop);if(window.FlossFoxThreadsUI)FlossFoxThreadsUI.tipDone('compare');openId=null;mode='edit';$('projEdit').hidden=true;$('projListCard').hidden=false;renderList()}
 function destCell(p,it){const d=p.decisions[it.code],dest=p.buyBrand,c=it.code,f=fam(c),L=esc(lab(c));
  if(dest==='anchor'&&f==='solid'&&DMC[c].anchor.length>1||dest==='anchor'&&(c==='WHITE'||c==='B5200')&&DMC[c].anchor.length){const disputed=c==='WHITE'||c==='B5200';
   return`<label class="flbl" for="anc-${esc(c)}">Choose the Anchor match</label><select id="anc-${esc(c)}" data-anc="${esc(c)}"><option value=""${d.anchor?'':' selected'}>Choose a match…</option>${DMC[c].anchor.map(a=>`<option value="${esc(a)}"${d.anchor===a?' selected':''}>Anchor ${esc(a)}</option>`).join('')}</select><p class="hint">${disputed?esc(WHITE_DISPUTE):'The chart lists more than one Anchor match for this color. Pick the one you want to use.'}</p>`}
@@ -246,7 +244,7 @@ function renderCmp(p){const el=$('pCmp'),T=window.FlossFoxThreadsUI;if(!el||!T)r
  bindUndo(p)}
 function bindUndo(p){const b=$('pUndoColl');if(!b)return;b.onclick=()=>{const U=undoBy[p.id];if(!U)return;
  U.forEach(x=>{const d=p.decisions[x.code];if(d)Object.assign(d,x.from)});delete undoBy[p.id];touch(p);renderEditor();renderList();const u=$('pUseColl');if(u)u.focus();pstatus(`Undone: ${s2(U.length)} put back as they were.`)}}
-function renderEditor(){if(mode==='shop')return renderShop();const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;return}
+function renderEditor(){if(mode==='shop')return renderShop();{const sb=$('shopBody');if(sb)sb.textContent=''}const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;return}
  const focusId=document.activeElement&&document.activeElement.id,y=window.scrollY,P=plan(p);
  const unchecked=p.items.filter(it=>!p.decisions[it.code].status).length;
  E.innerHTML=`<div class="noprint"><div class="ptitle"><button type="button" class="ghost" id="pClose">← All projects</button><button type="button" class="pri" id="pShop"><span aria-hidden="true">🛒</span> Shop my list</button></div>
@@ -267,7 +265,7 @@ function renderEditor(){if(mode==='shop')return renderShop();const p=proj(openId
  <details class="pmore" id="pAddBox"><summary>Add more colors</summary><label for="pAdd" class="flbl">Paste colors to add (same format as the Add colors box)</label><textarea id="pAdd" rows="2" style="width:100%;min-height:72px" placeholder="e.g. 3865 x2, 762"></textarea>
  <div class="row"><button type="button" class="sec" id="pAddBtn">Add to project</button></div><div id="pAddErr"></div></details></section>
  <div class="plan" id="pPlan"></div>`;
- bindEditor(p);window.FlossFoxSkeinsUI.bind(E,p,x=>{edited(x);touch(x)},message=>{renderEditor();renderList();pstatus(message);const se=$('pSkein');if(se)se.open=true;const b=$('seSave');if(b)b.focus({preventScroll:true})});renderCmp(p);renderPlan(p,P);applyFilter(P);window.scrollTo(0,y);if(focusId){const f=document.getElementById(focusId);if(f)f.focus({preventScroll:true})}}
+ bindEditor(p);window.FlossFoxSkeinsUI.bind(E,p,x=>{edited(x);touch(x)},message=>{renderEditor();renderList();pstatus(message);const se=$('pSkein');if(se)se.open=true;const b=$('seSave');if(b)b.focus({preventScroll:true})});renderCmp(p);renderPlan(p,P);mountShop(p);applyFilter(P);window.scrollTo(0,y);if(focusId){const f=document.getElementById(focusId);if(f)f.focus({preventScroll:true})}}
 function applyFilter(P){const cards=[...document.querySelectorAll('#pCards .tcard')],q=query.trim().toLowerCase();let n=0;const map={};P.threads.forEach(t=>map[t.it.code]=t);
  cards.forEach(c=>{const t=map[c.dataset.code],show=inFilter(t,filt)&&(!q||c.dataset.search.includes(q));c.hidden=!show;if(show)n++});
  const nr=$('pNoRes');if(nr){nr.hidden=!!n||!cards.length;nr.innerHTML=n?'':`${q?`No colors match “${esc(query)}”${filt!=='all'?' in this view':''}.`:'Nothing here right now.'} <button type="button" class="sec small" id="pNoResClear">Show all colors</button>`;const b=$('pNoResClear');if(b)b.onclick=()=>{query='';filt='all';renderEditor()}}
@@ -286,7 +284,7 @@ function renderPlan(p,P){P=P||plan(p);const cel=!!(window.FlossFoxPip&&FlossFoxP
  ${(n=>n?`<p class="skeins">${s2(n)} use${n===1?'s':''} an assumed amount (1 skein for each line with no amount). Check against your pattern in Details.</p>`:'')(P.threads.filter(t=>['assumed','partly-assumed'].includes(t.req.source)&&t.req.amount!==null).length)}${skeins||colorOnly?`<p class="skeins">Skeins still to get: <b>${skeins}</b>${colorOnly?` · plus ${s2(colorOnly)} with no amount entered, so the total isn't complete`:''}</p>`:''}
  ${steps.length?`<ul class="next noprint">${steps.map(([c,t,b,a],i)=>`<li class="${c}"><span>${esc(t)}</span><button type="button" class="sec small" id="ns-${i}" data-ns="${a}">${b}</button></li>`).join('')}</ul>`:''}
  <nav class="jump noprint" aria-label="Jump to"${P.ready?' hidden':''}><a href="#pThreads">Your colors</a><a href="#pReviewH">Needs attention (${s.review})</a><a href="#pShopH">Shopping list (${P.lines.length})</a></nav></section>`;
- $('pPlan').innerHTML=`<h3 id="pShopH" tabindex="-1">Shopping list</h3><h4>Need to buy</h4>${tb.length&&FL().retailersFor(P.dest,'310').length?DISC():''}<ul>${tb.map(l=>`<li><label><input type="checkbox" id="pb-${esc(l.key)}" data-bought="${esc(l.key)}"> ${li(l)}</label>${FL().buyLinks(P.dest,disp(P.dest,l.to))}${mw(l)}</li>`).join('')}${P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy').map(t=>`<li>DMC ${esc(lab(t.it.code))} · <span class="unk">amount not entered</span>. Add it to check this color off.</li>`).join('')||''}</ul>${tb.length||colorOnly?'':(P.checkFirst.length?'<p class="mut">Nothing confirmed to buy yet.</p>':'')}
+ $('pPlan').innerHTML=`<h3 id="pShopH" tabindex="-1">Shopping list</h3><h4>Need to buy</h4><ul>${tb.map(l=>`<li><label><input type="checkbox" id="pb-${esc(l.key)}" data-bought="${esc(l.key)}"> ${li(l)}</label>${mw(l)}</li>`).join('')}${P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy').map(t=>`<li>DMC ${esc(lab(t.it.code))} · <span class="unk">amount not entered</span>. Add it to check this color off.</li>`).join('')||''}</ul>${tb.length||colorOnly?'':(P.checkFirst.length?'<p class="mut">Nothing confirmed to buy yet.</p>':'')}
  ${P.checkFirst.length?`<h4 id="pCheckH">Check first (${P.checkFirst.length})</h4><p class="cfnote" id="pCfNote"><b>${cfNote(P.checkFirst.length)}</b> These colors aren't on the buy list or in the estimate. Check your stash, then choose Have enough or Need to buy.</p><ul id="pCheck">${P.checkFirst.map(t=>`<li>DMC ${esc(lab(t.it.code))} · needs ${t.it.qty===null?'<span class="unk">amount not entered</span>':esc(needTxt(t.it,p))}: ${esc(cfWhy(t))}</li>`).join('')}</ul>`:''}${shopDone(p,P,tb,aw,'plan')}
  <h4>Bought: check in when it arrives</h4><p class="hint">Ticking a thread as bought doesn't count it as ready. Check it in once you have it in hand.</p><ul>${aw.map(l=>{const k=sid(l.key);return`<li><label><input type="checkbox" id="pb-${esc(l.key)}" data-bought="${esc(l.key)}" checked> ${li(l)}</label>${mw(l)}
   <div class="noprint"><button type="button" class="sec small" id="rb-${k}" data-rb="${esc(l.key)}">I received this thread…</button>
@@ -296,8 +294,13 @@ function renderPlan(p,P){P=P||plan(p);const cel=!!(window.FlossFoxPip&&FlossFoxP
  ${p.notes?`<p class="printonly"><b>Notes:</b> ${esc(p.notes)}</p>`:''}<div class="totals">${esc(costLine(P))}</div>
  <div class="row noprint"><button type="button" class="pri" id="pPrint">Print</button><button type="button" class="sec" id="pCopy">Copy as text</button><button type="button" class="sec" id="pCsv">Download spreadsheet (CSV)</button></div>
  <p id="pMsg" class="hint" role="status" aria-live="polite"></p><textarea id="pFallback" class="noprint" hidden readonly aria-label="Project text to copy" style="width:100%;min-height:120px"></textarea>`;
+ {const w=document.createElement('div');w.id='pWtb';w.hidden=true;$('pPlan').appendChild(w);if(window.FlossFoxShop)FlossFoxShop.render(w,FlossFoxShop.fromProject(p,P),{context:'project'})}   // read-only consumer of the plan
+ if((window.FLOSS_FOX_ENV==='preview'||window.FLOSS_FOX_DIRECT_LINKS===true)&&window.FlossFoxSkeinPreviewUI&&window.FlossFoxShop){   // 2.0A: inline store pills on each Need to buy row
+  const nd=FlossFoxShop.fromProject(p,P).needs,ul=$('pPlan').querySelector('ul');
+  if(ul){const lis=[...ul.children].filter(x=>{const c=x.querySelector(':scope > label > [data-bought]');return c&&!c.checked});
+   if(lis.length===nd.length)FlossFoxSkeinPreviewUI.inline(lis.map((li,i)=>({li,need:nd[i]})))}}
  const el=$('pPlan'),re=msg=>{renderEditor();renderList();if(msg)$('pMsg').textContent=msg};
- $('pSum').querySelectorAll('[data-ns]').forEach(b=>b.onclick=()=>{if(b.dataset.ns==='shop')openShop(p);else{filt='att';query='';renderEditor();$('pThreads').scrollIntoView();const f=$('f-att');if(f)f.focus({preventScroll:true})}});
+ $('pSum').querySelectorAll('[data-ns]').forEach(b=>b.onclick=()=>{if(b.dataset.ns==='shop')showView('shop');else{filt='att';query='';renderEditor();$('pThreads').scrollIntoView();const f=$('f-att');if(f)f.focus({preventScroll:true})}});
  el.querySelectorAll('[data-bought]').forEach(cb=>cb.onchange=()=>{if(cb.checked)p.purchased[cb.dataset.bought]=true;else delete p.purchased[cb.dataset.bought];touch(p);re(cb.checked?'Marked as bought. Check it in when you have it.':'Moved back to Need to buy.')});
  el.querySelectorAll('[data-rb]').forEach(b=>b.onclick=()=>{const k=sid(b.dataset.rb);$('rf-'+k).hidden=false;$('rq-'+k).focus()});
  el.querySelectorAll('[data-rx]').forEach(b=>b.onclick=()=>{$('rf-'+b.dataset.rx).hidden=true});
@@ -305,6 +308,12 @@ function renderPlan(p,P){P=P||plan(p);const cel=!!(window.FlossFoxPip&&FlossFoxP
  bindOut(p,'p')}
 function bindOut(p,pre){$(pre+'Print').onclick=()=>print();$(pre+'Copy').onclick=async()=>{const t=planText(p),m=$(pre+'Msg'),f=$(pre+'Fallback');try{if(!navigator.clipboard)throw 0;await navigator.clipboard.writeText(t);m.textContent='✓ Copied. Paste it into a note or message.';f.hidden=true;if(window.FlossFoxPip)FlossFoxPip.saved(m)}catch(e){m.textContent="Couldn't copy automatically. Select the text below and copy it.";f.value=t;f.hidden=false;f.focus();f.select()}};
  $(pre+'Csv').onclick=()=>{download(csv(p),safe(p.name)+'.csv','text/csv');$(pre+'Msg').textContent='Spreadsheet file downloaded.'}}
+// Shopping list tab: the project's #pPlan (shopping list and everything after it) lives in #shopView, not in the Projects view.
+function mountShop(p){const sb=$('shopBody'),pl=$('pPlan');if(!sb)return;if(pl&&p){sb.appendChild(pl);$('shopProj').textContent='For project: '+p.name}
+ document.querySelectorAll('#projEdit nav.jump a[href^="#"]').forEach(x=>{const id=x.getAttribute('href').slice(1);if(sb.querySelector('#'+id))x.onclick=e=>{e.preventDefault();showView('shop');const t=$(id);if(t){t.scrollIntoView();t.focus({preventScroll:true})}}});shopState()}
+function shopState(){const sb=$('shopBody'),p=openId&&proj(openId),has=!!(p&&sb&&sb.querySelector('#pPlan'));$('shopEmpty').hidden=has;sb.hidden=!has;$('shopProj').hidden=!has;
+ const n=has?sb.querySelectorAll('#pPlan > ul:first-of-type [data-bought]:not(:checked)').length:0;$('shopCount').textContent=n?`(${n})`:''}
+function ensureShop(){const p=openId&&proj(openId);if(!p){const sb=$('shopBody');if(sb)sb.textContent='';shopState();return}if(!$('shopBody').querySelector('#pPlan')||mode==='shop'){const m=mode;mode='edit';renderEditor();mode=m;if(m==='shop')renderEditor()}shopState()}
 function openShop(p){mode='shop';shopPanel=null;query='';renderEditor();window.scrollTo(0,0);const h=$('shH');if(h)h.focus({preventScroll:true})}
 function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;return}const focusId=document.activeElement&&document.activeElement.id,y=window.scrollY,P=plan(p);
  const tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),co=P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy'),done=P.have.filter(t=>!t.cf),need=P.sum.toBuy+co.length;
@@ -313,14 +322,14 @@ function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;
   return`<div class="panel"><label for="sq-${k}"><b>How many skeins did you get?</b> (${l.q} needed)</label><div class="acts"><input type="number" id="sq-${k}" min="1" step="1" inputmode="numeric" class="qbox" aria-describedby="sqh-${k}"><button type="button" class="pri" id="ss-${k}" data-ss="${esc(l.key)}">Save</button><button type="button" class="ghost" data-sc="1">Cancel</button></div><div class="hint" id="sqh-${k}">Enter only what you actually have in hand.</div></div>`};
  const sc=(l,awaiting)=>{const k=sid(l.key);return`<li class="scard" id="sh-${k}" data-q="${esc((disp(P.dest,l.to)+' '+l.from.map(c=>lab(c)+' '+DMC[c].name).join(' ')).toLowerCase())}"><div class="top">${swatches(l)}<div><div class="code">${BRAND[P.dest]} ${esc(disp(P.dest,l.to))}</div>${P.dest!=='dmc'||l.from.length>1?`<div class="for">for DMC ${l.from.map(c=>esc(lab(c))).join(', ')}</div>`:`<div class="for">${esc(cap(DMC[l.from[0]].name))}</div>`}</div><div class="qty">${plural(l.q,'skein')}${l.recvd?`<br><small class="mut">${l.recvd} received</small>`:''}</div></div>
   ${awaiting?`<div class="stat awaiting"><span aria-hidden="true">📦</span> Bought: check it in when it arrives</div><div class="acts"><button type="button" class="pri" id="sr-${k}" data-sr="${esc(l.key)}">I received it</button><button type="button" class="ghost" id="su-${k}" data-su="${esc(l.key)}">Not bought after all</button></div>`
-   :`${FL().buyLinks(P.dest,disp(P.dest,l.to))}<div class="acts"><button type="button" class="pri" id="sb-${k}" data-sb="${esc(l.key)}" aria-expanded="${!!(shopPanel&&shopPanel.key===l.key)}">Bought it</button></div>`}${panel(l,k)}</li>`};
+   :`<div class="acts"><button type="button" class="pri" id="sb-${k}" data-sb="${esc(l.key)}" aria-expanded="${!!(shopPanel&&shopPanel.key===l.key)}">Bought it</button></div>`}${panel(l,k)}</li>`};
  E.innerHTML=`<div class="shophead"><div class="ptitle"><button type="button" class="ghost" id="shBack">← Back to project</button><span class="mut">${esc(p.name)} · ${esc(BRAND[P.dest])}</span></div>
  <h2 id="shH" tabindex="-1">Shopping list</h2>
  <p class="shopsum" role="status" aria-live="polite">${need?`You still need ${s2(need)}.`:P.sum.checkFirst?'Nothing confirmed to buy yet.':(aw.length?'Everything is bought. Check threads in as they arrive.':'Nothing left to buy.')}${P.sum.checkFirst?` <b class="cfnote">${cfNote(P.sum.checkFirst)}</b>`:''}</p>
  ${P.lines.length||co.length?`<p class="hint">Skeins still to get: <b>${P.lines.reduce((a,l)=>a+l.q,0)}</b>${co.length?` · ${s2(co.length)} with no amount entered`:''}</p>`:''}
  ${P.lines.length+co.length>6?`<div class="searchrow"><label class="sr" for="shSearch">Find a thread</label><input type="search" id="shSearch" placeholder="Find a thread, e.g. 310" autocomplete="off"><button type="button" class="sec" id="shSearchClear" hidden>Clear</button></div>`:''}</div>
  ${(n=>n>0?`<p class="hint">${s2(n)} still need${n===1?'s':''} attention in your project, so ${n===1?"it isn't":"they aren't"} on this list yet.</p>`:'')(P.review.filter(t=>!t.cf).length-co.length)}
- ${tb.length&&FL().retailersFor(P.dest,'310').length?DISC():''}
+ 
  <p id="shMsg" class="ok-msg" role="status" aria-live="polite"></p>
  <ul class="shoplist" id="shList">${tb.map(l=>sc(l,false)).join('')}${co.map(t=>`<li class="scard" data-q="${esc((lab(t.it.code)+' '+DMC[t.it.code].name).toLowerCase())}"><div class="top"><span class="bigsw" style="background:${DMC[t.it.code].hex}"></span><div><div class="code">DMC ${esc(lab(t.it.code))}</div><div class="for">${esc(cap(DMC[t.it.code].name))}</div></div><div class="qty unk" style="font-size:.85rem">Amount not entered</div></div><p class="hint">Add the amount in your project to check this color off.</p></li>`).join('')}<li class="noresults" id="shNoRes" hidden></li></ul>
  ${P.checkFirst.length?`<h3 id="shCheckH">Check first (${P.checkFirst.length})</h3><p class="hint">Not on the buy list or in the estimate: you may already have these.</p><ul class="shoplist" id="shCheck">${P.checkFirst.map(t=>`<li class="scard"><div class="top"><span class="bigsw" style="background:${DMC[t.it.code].hex}"></span><div><div class="code">DMC ${esc(lab(t.it.code))}</div><div class="for">${esc(cfWhy(t))}</div></div></div></li>`).join('')}</ul>`:''}
@@ -328,6 +337,7 @@ function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;
  ${aw.length?`<h3>Bought: check in when it arrives (${aw.length})</h3><ul class="shoplist" id="shAw">${aw.map(l=>sc(l,true)).join('')}</ul>`:''}
  <details class="donebox"${done.length&&!tb.length?' open':''}><summary>Done (${done.length})</summary><ul class="shoplist">${done.map(t=>`<li class="scard"><div class="top"><span class="bigsw" style="background:${DMC[t.it.code].hex}"></span><div><div class="code">DMC ${esc(lab(t.it.code))}</div><div class="for">${t.state==='received'?`Received ${t.recv} × ${BRAND[P.dest]} ${esc(disp(P.dest,t.r.to))}`:'You have enough'}</div></div></div>${t.state==='received'?`<div class="acts"><button type="button" class="ghost" id="sx-${esc(t.it.code)}" data-sx="${esc(t.it.code)}">Undo received</button></div>`:''}</li>`).join('')||'<li class="mut" style="list-style:none">Nothing yet.</li>'}</ul></details>
  <details class="shopextra"><summary>Copy, download or print</summary><div class="row"><button type="button" class="sec" id="sCopy">Copy as text</button><button type="button" class="sec" id="sCsv">Download spreadsheet (CSV)</button><button type="button" class="sec" id="sPrint">Print</button></div><p id="sMsg" class="hint" role="status" aria-live="polite"></p><textarea id="sFallback" hidden readonly aria-label="Shopping list text to copy" style="width:100%;min-height:120px"></textarea></details>`;
+ {const w=document.createElement('div');w.id='shWtb';w.hidden=true;const a=$('shAw');(a||$('shList')).after(w);if(window.FlossFoxShop)FlossFoxShop.render(w,FlossFoxShop.fromProject(p,P),{context:'shop'})}
  const re=msg=>{renderEditor();renderList();if(msg)$('shMsg').textContent=msg};
  $('shBack').onclick=()=>{mode='edit';query='';renderEditor();window.scrollTo(0,0)};
  E.querySelectorAll('[data-sb]').forEach(b=>b.onclick=()=>{shopPanel={key:b.dataset.sb,step:'choose'};renderShop();const f=$('sw-'+sid(b.dataset.sb));if(f)f.focus({preventScroll:true})});
@@ -341,7 +351,7 @@ function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;
  const ss=$('shSearch');if(ss){const run=()=>{const q=ss.value.trim().toLowerCase();let n=0;E.querySelectorAll('#shList .scard').forEach(c=>{const sh=!q||c.dataset.q.includes(q);c.hidden=!sh;if(sh)n++});const nr=$('shNoRes');nr.hidden=!q||!!n;nr.textContent=`Nothing on your list matches “${ss.value}”.`;$('shSearchClear').hidden=!q};ss.oninput=run;$('shSearchClear').onclick=()=>{ss.value='';run();ss.focus()}}
  bindOut(p,'s');window.scrollTo(0,y);if(focusId){const f=document.getElementById(focusId);if(f)f.focus({preventScroll:true})}}
 function bindEditor(p){const E=$('projEdit'),re=()=>{edited(p);touch(p);renderEditor();renderList()};
- $('pClose').onclick=closeProject;$('pShop').onclick=()=>openShop(p);$('pDelete').onclick=()=>delProject(p.id);
+ $('pClose').onclick=closeProject;$('pShop').onclick=()=>showView('shop');$('pDelete').onclick=()=>delProject(p.id);
  $('pName').onchange=()=>{p.name=$('pName').value.trim().slice(0,100)||'Untitled project';touch(p);renderList();renderPlan(p)};
  $('pNotes').onchange=()=>{p.notes=$('pNotes').value.slice(0,2000);touch(p);renderPlan(p)};
  $('pDest').onchange=()=>{p.buyBrand=$('pDest').value;re()};
@@ -436,11 +446,11 @@ function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBo
   .catch(()=>{R.hidden=false;R.innerHTML='<b class="warn">Couldn\'t read that file. Nothing was changed.</b>'})}
 
 // ---- Wiring ----
-function showView(v){const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp']};
+function showView(v,fromHash){{const pc=$('planCard');if(pc&&!pc.hidden){pc.hidden=true;pc.innerHTML=''}}if(!fromHash&&location.hash!=='#'+v)history.pushState(null,'','#'+v);const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp'],shop:['shopView','tabShop']};
  const T=window.FlossFoxThreadsUI;if(T&&!$('threadsView').hidden&&v!=='threads')T.leaveView();if(T&&!$('projectsView').hidden&&v!=='projects')T.tipDone('compare');
  for(const k in V){const on=k===v;$(V[k][0]).hidden=!on;const t=$(V[k][1]);t.setAttribute('aria-pressed',String(on));if(on)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')}
- if(v==='threads'&&T)T.render();if(v==='projects'){renderList();if(openId&&proj(openId)){renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true}else{$('projEdit').hidden=true;$('projListCard').hidden=false}}window.scrollTo(0,0)}
-$('tabConvert').onclick=()=>showView('convert');$('tabProjects').onclick=()=>showView('projects');$('tabThreads').onclick=()=>showView('threads');$('tabHelp').onclick=()=>showView('help');
+ if(v==='threads'&&T)T.render();if(v==='shop')ensureShop();if(v==='projects'){renderList();if(openId&&proj(openId)){renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true}else{$('projEdit').hidden=true;$('projListCard').hidden=false}}window.scrollTo(0,0)}
+$('tabConvert').onclick=()=>showView('convert');$('tabProjects').onclick=()=>showView('projects');$('tabThreads').onclick=()=>showView('threads');$('tabHelp').onclick=()=>showView('help');addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(['convert','threads','projects','shop','help'].includes(v))showView(v,true)});addEventListener('popstate',()=>{const v=location.hash.slice(1)||'convert';if(['convert','threads','projects','shop','help'].includes(v))showView(v,true)});$('tabShop').onclick=()=>showView('shop');$('shopGoProj').onclick=()=>showView('projects');
 $('newEmpty').onclick=()=>{if($('newEmpty').disabled)return;$('newEmpty').disabled=true;setTimeout(()=>$('newEmpty').disabled=false,600);const p={id:newId(),name:'Untitled project',notes:'',buyBrand:'dmc',status:'planning',items:[],decisions:{},purchased:{},created:nowISO(),updated:nowISO()};store.projects.push(p);save();renderList();openProject(p.id)};
 $('backupBtn').onclick=backup;undoImportRow();$('restoreFile').onchange=e=>{restoreFile(e.target.files[0]);e.target.value=''};
 let saving=false;
@@ -451,7 +461,7 @@ $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg')
  $('copymsg').innerHTML=(ok?`✓ Saved "${esc(p.name)}" in this browser.`:`Saved for now only: this browser isn't letting Floss Fox store projects, so download a backup from My projects.`)+` <button type="button" class="pri small" id="openSaved">Check what you have →</button>`;$('newProjName').value='';renderList();
  $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('copymsg'))};
 load();renderList();
-window.FlossFoxProjects={plan,planText,csv,migrate,backup,restoreFile,checkBackup,PREKEY,_store:()=>store,KEY,canSave:()=>canSave,
+window.FlossFoxProjects={estimateInput,plan,planText,csv,migrate,backup,restoreFile,checkBackup,PREKEY,_store:()=>store,KEY,canSave:()=>canSave,
  replaceAll:data=>{store={schema:SCHEMA,projects:data.projects};canSave=true;storeMsg('');openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false;const ok=save();renderList();return ok},
  removeDemo:()=>{const n=store.projects.filter(x=>x.demo).length;store.projects=store.projects.filter(x=>!x.demo);if(openId&&!proj(openId)){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}save();renderList();return n},showView,open:id=>{showView('projects');openProject(id)},add:p=>{const m=normProject(p);if(!m)return null;store.projects.push(m);save();renderList();return m.id}}; // for tests and debugging
 })();

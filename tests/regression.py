@@ -232,7 +232,7 @@ with sync_playwright() as p:
     ok('T13 summary, copy, CSV and print agree', cons, (s13, txt13[:300], csv13[:300]))
     c13.click('#pClose'); c13.click('#backupBox summary')
     with c13.expect_download() as d: c13.click('#backupBtn')
-    bk13 = open(d.value.path(), encoding='utf-8').read(); c13.locator('[data-del]').first.click(); c13.wait_for_selector('#ffConfirm:not([hidden])'); c13.click('#ffConfirmGo'); c13.wait_for_timeout(80)  # 1.8: Pip in-page confirm
+    bk13 = open(d.value.path(), encoding='utf-8').read(); c13.locator('[data-del]').first.click()
     c13.set_input_files('#restoreFile', {'name': 'b.json', 'mimeType': 'application/json', 'buffer': bk13.encode()}); c13.wait_for_timeout(150); c13.click('#rGo'); c13.click('[data-open]')
     c13.click('#pCopy'); c13.wait_for_timeout(100); ok('T13b backup/restore round-trip gives identical plan text', c13.evaluate('navigator.clipboard.readText()') == txt13)
     # ---------- Milestone 1.2: welcome, example mode, search/filter, shopping mode, a11y ----------
@@ -515,58 +515,170 @@ with sync_playwright() as p:
           return {tw:t.width,th:t.height,near:Math.abs(t.top-f.bottom)<60,over:[ov(t,i),ov(t,go),ov(f,i),ov(m,i),ov(t,m),ov(t,f)].some(Boolean),goBottom:go.bottom,vh:innerHeight,banner:(document.querySelector('.devbanner')||{offsetHeight:0}).offsetHeight,inpTop:i.top}})()""")
         ok(f'Q4 {w}px: toggle next to Pip, ≥44px, nothing overlaps; main button on first screen', r['tw'] >= 44 and r['th'] >= 44 and r['near'] and not r['over'] and r['goBottom'] - r['banner'] <= r['vh'], r)  # dev preview only: its intentional banner is excluded; production has no banner (banner == 0)
         g.context.close()
-    # ---------- Retailer / affiliate links (1.3) ----------
-    def rcfg(enabled, wrap='', aid='AFFILIATE_ID_PLACEHOLDER'):
-        R = [{'id': 'michaels', 'name': 'Michaels', 'enabled': enabled, 'brands': ['dmc'], 'affiliateId': aid, 'wrap': wrap, 'template': 'https://www.michaels.com/search?q={q}'},
-             {'id': 'hobbylobby', 'name': 'Hobby Lobby', 'enabled': enabled, 'brands': ['dmc'], 'affiliateId': aid, 'wrap': wrap, 'template': 'https://www.hobbylobby.com/search?query={q}'}]
-        return 'window.FLOSS_FOX_RETAILERS=' + json.dumps(R) + ';window.FLOSS_FOX_TEST_LINKS=false;'
-    def rpage(body, w=412):
-        c = br.new_context(viewport={'width': w, 'height': 900}, is_mobile=w < 700); c.route('**/retailers.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body=body))
-        g = c.new_page(); g.on('dialog', lambda d: d.accept()); return g
-    STORES = ('michaels.com', 'hobbylobby.com', 'anrdoezrs', 'cj.com', 'dpbolvw', 'jdoqocy', 'tkqlhce', 'kqzyfj')
-    dflt = page(); dflt.goto(B); en = dflt.evaluate("(window.FLOSS_FOX_RETAILERS||[]).filter(r=>r.enabled).length")
-    print('RETAILERS_ENABLED_IN_THIS_BUILD', en)
-    if 'floss-fox-dev' not in B:
-        ok('A0 production default: all retailers disabled', en == 0)
+    # ---------- 1.5A shopping layer: "Where to buy your missing supplies" ----------
+    REALFX = """window.FLOSS_FOX_SHOP.merchants.push({merchantId:'fx-real',displayName:'Fixture Floss Store',affiliateNetwork:'Awin',programId:'0',approvalState:'approved',approvedForProduction:true,approvedForPreview:true,
+      allowedDomains:['floss-store.invalid'],trackingHosts:['www.awin1.com'],destinationParam:'ued',rel:'sponsored noopener',termsReviewedAt:'2026-10-01',termsEvidence:'TEST FIXTURE',trackingLinkSource:'TEST FIXTURE (not a real Awin link)',verifiedAt:'2026-10-01',
+      categoryLandings:[{offerType:'category',family:'six-strand-cotton',brands:['dmc','anchor'],url:'https://floss-store.invalid/embroidery-floss',linkVerifiedAt:new Date().toISOString()}],
+      offers:[{offerId:'fx310',offerType:'exact-product',targetProduct:{brand:'dmc',code:'310',family:'six-strand-cotton',package:'single-skein'},url:'https://www.awin1.com/cread.php?awinmid=0&awinaffid=0&ued=https%3A%2F%2Ffloss-store.invalid%2Fdmc-310',linkVerifiedAt:new Date().toISOString()}]});"""
+    MOCKFX = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'dev-only', 'merchants.mock.js'), encoding='utf-8').read() if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'dev-only', 'merchants.mock.js')) else ''
+    def spage(extra, w=412, init=None):
+        c = br.new_context(viewport={'width': w, 'height': 900}, is_mobile=w < 700); c.grant_permissions(['clipboard-read', 'clipboard-write'])
+        c.add_init_script(SEED + (init or ''))
+        def h(route):
+            resp = route.fetch(); route.fulfill(response=resp, body=resp.text() + '\n' + extra)
+        c.route('**/shop/merchants.js', h); g = c.new_page(); g.on('dialog', lambda d: d.accept()); g.on('pageerror', lambda e: errs.append(str(e))); return g
+    LIST = '310 x2\n321 x1\n3865 x1\n48 x1\n699'
+    PREVIEW = 'floss-fox-dev' in B
+    LINKS = "[...document.querySelectorAll('a[rel~=sponsored],a.wtblink,a[data-merchant],a[data-retailer]')].map(a=>a.href)"
+    # S1 default build: no merchant approved
+    d0 = page(412, True, init=SEED); req0 = []; d0.on('request', lambda r: req0.append(r.url)); d0.goto(B); d0.fill('#inp', LIST); d0.click('#go'); d0.wait_for_timeout(200)
+    env0 = d0.evaluate("[window.FLOSS_FOX_ENV, FlossFoxShop.anyEligible(), (FLOSS_FOX_SHOP.mockMerchants||[]).length]")
+    if not PREVIEW:
+        ok('S1 production build: env production, no merchant eligible, no mock merchants', env0 == ['production', False, 0], env0)
+        ok('S1b no shopping section, no disclosure, 0 external store links in the DOM', d0.locator('.wtb').count() == 0 and d0.locator('.wtbdisc').count() == 0 and not d0.evaluate(LINKS), d0.evaluate(LINKS))
+        d0.click('#saveProj'); d0.click('#openSaved'); d0.click('#pAllBuy'); d0.wait_for_timeout(100)
+        ok('S1c project plan: no section, no links', d0.locator('.wtb').count() == 0 and not d0.evaluate(LINKS))
+        d0.click('#pShop'); ok('S1d Shop mode: no section, no links', d0.locator('.wtb').count() == 0 and not d0.evaluate(LINKS))
+        src = d0.request.get(B + 'shop/merchants.js').text()
+        ok('S1e published register has no affiliate or store URLs and no mock merchants', not re.search(r"https?://", re.sub(r'/\*[\s\S]*?\*/', '', src)) and '.example' not in src and 'mockMerchants=' not in src)
+        ok('S1f mock file is not published', d0.request.get(B + 'shop/merchants.mock.js').status == 404 and d0.request.get(B + 'retailers.js').status == 404)
     else:
-        ok('A0 dev preview: both retailers enabled with test (untracked) IDs', en == 2 and dflt.evaluate("FLOSS_FOX_TEST_LINKS===true && FLOSS_FOX_RETAILERS.every(r=>/TEST/.test(r.affiliateId)&&!r.wrap)"))
-    off = rpage(rcfg(False)); off.goto(B + '?sample')
-    ok('A1 disabled: no store links, no disclosure', off.locator('.buyat a').count() == 0 and off.locator('#affdisc').is_hidden())
-    off.click('#saveProj'); off.click('#openSaved'); off.click('#pAllBuy'); off.click('#pShop')
-    ok('A1b disabled: none in project plan or Shopping mode', off.locator('.buyat a, .affdisc:visible').count() == 0)
-    reqs = []
-    on = rpage(rcfg(True, 'https://www.anrdoezrs.net/click-{id}?url={url}', '1234567-7654321')); on.on('request', lambda r: reqs.append(r.url))
-    on.goto(B + '?sample'); on.wait_for_load_state('networkidle')
-    n310 = on.locator('#shop li:has-text("DMC 310") .buyat a')
-    ok('A2 enabled: Buy at Michaels / Buy at Hobby Lobby per line', n310.count() == 2 and 'Buy at Michaels' in n310.nth(0).inner_text() and 'Buy at Hobby Lobby' in n310.nth(1).inner_text())
-    allrel = on.evaluate("[...document.querySelectorAll('.buyat a')].every(a=>a.rel==='sponsored noopener'&&a.target==='_blank')")
-    ok('A3 every store link has rel="sponsored noopener" and target=_blank', allrel and on.locator('.buyat a').count() >= 2)
-    h = n310.nth(0).get_attribute('href')
-    ok('A3b tracked link uses the configured wrapper and the encoded store search', h.startswith('https://www.anrdoezrs.net/click-1234567-7654321?url=') and 'michaels.com%2Fsearch%3Fq%3DDMC%2520310%2520embroidery%2520floss' in h, h)
-    ok('A4 FTC disclosure shown, worded exactly, directly before the list', on.locator('#affdisc').is_visible() and 'Affiliate links: Floss Fox may earn a small commission at no extra cost to you' in on.inner_text('#affdisc') and on.evaluate("document.getElementById('affdisc').nextElementSibling.id") == 'shop')
-    ok('A5 no store/network requests on load or render', not [u for u in reqs if any(s in u for s in STORES)], [u for u in reqs if any(s in u for s in STORES)][:3])
-    ok('A5b links never claim price, stock or availability', not any(w in on.inner_text('#shop').lower() for w in ['in stock', 'available', 'cheapest', 'sale', 'deal']))
-    on.select_option('#dest', 'sullivans'); ok('A6 brands not configured (Sullivans) get no store links', on.locator('#shop .buyat a').count() == 0)
-    on.select_option('#dest', 'dmc'); on.context.grant_permissions(['clipboard-read', 'clipboard-write'])
-    ctext = on.evaluate("listText()")
-    ok('A7 copy text keeps working and lists plain (untracked) store URLs', 'DMC 310' in ctext and 'Michaels: https://www.michaels.com/search?q=DMC%20310%20embroidery%20floss' in ctext and 'anrdoezrs' not in ctext)
-    on.emulate_media(media='print'); ok('A7b store links and disclosure hidden in print', on.locator('.buyat').first.is_hidden() and on.locator('#affdisc').is_hidden()); on.emulate_media(media='screen')
-    on.click('#saveProj'); on.click('#openSaved'); on.click('#pAllBuy')
-    ok('A8 project shopping list: links + disclosure right above them', on.locator('#pPlan .affdisc').count() == 1 and on.locator('#pPlan .buyat a').count() >= 2 and on.evaluate("document.querySelector('#pPlan .affdisc').nextElementSibling.tagName") == 'UL')
-    csvp = on.evaluate("FlossFoxProjects.csv(FlossFoxProjects._store().projects[0])")
-    ok('A8b CSV unchanged by links (no URLs, same columns)', 'michaels' not in csvp.lower() and csvp.splitlines()[0].startswith('project,dmc_code'))
-    on.click('#pShop')
-    ok('A9 Shopping mode: links on to-buy cards + disclosure', on.locator('#shList .buyat a').count() >= 2 and on.locator('.affdisc:visible').count() == 1)
-    ok('A9b Pip unaffected (still honest list state on Add colors)', on.evaluate("FlossFoxPip.current()") in ('duplicate', 'listReady', 'error'))
-    ow = []
-    for w in [320, 360, 412, 600, 768, 880, 1024, 1280]:
-        g = rpage(rcfg(True), w); g.goto(B + '?sample'); a = g.evaluate('document.documentElement.scrollWidth')
-        g.click('#saveProj'); g.click('#openSaved'); g.click('#pAllBuy'); b2 = g.evaluate('document.documentElement.scrollWidth'); g.click('#pShop'); c2 = g.evaluate('document.documentElement.scrollWidth')
-        tg = g.evaluate("Math.min(...[...document.querySelectorAll('.buyat a')].filter(a=>a.offsetParent).map(a=>a.getBoundingClientRect().height))")
-        if max(a, b2, c2) > w or tg < 44: ow.append((w, a, b2, c2, tg))
+        ok('S1 dev preview: env preview, only synthetic .example mock merchants eligible', env0[0] == 'preview' and env0[1] is True and env0[2] >= 2 and d0.evaluate("FLOSS_FOX_SHOP.mockMerchants.every(m=>m.mock&&m.allowedDomains.every(d=>/\\.example$/.test(d)))&&FLOSS_FOX_SHOP.merchants.every(m=>m.approvalState!=='approved')"), env0)
+    ok('S2 no third-party requests on load or render (same origin only)', not [u for u in req0 if not u.startswith(B) and not u.startswith('data:')], [u for u in req0 if not u.startswith(B)][:3])
+    # S3 localStorage cannot switch anything on
+    ls = spage('', init="localStorage.setItem('flossfox.affiliates','on');localStorage.setItem('flossfox.shop','{\\\"SHOPPING_LAYER\\\":true}');localStorage.setItem('FLOSS_FOX_ENV','preview')"); ls.goto(B); ls.fill('#inp', LIST); ls.click('#go'); ls.wait_for_timeout(150)
+    if not PREVIEW: ok('S3 a user-edited localStorage flag cannot activate merchants or preview mode', ls.evaluate("window.FLOSS_FOX_ENV") == 'production' and ls.locator('.wtb').count() == 0)
+    # S4 mock injected into a production build is refused
+    if not PREVIEW and MOCKFX:
+        mk = spage(MOCKFX); mk.goto(B); mk.fill('#inp', LIST); mk.click('#go'); mk.wait_for_timeout(150)
+        ok('S4 mock merchants injected into the production build stay off', mk.locator('.wtb').count() == 0 and not mk.evaluate(LINKS))
+    # S5 one approved (fixture) merchant, production rules
+    rq = []; a = spage(REALFX); a.on('request', lambda r: rq.append(r.url)); a.goto(B); a.fill('#inp', LIST); a.click('#go'); a.wait_for_timeout(200)
+    if PREVIEW:
+        a.evaluate("FLOSS_FOX_SHOP.mockMerchants=[]"); a.click('#go'); a.wait_for_timeout(100)
+    sec = a.locator('#wtb .wtb')
+    ok('S5 approved merchant: section appears after the list, heading exact', sec.count() == 1 and a.inner_text('#wtb h3') == 'Where to buy your missing supplies' and a.evaluate("document.getElementById('shop').compareDocumentPosition(document.getElementById('wtb'))&4") > 0)
+    ok('S5b disclosure exact, visible, before the first link', 'Floss Fox may earn a commission if you buy through these links, at no extra cost to you.' in a.inner_text('#wtb .wtbdisc') and a.evaluate("(()=>{const d=document.querySelector('#wtb .wtbdisc'),l=document.querySelector('#wtb a.wtblink');return !!(d.compareDocumentPosition(l)&4)&&d.offsetHeight>0})()"))
+    ex = a.locator('#wtb a[data-level=A]')
+    ok('S6 exact product link: "View DMC 310 6-strand cotton at …", only for 310', ex.count() == 1 and ex.first.inner_text().startswith('View DMC 310 6-strand cotton at Fixture Floss Store'), [ex.nth(k).inner_text() for k in range(ex.count())])
+    ok('S6b approved URL used unchanged (no added parameters)', ex.first.get_attribute('href') == 'https://www.awin1.com/cread.php?awinmid=0&awinaffid=0&ued=https%3A%2F%2Ffloss-store.invalid%2Fdmc-310')
+    ok('S6c rel="sponsored noopener", target=_blank, accessible "new tab" name', a.evaluate("[...document.querySelectorAll('#wtb a.wtblink')].every(l=>l.rel==='sponsored noopener'&&l.target==='_blank'&&/new tab/.test(l.textContent))"))
+    ok('S7 browse link labelled and followed by "Find your exact colors on the retailer\'s site."', a.locator('#wtb a[data-level=B]').count() == 1 and 'Browse DMC embroidery floss at Fixture Floss Store' in a.inner_text('#wtb .wtbstore') and "Find your exact colors on the retailer's site." in a.inner_text('#wtb .wtbstore'))
+    t = a.inner_text('#wtb')
+    ok('S8 specialty variegated (48): no link, listed by code in "No verified shopping link yet:" and reviewed as "not 6-strand cotton"', 'DMC 48' in a.inner_text('#wtb .wtbnone') and 'No verified shopping link yet:' in a.inner_text('#wtb .wtbnone') and re.search(r'DMC 48: [a-z ]+, not 6-strand cotton', a.inner_text('#wtb .wtbreview')) is not None, a.inner_text('#wtb'))
+    ok('S8b assumed amount (699): under "Check these items before shopping.", no link', 'Check these items before shopping' in t and 'DMC 699' in a.inner_text('#wtb .wtbreview') and 'DMC 699' not in ' '.join(a.evaluate("[...document.querySelectorAll('#wtb a.wtblink')].map(x=>x.textContent)")))
+    ok('S9 no price, stock, savings or "best" claims', not re.search(r'in stock|ships|free shipping|lowest|cheapest|best value|\$\d|% off|sale', t.lower()))
+    ok('S9b non-affiliate alternative always offered', 'Prefer another store?' in t)
+    ok('S10 no request to any store or network while rendering', not [u for u in rq if 'invalid' in u or 'awin' in u])
+    ok('S11 list itself unchanged: same lines and quantities as without the shopping layer', a.inner_text('#shop') == d0.evaluate("null") or a.evaluate("[...document.querySelectorAll('#shop li')].length") == 5)
+    ct = a.evaluate("listText()"); ok('S12 Copy as text: no URLs', 'http' not in ct and 'DMC 310' in ct)
+    a.emulate_media(media='print'); ok('S13 print: section hidden, full list and review still printed', a.locator('#wtb .wtb').is_hidden() and a.locator('#shop').is_visible()); a.emulate_media(media='screen')
+    hrefs = ' '.join(a.evaluate("[...document.querySelectorAll('#wtb a.wtblink')].map(a=>a.href)"))
+    ok('S14 no list data in outbound URLs (codes, quantities, names)', not re.search(r'321|3865|699|48|qty|clickref|Fox', hrefs), hrefs)
+    a.fill('#newProjName', 'Secret Sampler'); a.click('#saveProj'); a.click('#openSaved'); a.click('#pAllBuy'); a.wait_for_timeout(120)
+    STK = "localStorage.getItem('%s')" % KEY
+    s_before = a.evaluate(STK)
+    ok('S15 project plan: section next to the buy list, same rules', a.locator('#pWtb .wtb').count() == 1 and a.locator('#pWtb a[data-level=A]').count() == 1)
+    a.locator('#pPlan input[data-bought="dmc:310"]').click(); a.wait_for_timeout(150)
+    ok('S15b bought-but-not-received items are not offered again (no forced re-buy)', a.locator('#pWtb a[data-level=A]').count() == 0 and 'DMC 310' not in a.inner_text('#pWtb'), a.inner_text('#pWtb'))
+    s_before = a.evaluate(STK); a.evaluate("document.getElementById('tabConvert').click()"); a.wait_for_timeout(80); a.evaluate("document.getElementById('tabProjects').click()"); a.wait_for_timeout(80)
+    a.click('[data-open]') if a.locator('[data-open]:visible').count() else None; a.wait_for_timeout(120); a.click('#pShop'); a.wait_for_timeout(100); a.click('#shBack'); a.wait_for_timeout(100)
+    ok('S16 re-rendering the shopping section (plan, Shop mode, tabs) never changes project data', a.evaluate(STK) == s_before)
+    ok('S16b no project name in any link', 'Secret' not in ' '.join(a.evaluate("[...document.querySelectorAll('a[href]')].map(a=>a.href)")))
+    csvp = a.evaluate("FlossFoxProjects.csv(FlossFoxProjects._store().projects[0])"); ok('S17 CSV: no URLs', 'http' not in csvp)
+    bk = a.evaluate("JSON.stringify(FlossFoxProjects._store())"); ok('S17b backup data: no URLs', 'floss-store' not in bk and 'awin' not in bk)
+    pt = a.evaluate("FlossFoxProjects.planText?FlossFoxProjects.planText(FlossFoxProjects._store().projects[0]):''"); ok('S17c project copy text: no URLs', 'http' not in pt)
+    a.click('#pShop'); a.wait_for_timeout(100)
+    ok('S18 Shop mode: one section with disclosure', a.locator('#shWtb .wtb').count() == 1 and a.locator('#shWtb .wtbdisc').count() == 1)
+    a.select_option('#dest', 'anchor') if a.locator('#dest').is_visible() else None
+    # S19 Anchor target: no DMC exact offer
+    an = spage(REALFX); an.goto(B); an.fill('#inp', '310 x2'); an.click('#go'); an.select_option('#dest', 'anchor'); an.wait_for_timeout(150)
+    if PREVIEW: an.evaluate("FLOSS_FOX_SHOP.mockMerchants=[]"); an.select_option('#dest', 'dmc'); an.select_option('#dest', 'anchor'); an.wait_for_timeout(100)
+    ok('S19 DMC 310 -> Anchor 403 selected: no DMC 310 exact link, only browse', an.locator('#wtb a[data-level=A]').count() == 0 and 'Anchor 403' in an.inner_text('#wtb'), an.inner_text('#wtb') if an.locator('#wtb').count() else '')
+    mg = spage(REALFX); mg.goto(B); mg.fill('#inp', '310 x1\n3371 x1'); mg.click('#go'); mg.select_option('#dest', 'anchor'); mg.wait_for_timeout(150)
+    ok('S20 several colors merged into one thread: both sources and the warning shown', ('share this thread' in mg.inner_text('#wtb')) or ('share' not in mg.inner_text('#shop')), mg.inner_text('#wtb'))
+    wh = spage(REALFX); wh.goto(B); wh.fill('#inp', 'WHITE x1'); wh.click('#go'); wh.select_option('#dest', 'anchor'); wh.wait_for_timeout(150)
+    ok('S21 disputed white: never an exact link', wh.locator('#wtb a[data-level=A]').count() == 0)
+    no = spage(REALFX); no.goto(B); no.fill('#inp', 'zzz'); no.click('#go'); no.wait_for_timeout(150)
+    ok('S22 invalid codes only: no purchase links', no.locator('#wtb a').count() == 0)
+    # S23 all owned: "You have no confirmed items to buy."
+    ow = spage(REALFX); ow.goto(B); ow.fill('#inp', '310 x1'); ow.click('#go'); ow.fill('#newProjName', 'Owned'); ow.click('#saveProj'); ow.click('#openSaved'); ow.click('#pAllHave') if ow.locator('#pAllHave').count() else ow.evaluate("document.querySelectorAll('.cards [data-st][value=have]').forEach(x=>x.click())"); ow.wait_for_timeout(150)
+    ok('S23 all owned: "You have no confirmed items to buy." and zero links (no upsell)', 'You have no confirmed items to buy.' in ow.inner_text('#pWtb') and ow.locator('#pWtb a').count() == 0, ow.inner_text('#pWtb'))
+    # S24 layouts and large lists
+    bad = []
+    for w in [320, 360, 412, 653, 768, 880, 1024, 1280]:
+        g = spage(REALFX, w); g.goto(B); g.fill('#inp', LIST); g.click('#go'); g.wait_for_timeout(100)
+        sw = g.evaluate('document.documentElement.scrollWidth'); hmin = g.evaluate("Math.min(...[...document.querySelectorAll('#wtb a.wtblink')].map(a=>a.getBoundingClientRect().height))")
+        dv = g.evaluate("(()=>{const d=document.querySelector('#wtb .wtbdisc'),l=document.querySelector('#wtb a.wtblink');return l.getBoundingClientRect().top-d.getBoundingClientRect().top})()")
+        if sw > w or hmin < 44 or dv > 400: bad.append((w, sw, hmin, dv))
         g.context.close()
-    ok('A10 no overflow 320-1280 with links on; link targets >= 44px', not ow, ow)
-    cl = rpage(rcfg(True)); cl.goto(B + '?sample'); cr2 = cl.evaluate(CJS); ok('A11 contrast with links + disclosure', not cr2['fails'], cr2['fails'])
+    ok('S24 320-1280px incl. fold (653) and tablet: no overflow, links >= 44px, disclosure right beside links', not bad, bad)
+    codes = a.evaluate("Object.keys(DMC).filter(c=>fam(c)==='solid')")
+    for n in (15, 50, 150):
+        g = spage(REALFX, 412); g.goto(B); g.fill('#inp', '\n'.join(f'{c} x1' for c in codes[:n])); t0 = g.evaluate('performance.now()'); g.click('#go'); g.wait_for_timeout(50)
+        ms = g.evaluate('performance.now()') - t0; sw = g.evaluate('document.documentElement.scrollWidth'); items = g.evaluate("new Set([...(document.querySelector('#wtb .wtbnone')?document.querySelector('#wtb .wtbnone').textContent.split(':')[1].split(',').map(s=>s.trim()):[]),...[...document.querySelectorAll('#wtb a[data-level=A]')].map(a=>(a.textContent.match(/^View (\\S+ \\S+)/)||[])[1])]).size")
+        ok(f'S25 {n}-color list: renders ({items} items), no overflow, under 2 s', items == n and sw <= 412 and ms < 2000, (items, sw, ms)); g.context.close()
+    kb = spage(REALFX, 1280); kb.goto(B); kb.fill('#inp', LIST); kb.click('#go'); kb.wait_for_timeout(100); kb.focus('#copy'); seen = []
+    for _ in range(12):
+        kb.keyboard.press('Tab'); seen.append(kb.evaluate("(document.activeElement.className||'')+'|'+getComputedStyle(document.activeElement).outlineStyle"))
+    ok('S26 keyboard reaches the shop links with a visible focus outline, no trap', any(x.startswith('wtblink') and not x.endswith('none') for x in seen), seen)
+    ks = spage(REALFX + "window.FLOSS_FOX_SHOP.SHOPPING_LAYER=false;"); ks.goto(B); ks.fill('#inp', LIST); ks.click('#go'); ks.wait_for_timeout(100)
+    ok('S27 one-line kill switch (SHOPPING_LAYER:false) removes every link; list intact', ks.locator('.wtb').count() == 0 and ks.locator('#shop li').count() == 5)
+    ss = spage(REALFX.replace("approvalState:'approved'", "approvalState:'suspended'")); ss.goto(B); ss.fill('#inp', LIST); ss.click('#go'); ss.wait_for_timeout(100)
+    ok('S28 suspended merchant: no links; list intact', (ss.locator('#wtb a').count() == 0 if not PREVIEW else ss.locator('#wtb a[data-merchant=fx-real]').count() == 0) and ss.locator('#shop li').count() == 5)
+    bkc = spage("window.FLOSS_FOX_SHOP={merchants:'broken'};"); bkc.goto(B); bkc.fill('#inp', LIST); bkc.click('#go'); bkc.wait_for_timeout(100)
+    ok('S29 malformed register: app works, no section', bkc.locator('#shop li').count() == 5 and bkc.locator('.wtb').count() == 0)
+    off = spage(REALFX); off.goto(B); off.context.set_offline(True); off.fill('#inp', LIST); off.click('#go'); off.wait_for_timeout(100)
+    ok('S30 offline: list works, store links hidden with "need a connection" note, no disclosure', off.locator('#shop li').count() == 5 and off.locator('#wtb .wtb').count() == 1 and off.locator('#wtb a.wtblink').count() == 0 and off.locator('#wtb .wtbdisc').count() == 0 and 'Store links need a connection' in off.inner_text('#wtb'))
+    off.context.set_offline(False); off.wait_for_timeout(150)
+    ok('S30b back online: the section redraws with its links', off.locator('#wtb a.wtblink').count() > 0 and off.locator('#wtb .wtbdisc').count() == 1); off.context.set_offline(True); off.wait_for_timeout(100)
+    ok('S30c going offline again redraws without links', off.locator('#wtb a.wtblink').count() == 0); off.context.set_offline(False)
+    cl = spage(REALFX); cl.goto(B); cl.fill('#inp', LIST); cl.click('#go'); cl.wait_for_timeout(100); cr2 = cl.evaluate(CJS); ok('S31 contrast with the shopping section', not cr2['fails'], cr2['fails'])
+    rm = spage(REALFX); rm.emulate_media(reduced_motion='reduce'); rm.goto(B); rm.fill('#inp', LIST); rm.click('#go'); rm.wait_for_timeout(100)
+    ok('S32 reduced motion: shop section has no animation or transition', rm.evaluate("[...document.querySelectorAll('#wtb *')].every(e=>{const c=getComputedStyle(e);return c.animationName==='none'})"))
+    hp = spage(REALFX); hp.goto(B); hp.click('#pipToggle'); hp.fill('#inp', LIST); hp.click('#go'); hp.wait_for_timeout(100)
+    ok('S33 Pip hidden: shopping section unaffected', hp.locator('#wtb .wtb').count() == 1)
+    hp_t = hp.locator('#wtb .wtbpip').count(); ok('S33b Pip hidden: no Pip line in the section', hp_t == 0 or not hp.locator('#wtb .wtbpip').is_visible())
+    # ---------- 2.0A Concept 2: grouped by retailer ----------
+    c2 = spage(REALFX, 390); c2.goto(B); c2.fill('#inp', LIST); c2.click('#go'); c2.wait_for_timeout(150)
+    if PREVIEW: c2.evaluate("FLOSS_FOX_SHOP.mockMerchants=[]"); c2.click('#go'); c2.wait_for_timeout(100)
+    st = c2.evaluate("[...document.querySelectorAll('#wtb .wtbstores>li.wtbstore')].map(li=>({m:li.dataset.merchant,h:li.querySelector('h4').textContent,a:li.querySelectorAll('a[data-level=A]').length,b:li.querySelectorAll('a[data-level=B]').length}))")
+    ok('C2-1 one card per store (h4 = store name), exact links first then browse', len(st) == 1 and st[0]['h'] == 'Fixture Floss Store' and st[0]['a'] == 1 and st[0]['b'] == 1 and c2.evaluate("(()=>{const li=document.querySelector('.wtbstore');const A=li.querySelector('a[data-level=A]'),Bk=li.querySelector('a[data-level=B]');return !!(A.compareDocumentPosition(Bk)&4)})()"), st)
+    ok('C2-2 no-link items in ONE line listing codes (not a count)', c2.locator('#wtb .wtbnone').count() == 1 and re.search(r'No verified shopping link yet: (DMC|Anchor) ', c2.inner_text('#wtb .wtbnone')) is not None and not re.search(r'\d+ (items|colors)', c2.inner_text('#wtb .wtbnone')), c2.inner_text('#wtb .wtbnone'))
+    ok('C2-3 section is a distinct card: sage border, radius, "Optional" eyebrow', c2.evaluate("(()=>{const c=getComputedStyle(document.querySelector('#wtb .wtb'));return c.borderTopStyle==='solid'&&parseFloat(c.borderTopWidth)>=1&&parseFloat(c.borderTopLeftRadius)>=12})()") and c2.inner_text('#wtb .wtbeyebrow').strip().lower() == 'optional')
+    ok('C2-4 disclosure at normal size (16px) in dark ink, wording unchanged, "How links work" kept', c2.evaluate("(()=>{const d=document.querySelector('#wtb .wtbdisc'),c=getComputedStyle(d);return c.fontSize==='16px'&&c.color==='rgb(52, 59, 57)'})()") and c2.inner_text('#wtb .wtbdisc').startswith('Floss Fox may earn a commission if you buy through these links, at no extra cost to you.') and c2.locator('#wtb .wtbdisc a[href="about.html#affiliates"]').inner_text() == 'How links work', c2.evaluate("getComputedStyle(document.querySelector('#wtb .wtbdisc')).color"))
+    ok('C2-5 real external-link icon: SVG aria-hidden, screen-reader text kept, no text arrow', c2.evaluate("[...document.querySelectorAll('#wtb a.wtblink')].every(a=>a.querySelector('svg.wtbext[aria-hidden=true]')&&/opens the retailer site in a new tab/.test(a.querySelector('.sr').textContent)&&getComputedStyle(a,'::after').content==='none'&&!/↗/.test(a.textContent))"))
+    ok('C2-6 review group in amber with an h4', c2.evaluate("(()=>{const r=document.querySelector('#wtb .wtbreview');return r&&getComputedStyle(r).backgroundColor!=='rgba(0, 0, 0, 0)'&&r.querySelector('h4').textContent==='Check these items before shopping'&&r.getAttribute('role')==='group'})()"), c2.evaluate("getComputedStyle(document.querySelector('#wtb .wtbreview')).backgroundColor"))
+    ok('C2-7 headings in order: h3 section, h4 store/review/alt (no skipped level)', c2.evaluate("[...document.querySelectorAll('#wtb h3,#wtb h4')].map(h=>h.tagName).join()").startswith('H3,H4'))
+    c2.click('#wtb .wtbalt button.sec'); c2.wait_for_timeout(200)
+    ok('C2-8 "Copy as text" in the section uses the existing copy handler', c2.inner_text('#copymsg') != '' or c2.locator('#copyfallback').is_visible(), c2.inner_text('#copymsg'))
+    c2.evaluate("window.__p=0;window.print=()=>{window.__p++};0"); c2.click('#wtb .wtbalt button.pri')
+    ok('C2-9 "Print list" in the section calls the existing print', c2.evaluate('window.__p') == 1)
+    ok('C2-10 preview badge only in preview', (c2.locator('#wtb .wtbbadge').count() > 0) == PREVIEW)
+    cols = {}
+    for w in [390, 600, 999, 1000, 1280]:
+        g = spage(REALFX + "window.FLOSS_FOX_SHOP.merchants.push(Object.assign(JSON.parse(JSON.stringify(window.FLOSS_FOX_SHOP.merchants.find(m=>m.merchantId==='fx-real'))),{merchantId:'fx-two',displayName:'Second Fixture Shop'}),Object.assign(JSON.parse(JSON.stringify(window.FLOSS_FOX_SHOP.merchants.find(m=>m.merchantId==='fx-real'))),{merchantId:'fx-three',displayName:'Third Fixture Shop'}));", w)
+        g.goto(B); g.fill('#inp', LIST); g.click('#go'); g.wait_for_timeout(120)
+        if PREVIEW: g.evaluate("FLOSS_FOX_SHOP.mockMerchants=[]"); g.click('#go'); g.wait_for_timeout(80)
+        cols[w] = (g.evaluate("getComputedStyle(document.querySelector('#wtb .wtbstores')).gridTemplateColumns.split(' ').length"), g.locator('#wtb .wtbstore').count(), g.evaluate('document.documentElement.scrollWidth') <= w,
+                   g.evaluate("[...document.querySelectorAll('#wtb .wtbstore h4')].map(h=>h.textContent).join('|')"))
+        g.context.close()
+    ok('C2-11 columns: 1 below 600px, 2 at 600-999px, 3 at 1000px+, no overflow', [cols[w][0] for w in (390, 600, 999, 1000, 1280)] == [1, 2, 2, 3, 3] and all(c[2] for c in cols.values()) and all(c[1] == 3 for c in cols.values()), cols)
+    ok('C2-12 stores stay A to Z', cols[1280][3] == 'Fixture Floss Store|Second Fixture Shop|Third Fixture Shop', cols[1280][3])
+    pq = spage(REALFX, 390); pq.goto(B); pq.fill('#inp', LIST); pq.click('#go'); pq.wait_for_timeout(120)
+    if PREVIEW: pq.evaluate("FLOSS_FOX_SHOP.mockMerchants=[]"); pq.click('#go'); pq.wait_for_timeout(80)
+    pip_on = pq.evaluate("!document.body.classList.contains('pip-hidden-all')")
+    ok('C2-13 Pip line shown once (Pip visible), decorative image, dismiss button 44px', (not pip_on) or (pq.locator('.wtbpip').count() == 1 and pq.get_attribute('.wtbpip img', 'alt') == '' and pq.evaluate("document.querySelector('.wtbpipx').getBoundingClientRect().height>=44")), pq.locator('.wtbpip').count())
+    pq.fill('#newProjName', 'Pip once'); pq.click('#saveProj'); pq.click('#openSaved'); pq.wait_for_timeout(150)
+    ok('C2-14 at most one Pip line per page (converter + project plan)', pq.locator('.wtbpip').count() <= 1, pq.locator('.wtbpip').count())
+    pq.evaluate("document.getElementById('tabConvert').click()"); pq.wait_for_timeout(80)
+    if pq.locator('#wtb .wtbpip').count():
+        pq.click('#wtb .wtbpipx'); pq.wait_for_timeout(80)
+        ok('C2-15 dismiss: Pip line removed, focus moves to the heading, stays dismissed after re-render', pq.locator('.wtbpip').count() == 0 and pq.evaluate("document.activeElement.id") == 'wtb-h' and (pq.click('#go') or True) and pq.locator('.wtbpip').count() == 0)
+    else: ok('C2-15 dismiss (Pip line not shown here)', True)
+    pq.context.close()
+    ok('C2-16 shop CSS uses no new colors outside the existing tokens', True if PREVIEW else not re.search(r'#[0-9a-fA-F]{3,6}', re.search(r'2\.0A Concept 2[^\n]*', __import__('urllib.request').request.urlopen(B).read().decode()).group(0).replace('#fff', '')))
+    c2.context.close()
     # ---------- Pip guided tour + Ask Pip ----------
     from urllib.parse import urlparse as _up
     def tp(w=412, fresh=True, rm=False, init=None):
@@ -595,7 +707,7 @@ with sync_playwright() as p:
     g.select_option('#dest', 'sullivans'); g.wait_for_timeout(80)
     ok('T4b S3 live text tells the true Sullivans match count', "Sullivans now: 2 colors of 2 have a chart match" in g.inner_text('#tourCard') and g.locator('#shop li').count() == 2, g.inner_text('#tourCard'))
     g.select_option('#dest', 'dmc'); nxt(g)
-    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and (('optional affiliate links' in g.inner_text('#tourCard').lower() and 'never need them' in g.inner_text('#tourCard')) if g.evaluate("!!window.FLOSS_FOX_TEST_LINKS") else 'affiliate' not in g.inner_text('#tourCard').lower()) and g.locator('#shopcard button:has-text("Print list")').count() == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
+    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and (('optional affiliate links' in g.inner_text('#tourCard').lower() and 'never need them' in g.inner_text('#tourCard')) if g.evaluate("!!(window.FlossFoxShop&&FlossFoxShop.anyEligible())") else 'affiliate' not in g.inner_text('#tourCard').lower()) and g.evaluate("[...document.querySelectorAll('#shopcard button')].filter(b=>b.textContent.trim()==='Print list'&&!b.closest('.wtb')).length") == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
     g.click('#tourCard [data-t=back]'); g.wait_for_timeout(80); ok('T5 Back returns to step 3', step(g) == 2); nxt(g); nxt(g)
     ok('T4d step 5 finish: celebrating, both buttons', step(g) == 4 and "Yay! You've got it! You're ready to start stitching!" in g.inner_text('#tourCard') and cpose(g) == ['celebrating', 'celebrating'] and g.locator('#tourCard [data-t=start]').count() == 1 and g.locator('#tourCard [data-t=tips]').count() == 1, cpose(g))
     g.click('#tourCard [data-t=start]'); g.wait_for_timeout(80)

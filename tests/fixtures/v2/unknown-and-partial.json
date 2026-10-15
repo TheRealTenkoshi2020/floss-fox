@@ -1,0 +1,8 @@
+{
+  "description": "Synthetic fixture: uncertain quantity and partial skein never give a false-ready result.",
+  "projects": [
+    {"id": "test-a", "name": "Unknown", "items": [{"code": "321", "qty": null, "assumed": 0, "stated": false}, {"code": "310", "qty": 1.2, "assumed": 0, "stated": true}], "decisions": {}}
+  ],
+  "collection": {"schema": 1, "threads": {"321": {"n": 4, "partial": false, "restock": false, "confirmed": true, "updated": "2026-10-14T00:00:00Z"}, "310": {"n": 1, "partial": true, "restock": false, "confirmed": true, "updated": "2026-10-14T00:00:00Z"}}},
+  "expected": {"complete": false, "321": "review", "310": "review", "310PossibleWholeSkeinsToBuy": [0,1]}
+}

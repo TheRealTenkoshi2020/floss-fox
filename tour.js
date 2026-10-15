@@ -18,7 +18,7 @@ const BR={dmc:'DMC',sullivans:'Sullivans',anchor:'Anchor'};
 const pipImg=(pose,cls)=>`<picture><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img class="${cls}" src="assets/pip/pip-${pose}-160.png" width="160" height="240" alt="" decoding="async"></picture>`;
 const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
 const TOUR_SAMPLE='310\n321\n666\n699';
-const linksOn=()=>!!(window.FlossFoxLinks&&FlossFoxLinks.enabled&&FlossFoxLinks.enabled());
+const linksOn=()=>!!(window.FlossFoxShop&&FlossFoxShop.anyEligible());
 const inView=v=>!$(v).hidden;
 const toConvert=()=>{if(!inView('convertView'))$('tabConvert').click()};
 
