@@ -30,7 +30,7 @@ with sync_playwright() as p:
   ok(t+'target _blank, rel noopener noreferrer, no sponsored, kind direct',all(x['t']=='_blank' and x['r']=='noopener noreferrer' and x['k']=='direct' and x['tr']=='false' for x in pills),pills)
   ok(t+'no pills for 3865 check-first/unconfirmed, 415 owned, 48 specialty',not({'3865','415','48'}&set(got)))
   note=g.evaluate("[...document.querySelectorAll('#shopView .ff-skein-direct')].map(e=>e.textContent)")
-  ok(t+'one direct-link note',note==['Direct store links. Floss Fox earns nothing from these.'],note)
+  ok(t+'one direct-link note',note==["These are plain store links, and Floss Fox doesn't earn anything from them. Before you order, double-check the color, thread type, amount and availability on the store's site."],note)
   dm=g.evaluate("(()=>{const h=document.body.innerHTML.replace(/<script[\\s\\S]*?<\\/script>/g,'');return [h.match(/.{60}(\\(demo\\)|\\.example).{40}/g),!!document.querySelector('.wtb'),(FLOSS_FOX_SHOP.mockMerchants||[]).length]})()")
   ok(t+'no demo stores without flag',dm==[None,False,0],dm)
   ok(t+'no h-overflow',g.evaluate('document.documentElement.scrollWidth')<=w)
