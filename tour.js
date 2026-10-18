@@ -17,8 +17,11 @@ const destV=()=>($('dest')||{}).value||'dmc';
 const BR={dmc:'DMC',sullivans:'Sullivans',anchor:'Anchor'};
 const pipImg=(pose,cls)=>`<picture><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img class="${cls}" src="assets/pip/pip-${pose}-160.png" width="160" height="240" alt="" decoding="async"></picture>`;
 const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
+/* FF-1261: with-colors closing line when results have colors OR the paste box holds recognizable DMC colors (typed, pasted or the tour's example) */
+const hasColors=()=>{if(st().items.length)return true;try{const v=($('inp')||{}).value||'';return !!v.trim()&&typeof parse==='function'&&parse(v).items.length>0}catch(e){return false}};
 const TOUR_SAMPLE='310\n321\n666\n699';
-const linksOn=()=>!!(window.FlossFoxShop&&FlossFoxShop.anyEligible());
+// affiliate sentence only for real (non-mock) approved merchants; ?fixtures=1 demo shops earn nothing
+const linksOn=()=>!!(window.FlossFoxShop&&FlossFoxShop.anyRealEligible&&FlossFoxShop.anyRealEligible());
 const inView=v=>!$(v).hidden;
 const toConvert=()=>{if(!inView('convertView'))$('tabConvert').click()};
 
@@ -27,41 +30,41 @@ const STEPS=[
  {id:'enter',title:'Add your colors',target:()=>$('inp'),anchor:()=>document.querySelector('.hero .row'),
   pose:()=>st().errs.length?PIP().errPose(st()):'pointing',
   msg:()=>"First, pop your DMC thread numbers in here! You can type them or paste your whole list.",
-  more:()=>st().errs.length?`${plural(st().errs.length,'line')} couldn't be read yet. They're listed in red under Your colors.`:st().items.length?`You've added ${plural(st().items.length,'color')}. Tap Next when you're ready.`:"Then tap Add my colors. Want to practise first? I can fill in a short sample list.",
+  more:()=>st().errs.length?`${plural(st().errs.length,'line')} couldn't be read yet. They're listed in red under Your colors.`:st().items.length?`You've added ${plural(st().items.length,'color')}. Tap Next when you're ready.`:"Then tap Add my colors. Want to practice first? I can fill in a short sample list.",
   extra:()=>st().items.length?'':`<button type="button" class="sec" data-t="example">Try an example (310, 321, 666, 699)</button>`,
   done:()=>st().items.length>0,
-  help:'Each line or comma-separated entry is one DMC color. Add amounts like 310 x2.'},
+  help:''},
  {id:'results',title:'Check your results',target:()=>$('results').hidden?null:$('results'),anchor:()=>$('summary'),
   pose:()=>st().errs.length?PIP().errPose(st()):dupN()?'duplicates':'presenting',
   msg:()=>"Here's what I found! You can check your colors and see if anything needs attention.",
   more:()=>{const s=st();if(!s.items.length&&!s.errs.length)return'No results yet. Go back and add your colors, or skip this step.';const b=[];
    if(s.items.length)b.push(`I recognized ${plural(s.items.length,'color')}; each row shows the DMC color and its chart matches.`);
-   if(s.errs.length)b.push(`${plural(s.errs.length,'line')} couldn't be read. Fix them in the box above and add again.`);
+   if(s.errs.length)b.push(`${plural(s.errs.length,'line')} couldn't be read. You can fix this in the box above, then tap Add my colors again.`);
    if(dupN())b.push(`${plural(dupN(),'color')} appeared more than once, so I combined them and added up the skeins.`);
    if(s.items.some(i=>i.stated===false||i.assumed))b.push('Amounts marked "assumed" had no number, so I counted 1 skein.');return b.join(' ')},
   ready:()=>!$('results').hidden,
   help:'Swatches show the DMC color on screen, which is only an approximation.'},
  {id:'brands',title:'Other thread brands',target:()=>$('shopcard').hidden?null:$('dest'),anchor:()=>document.querySelector('#shopcard .toggle'),
   pose:()=>'pointing',
-  msg:()=>"Did you know you can look at other thread brands too? Let's explore your options!",
+  msg:()=>"Did you know you can switch to other thread brands too? Let's take a look.",
   more:()=>`Use <b>Brand to buy</b> to switch between DMC, Sullivans and Anchor. Matches come from published conversion charts, so colors may not be exact. Compare real thread if it matters. The cost table shows rough price estimates for each brand, before shipping; prices change, so check the store.${destV()!=='dmc'?` You're looking at ${BR[destV()]} now: ${plural(window.FlossFoxAltFor?FlossFoxAltFor(destV()):0,'color')} of ${st().items.length} have a chart match.`:''}`,
   ready:()=>!$('shopcard').hidden,optional:true,
   help:'Metallic and variegated threads are never swapped automatically.'},
  {id:'shop',title:'Your shopping list',target:()=>$('shopcard').hidden?null:$('shop'),anchor:()=>$('shop'),
   pose:()=>'pointing',
   msg:()=>"Now let's get your threads organized so they're easier to shop for!",
-  more:()=>`Tick the boxes as you shop, or use <b>Print list</b> and <b>Copy as text</b> below. <b>Save project</b> keeps the list in this browser; in My projects you can mark what you have, open <b>Shop my list</b> in the store, and download a spreadsheet (CSV).${linksOn()?' Store links are optional affiliate links. You never need them to use Floss Fox.':''}`,
+  more:()=>`Tick the boxes as you shop, or use <b>Print list</b> and <b>Copy as text</b> below. <b>Save project</b> keeps the list in this browser; in My Projects you can mark what you have, open <b>Shop my list</b> in the store, and download a spreadsheet (CSV).${linksOn()?' Floss Fox may earn a commission if you buy through these links, at no extra cost to you. You never need them to use Floss Fox.':''}`,
   ready:()=>!$('shopcard').hidden,
-  help:'Nothing is uploaded: projects live on this device only.'},
+  help:'Floss Fox never uploads your projects or thread collection: they live on this device.'},
  {id:'finish',title:"You're all set",target:()=>null,anchor:()=>$('shopcard').hidden?document.querySelector('.hero .row'):document.querySelector('#shopcard h2'),
-  pose:()=>'celebrating',
-  msg:()=>"Yay! You've got it! You're ready to start stitching!",
+  pose:()=>'goodbye',
+  msg:()=>hasColors()?"You've got it! Save this list as a project when you're ready, and I'll help you check what you already have.":"You've got it! Add your colors whenever you're ready, and I'll help you plan.",
   more:()=>"You can take the tour again any time from Ask Pip or the Help tab.",
   final:true}
 ];
 
 /* ---------- Tour card ---------- */
-// Pointing Pip: his paw points to his left (screen right). Mirror him when the target's centre is to his left on screen.
+// Pointing Pip: their paw points to their left (screen right). Mirror Pip when the target's centre is to their left on screen.
 function aim(){if(!card||!tgt)return;const i=card.querySelector('.tpip');if(!i||card.dataset.pose!=='pointing')return;const a=i.getBoundingClientRect(),b=tgt.getBoundingClientRect();
  const mir=(b.left+b.right)/2<(a.left+a.right)/2;i.classList.toggle('mirror',mir);card.dataset.mirror=mir}
 let idx=-1,card=null,tgt=null,returnFocus=null,readSince=0;
@@ -77,8 +80,8 @@ function render(focus){const S=STEPS[idx];if(!S)return;toConvert();removeCard();
  const c=document.createElement('section');c.className='tourcard noprint';c.id='tourCard';c.setAttribute('aria-labelledby','tourH');c.dataset.step=S.id;let pose=S.pose();if(pose==='pointing'&&!t)pose='helpful';c.dataset.pose=pose;
  const back=idx>0?'<button type="button" class="ghost" data-t="back">Back</button>':'';
  const nextLbl=S.final?'':notReady||missing?(S.optional?'Skip this step':'Skip this step'):'Next';
- const btns=S.final?'<button type="button" class="pri" data-t="start">Start using Floss Fox</button><button type="button" class="sec" data-t="tips">Explore more tips</button>':`${S.extra?S.extra():''}<button type="button" class="pri" data-t="next">${nextLbl}</button>${back}<button type="button" class="ghost" data-t="skip">Skip tour</button>`;
- c.innerHTML=`${pipImg(pose,'tpip')}<div><p class="tstep">Step ${idx+1} of ${STEPS.length}</p><h2 id="tourH" tabindex="-1">${esc(S.title)}</h2><p class="tmsg">${esc(S.msg())}</p><p class="tmore">${S.more()}</p>${missing&&!notReady?'<p class="tmore">I can\'t find that part of the page right now, so you can skip ahead.</p>':''}</div><div class="row">${btns}${S.final?back:''}<button type="button" class="ghost" data-t="close" aria-label="Close the tour">Close</button></div>`;
+ const btns=S.final?'<button type="button" class="pri" data-t="start">Start using Floss Fox</button><button type="button" class="sec" data-t="tips">Explore Ask Pip</button>':`${S.extra?S.extra():''}<button type="button" class="pri" data-t="next">${nextLbl}</button>${back}<button type="button" class="ghost" data-t="skip">Skip tour</button>`;
+ c.innerHTML=`${pipImg(pose,'tpip')}<div><p class="tstep">Step ${idx+1} of ${STEPS.length}</p><h2 id="tourH" tabindex="-1">${esc(S.title)}</h2><p class="tmsg">${esc(S.msg())}</p>${S.help?`<p class="thelp hint">${esc(S.help)}</p>`:''}<p class="tmore">${S.more()}</p>${missing&&!notReady?'<p class="tmore">I can\'t find that part of the page right now, so you can skip ahead.</p>':''}</div><div class="row">${btns}${S.final?back:''}<button type="button" class="ghost" data-t="close" aria-label="Close the tour">Close</button></div>`;
  card=c;place(c,t?S.anchor():null,focus);aim();readSince=performance.now();
  setTourPref({status:'active',step:idx});if(PIP())PIP().setTour(true)}
 function go(i,announce=true){idx=Math.max(0,Math.min(STEPS.length-1,i));render(true);if(announce)live(`Pip's tour, step ${idx+1} of ${STEPS.length}: ${STEPS[idx].title}`)}
@@ -101,7 +104,7 @@ window.addEventListener('resize',()=>{if(card&&tgt&&!tgt.isConnected)render(fals
 let invite=null;
 function removeInvite(){if(invite)invite.remove();invite=null;$('pip').classList.remove('inviting')}
 function showInvite(resume){const c=document.createElement('section');c.className='tourcard noprint';c.id='tourInvite';c.setAttribute('aria-labelledby','inviteH');
- c.innerHTML=`${pipImg('greeting','tpip')}<div><h2 id="inviteH" class="sr" tabindex="-1">${resume?'Pick up the tour?':'Meet Pip'}</h2><p class="tmsg">${resume?"Looks like we didn't finish the tour last time. Your list isn't kept for the tour, so let's start it again from the beginning.":"Hi! I'm Pip! Want me to show you around? It'll be quick!"}</p></div><div class="row"><button type="button" class="pri" id="tourYes">${resume?'Restart the tour':'Show me around'}</button><button type="button" class="ghost" id="tourNo">${resume?'No thanks':"I'll explore myself"}</button></div>`;
+ c.innerHTML=`${pipImg('greeting','tpip')}<div><h2 id="inviteH" class="sr" tabindex="-1">${resume?'Pick up the tour?':'Meet Pip'}</h2><p class="tmsg">${resume?"Looks like we didn't finish the tour last time. I don't keep your list for the tour, so let's start again from the beginning.":"Hi, I'm Pip! Want me to show you around? It only takes five quick steps."}</p></div><div class="row"><button type="button" class="pri" id="tourYes">${resume?'Restart the tour':'Show me around'}</button><button type="button" class="ghost" id="tourNo">${resume?'No thanks':"I'll explore on my own"}</button></div>`;
  c.classList.add('invite');if(matchMedia('(max-width:879px)').matches){$('pip').before(c);$('pip').classList.add('inviting')}else document.querySelector('.hero .steps').insertAdjacentElement('afterend',c);invite=c;
  $('tourYes').onclick=start;$('tourNo').onclick=()=>{removeInvite();setTourPref({status:'dismissed'});$('inp').focus()}}
 const pref=tourPref();
@@ -122,8 +125,8 @@ function context(){
 const TOPICS=[
  ['enter','How do I enter my colors?','Type or paste DMC numbers into the box on Find My Floss, one per line or separated by commas, then tap Add my colors. Add amounts like 310 x2, or 310 x? if you don\'t know. Blanc, Ecru and B5200 work too.'],
  ['results','What does this result mean?','Your colors lists every DMC color I recognized, with its Anchor and Sullivans chart matches. Lines I couldn\'t read appear in red so you can fix them. Repeats are combined, and amounts marked "assumed" had no number, so I counted 1 skein.'],
- ['alts','What are thread alternatives?','Other brands, Sullivans and Anchor, that published charts match to your DMC colors. Choose one in Brand to buy on the shopping list. Chart matches are close, not exact, and metallic or variegated threads aren\'t swapped. Cost figures are rough estimates.'],
- ['shop','How do I use my shopping list?','Tick colors as you shop, or Print or Copy the list. Save it as a project to mark what you already have; then Shop my list in My projects gives you a store checklist, and you can download a spreadsheet (CSV).'],
+ ['alts','What are thread alternatives?','These are Sullivans and Anchor threads that published conversion charts match to your DMC colors. Pick one in Brand to buy on the shopping list. Chart matches are close, not exact, and metallic or variegated threads aren\'t swapped. Cost figures are rough estimates.'],
+ ['shop','How do I use my shopping list?','Tick colors as you shop, or Print or Copy the list. Save it as a project to mark what you already have; then Shop my list in My Projects gives you a store checklist, and you can download a spreadsheet (CSV).'],
  ['tour','Start the tour again','']];
 let lastTopic=null;
 const poseFor=k=>k==='enter'?(PIP()&&PIP().needlePose?PIP().needlePose():'needle'):k==='shop'?'organizing':'thinking';
@@ -133,6 +136,7 @@ function renderAsk(){const c=context();const a=TOPICS.find(t=>t[0]===lastTopic);
  <div class="atopics" role="group" aria-label="Help topics">${TOPICS.map(t=>`<button type="button" class="sec" data-a="${t[0]}"${t[0]===lastTopic?' aria-pressed="true"':''}>${esc(t[1])}</button>`).join('')}</div>
  ${a?`<div class="aans" id="askAns" tabindex="-1"><b>${esc(a[1])}</b><p>${esc(a[2])}</p></div>`:''}
  <div class="row"><label class="hintpref"><input type="checkbox" id="hintsAsk"${hintsOn()?' checked':''}> Show Pip's tips while I work</label><button type="button" class="ghost" data-a="close">Close</button></div>`;
+ window.FlossFoxPipHybrid?.decorateAskPanel(ask);
  $('hintsAsk').onchange=e=>setHints(e.target.checked)}
 function openAsk(){lastTopic=null;renderAsk();ask.hidden=false;askBtn.setAttribute('aria-expanded','true');$('askPipH').focus()}
 function closeAsk(focus){if(ask.hidden)return;ask.hidden=true;askBtn.setAttribute('aria-expanded','false');if(focus)askBtn.focus()}

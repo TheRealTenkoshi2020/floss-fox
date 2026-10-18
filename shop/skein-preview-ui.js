@@ -15,7 +15,7 @@
   add(section,'h3',null,'Shop the skeins you need');
   add(section,'p','ff-skein-note','Untracked test links only. Verify the color, thread type, quantity and availability on the retailer website before ordering.');
   if(typeof navigator!=='undefined'&&navigator.onLine===false){
-   add(section,'p','ff-skein-note','You are offline. Open store links when reconnected.');return rows.length;
+   add(section,'p','ff-skein-note','You\'re offline. Open store links once you\'re back online.');return rows.length;
   }
   const list=add(section,'ul','ff-skein-list');
   for(const row of rows){
@@ -30,7 +30,7 @@
     a.dataset.match=l.type;
     a.setAttribute('aria-label',l.label+' (opens in new tab)');
     a.title=l.hint;
-    if(!l.exact)add(a,'small',null,'Catalog / quick order — enter '+row.code);
+    if(!l.exact)add(a,'small',null,'Catalog / quick order: enter '+row.code);
    }
   }
   return rows.length;

@@ -62,7 +62,7 @@ with sync_playwright() as playwright, tempfile.TemporaryDirectory() as temp:
     check('legacy collection count remains unverified',page.locator('#st-321-check').is_checked())
     page.locator('#pUndoColl').click()
     check('comparison undo restores manual choice',page.locator('#st-310-have').is_checked())
-    check('copy text keeps estimate labels', 'PIP’S SKEIN ESTIMATES' in page.evaluate("FlossFoxProjects.planText(FlossFoxProjects._store().projects[0])"))
+    check('copy text keeps estimate labels', 'PIP'S SKEIN ESTIMATES' in page.evaluate("FlossFoxProjects.planText(FlossFoxProjects._store().projects[0])"))
     check('CSV keeps quantity provenance', 'quantity_source' in page.evaluate("FlossFoxProjects.csv(FlossFoxProjects._store().projects[0])"))
     page.emulate_media(media='print')
     check('print exposes assumptions and hides controls',not page.locator('#pSkein').is_visible() and page.locator('.skein-print').is_visible())

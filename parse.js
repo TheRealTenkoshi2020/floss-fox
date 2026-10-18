@@ -15,7 +15,7 @@ function make(DMC){
  const known=c=>Object.prototype.hasOwnProperty.call(DMC,c);
  const notInChart=c=>/^E\d/.test(c)?`DMC ${c} looks like a Light Effects thread. Floss Fox's chart only has 6-strand cotton, so it can't be checked yet`
   :/^4\d{3}$/.test(c)?`DMC ${c} looks like a Color Variations thread, which isn't in Floss Fox's chart yet`
-  :`DMC ${c} isn't in the chart data. Check the number on your pattern`;
+  :`DMC ${c} isn't in our chart. Double-check the number on your pattern`;
  const N='(-?[\\d.]+|\\?)';
  const QRE=[new RegExp('^\\s*x\\s*'+N,'i'),new RegExp('\\bx\\s*'+N,'i'),new RegExp('\\(\\s*'+N+'\\s*\\)'),new RegExp(N+'\\s*(?:skeins?|sk)\\b','i'),/(-?[\d.]+)\s*x\b/i,/(?:^|\s)(\?)(?=\s|$)/];
  const WORDNUM=/\b(one|two|three|four|five|six|seven|eight|nine|ten|half)\b/i;
@@ -26,7 +26,7 @@ function make(DMC){
   if(sm){const before=r.slice(0,sm.index);
    if(/[a-z]/i.test(before)||/stitch|sts?\s*$/i.test(sm[0])||(afterDmc&&!/\d/.test(before))){stitches=+sm[1].replace(/,/g,'');r=before}}
   if(/\d/.test(r)){const nums=(r.match(/\d[\d,.]*/g)||[]);
-   return{err:'multi',why:'contains more than one number. Put each colour on its own line or separate with commas',nums}}
+   return{err:'multi',why:'contains more than one number. Put each color on its own line or separate them with commas',nums}}
   if(/\?|\bskeins?\b|\bsk\b|\bx\b/i.test(r)||WORDNUM.test(r))return{err:'qty',why:'couldn\'t read the quantity. Use a number like "x2", or "x?" if you don\'t know'};
   const stated=qty!==null;if(qty==='?')qty=null;else if(qty===null)qty='1';
   if(qty!==null&&(!/^\d+$/.test(qty)||+qty<1))return{err:'qty',why:`quantity "${qty}" isn't a whole number of skeins (1 or more)`};
@@ -43,9 +43,9 @@ function make(DMC){
    if(pre&&!/^\d{1,4}[.):]?(\s+\S{1,2})?$/.test(pre))return{kind:'multi',why:'has extra text before "DMC". Start the line with the DMC number',fixes:[{label:`Use DMC ${dm[2]}`,text:r.slice(dm.index+dm[1].length)}]};
    row=!!pre;code=dm[2];rest=r.slice(dm.index+dm[0].length)}
   else{const m=r.match(/^\s*(b5200|e\d{3,4}|ecru|white|blanc|\d+|[a-z]+\d+[a-z0-9]*)(?=$|[^a-z0-9]|x\s*[\d?])/i);
-   if(!m)return{kind:'code',why:/^[a-z ]+$/i.test(r.trim())?'no DMC number found in this line':'not recognised as a DMC number',fixes:[]};
+   if(!m)return{kind:'code',why:/^[a-z ]+$/i.test(r.trim())?'we couldn\'t find a DMC number in this line':'not recognized as a DMC number',fixes:[]};
    code=m[1];rest=r.slice(m[0].length)}
-  if(!ID.test(code))return{kind:'code',why:'not recognised as a DMC number',fixes:[]};
+  if(!ID.test(code))return{kind:'code',why:'not recognized as a DMC number',fixes:[]};
   code=norm(code);rest=rest.replace(/^\s*[-:.]\s+/,' ');
   const tl=tail(rest,!!dm,norm(code));
   if(tl.err){const fixes=[];

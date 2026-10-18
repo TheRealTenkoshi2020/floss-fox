@@ -1,0 +1,8 @@
+.ff-storage{margin:9px 0 0;padding:8px 10px;background:var(--surface-2,#f6f4f0);border:1px solid var(--line,#ddd);border-radius:12px}
+.ff-storage summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--ink,#2b3430);overflow-wrap:anywhere}
+.ff-storage summary:focus-visible,.ff-storage input:focus-visible,.ff-storage select:focus-visible{outline:3px solid var(--sage-ink,#54765f);outline-offset:2px}
+.ff-storage-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin:6px 0 12px}
+.ff-storage-field{display:flex;flex-direction:column;gap:5px;font-size:.93rem}
+.ff-storage-field input,.ff-storage-field select{font:inherit;border-radius:9px;border:1px solid var(--line,#b6b6b6);background:#fff;color:#222;padding:9px;min-height:44px;min-width:0;max-width:100%}
+.ff-storage-actions{display:flex;gap:8px;flex-wrap:wrap}.ff-storage-actions button{min-height:44px}
+@media(prefers-reduced-motion:reduce){.ff-storage *{transition:none!important}}

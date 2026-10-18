@@ -18,7 +18,7 @@ function wholeInput(value,min,max,label){
  const n=Number(s);return Number.isSafeInteger(n)&&n>=min&&n<=max?{ok:true,value:n}:{ok:false,error:`${label} must be between ${min} and ${max}.`};
 }
 function validate(s){
- if(!s||s.version!==VERSION)return{ok:false,error:'These estimator settings need to be reviewed in this version.'};
+ if(!s||s.version!==VERSION)return{ok:false,error:'Please check these estimator settings again.'};
  if(typeof s.enabled!=='boolean'||typeof s.fullCrosses!=='boolean')return{ok:false,error:'Check the estimator choices.'};
  if(!['aida','even'].includes(s.fabric))return{ok:false,error:'Choose Aida or linen/evenweave.'};
  if(!Number.isInteger(s.count)||s.count<6||s.count>80||![1,2].includes(s.over))return{ok:false,error:'Check the fabric count and stitching over setting.'};
@@ -71,7 +71,7 @@ function requirement(it,s,known,family,dest){
  // Any explicit portion of a supplied amount retains the existing requirement.
  if(it.qty!==null&&it.qty!==undefined&&it.qty-assumed>0)return{amount:it.qty,source:assumed?'partly-assumed':'stated',estimate:e};
  if(!s||s.enabled!==true)return{amount:it.qty,source:assumed?'assumed':'unknown',estimate:e};
- if(dest!=='dmc')return{amount:null,source:'unavailable',estimate:e,reason:'Pip’s DMC estimate cannot set quantities for another brand.'};
+ if(dest!=='dmc')return{amount:null,source:'unavailable',estimate:e,reason:'Pip\'s estimate only covers DMC, so it can\'t set amounts for another brand.'};
  return e.kind==='estimate'?{amount:e.planning,source:'estimated',estimate:e}:{amount:null,source:'unavailable',estimate:e,reason:e.reason};
 }
 const fingerprint=(it,s,e)=>[MODEL,it.stitchCount,s.fabric,s.count,s.over,e.strands,s.extraPercent].join('|');
@@ -104,12 +104,12 @@ const assumptions=s=>{const v=validate(s);return v.ok?`DMC cotton · full crosse
 function text(p,known,fam){
  const s=p.skeinEstimator;if(!s||s.enabled!==true)return'';
  const rows=p.items.map(it=>({it,r:requirement(it,s,known,fam(it.code),p.buyBrand)}));
- const o=['PIP’S SKEIN ESTIMATES — complete pattern, approximate',assumptions(s)];
+ const o=['PIP\'S SKEIN ESTIMATES (complete pattern, approximate)',assumptions(s)];
  for(const {it,r} of rows){const e=r.estimate;
-  o.push(`DMC ${it.code}: ${e.kind==='estimate'?`about ${fmt(e.base)} skeins used; about ${fmt(e.planning)} with extra; ${e.whole} whole skeins before stock (${e.strands} strands)${r.source==='stated'||r.source==='partly-assumed'?'; supplied requirement retained':r.source==='unavailable'?'; shopping quantity unresolved':''}`:`Check first — ${r.reason||e.reason||'settings need review'}`}`);
+  o.push(`DMC ${it.code}: ${e.kind==='estimate'?`about ${fmt(e.base)} skeins used; about ${fmt(e.planning)} with extra; ${e.whole} whole skeins before stock (${e.strands} strands)${r.source==='stated'||r.source==='partly-assumed'?'; supplied requirement retained':r.source==='unavailable'?'; shopping quantity unresolved':''}`:`Check first: ${r.reason||e.reason||'settings need review'}`}`);
  }
  const omitted=rows.filter(x=>x.r.estimate.kind!=='estimate').length;
- if(omitted)o.push(`${omitted} color(s) omitted: the estimate is incomplete.`);
+ if(omitted)o.push(`${omitted} color${omitted===1?'':'s'} omitted: the estimate is incomplete.`);
  o.push('The provisional baseline comes from a small community sample; other stitch sizes and strand counts are scaled estimates. Sample use includes tails. Extra is an additional allowance for carries, frequent starts and unpicking; it cannot guarantee enough thread.');
  return o.join('\n');
 }

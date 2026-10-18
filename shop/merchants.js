@@ -7,7 +7,7 @@
    Public affiliate URLs are public campaign assets; never put passwords, API keys, tokens, payment/tax details here.
    To switch the whole shopping layer off in one reviewed change: set SHOPPING_LAYER:false below. */
 window.FLOSS_FOX_ENV='production';
-window.FLOSS_FOX_DIRECT_LINKS=true;   // 2.0A: untracked direct Hobby Lobby / Everything Cross Stitch skein links only (tracked:false). Affiliate layer stays off.
+window.FLOSS_FOX_DIRECT_LINKS=true;   // untracked direct Hobby Lobby / Everything Cross Stitch skein links only (tracked:false). Affiliate layer stays off.
 window.FLOSS_FOX_SHOP={
  version:'1.5A',
  SHOPPING_LAYER:true,                // global kill switch (true = allowed, but each merchant still needs its own approval)

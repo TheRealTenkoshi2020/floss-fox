@@ -4,7 +4,7 @@ const DMC=JSON.parse(html.match(/const DMC=(\{.*?\});/)[1]);
 const C=require('../threads.js').core(DMC),parse=require('../parse.js').make(DMC);let pass=0,fail=0;
 const t=(n,c)=>{try{if(c()){pass++;console.log('PASS',n)}else{fail++;console.log('FAIL',n)}}catch(e){fail++;console.log('FAIL',n,e.message)}};
 let d=C.empty();
-t('empty collection',()=>d.schema===1&&!Object.keys(d.threads).length);
+t('empty collection (schema 2 per CI005 storage contract)',()=>d.schema===2&&!Object.keys(d.threads).length);
 let r=C.add(d,parse('310, 321 x2\n310').items);t('add from parser: duplicates merge (310 twice = 2 skeins)',()=>r.added===2&&d.threads['310'].n===2&&d.threads['321'].n===2);
 r=C.add(d,parse('310 x3').items);t('adding an owned color merges, never duplicates',()=>r.merged===1&&r.added===0&&d.threads['310'].n===5&&Object.keys(d.threads).length===2);
 t('unknown codes are never added',()=>{C.add(d,[{code:'9999',qty:1}]);return!d.threads['9999']});
@@ -36,7 +36,7 @@ const dr=C.compare(pr.items,dc);t('Demogorgon (x1 stated): 19 colors -> 13 owned
 // migration / corrupted
 t('migrate: valid data round-trips',()=>{const m=C.migrate(JSON.parse(JSON.stringify(coll)));return m.data.threads['321'].partial===true&&m.skipped===0});
 t('migrate: bad entries skipped, good kept',()=>{const m=C.migrate({schema:1,threads:{'310':{n:2},'9999':{n:1},'321':{n:-1},'666':{n:1.5},'ECRU':'x','815':{n:3,restock:'yes'}}});return Object.keys(m.data.threads).join()==='310,815'&&m.skipped===4&&m.data.threads['815'].restock===false});
-t('migrate: newer schema refused (left untouched)',()=>C.migrate({schema:2,threads:{}}).tooNew===true);
+t('migrate: newer schema refused (left untouched)',()=>C.migrate({schema:3,threads:{}}).tooNew===true);
 t('migrate: not collection data -> null',()=>C.migrate(null)===null&&C.migrate({projects:[]})===null&&C.migrate({threads:[]})===null&&C.migrate('x')===null);
 t('migrate: no schema field treated as v1',()=>C.migrate({threads:{'310':{n:1}}}).data.threads['310'].n===1);
 t('core has no DOM/storage/network outside the UI part',()=>{const s=fs.readFileSync(__dirname+'/../threads.js','utf8');const core=s.slice(0,s.indexOf('// ---------------- UI'));return !/document\.|localStorage|fetch\(|XMLHttpRequest|sendBeacon/.test(core.replace(/\/\*[\s\S]*?\*\//g,''))});

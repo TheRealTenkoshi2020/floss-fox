@@ -15,35 +15,35 @@ const short=t=>{t=String(t).replace(/\s+/g,' ').trim();return t.length>24?t.slic
 /* Error poses: REASSURING for plain fixable errors (unknown DMC number, unreadable amount): "let's fix that".
    PUZZLED for clarification ("did you mean?"): a line with more than one number, where Pip can't tell what was meant. Tangled is never used for errors. */
 const errPose=r=>r.errs.some(e=>e.kind==='multi'||!['code','qty'].includes(e.kind))?'puzzled':'reassuring';
-function errMsg(r){if(r.errs.length>1)return errPose(r)==='reassuring'?`Let's fix that! ${r.errs.length} entries need a look. Check the highlighted lines below.`:`${r.errs.length} entries need a look. Check the highlighted lines below.`;const e=r.errs[0],x=short(e.t);
- if(e.kind==='code')return`Let's fix that! I couldn't read “${x}” as a DMC number. Check the highlighted line below.`;
- if(e.kind==='qty')return`Let's fix that! I couldn't read the amount in “${x}”. Check the highlighted line below.`;
- if(e.kind==='multi')return`“${x}” has more than one number in it. Check the highlighted line below.`;
- return"I couldn't read that entry. Check the highlighted line below."}
+function errMsg(r){if(r.errs.length>1)return errPose(r)==='reassuring'?`No worries! ${r.errs.length} entries need a quick look. They're highlighted below.`:`Hmm, ${r.errs.length} entries need a look. They're highlighted below.`;const e=r.errs[0],x=short(e.t);
+ if(e.kind==='code')return`Let's fix that one. I couldn't read “${x}” as a DMC number. It's highlighted below.`;
+ if(e.kind==='qty')return`Let's fix that one. I couldn't read the amount in “${x}”. It's highlighted below.`;
+ if(e.kind==='multi')return`Hmm, “${x}” has more than one number in it. Which one did you mean? It's highlighted below.`;
+ return"I couldn't read that entry. It's highlighted below so you can take a look."}
 const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
 // Real alternatives only: counts DMC colors the chart actually matched in the chosen non-DMC brand (read from the converter's own list).
 const alt=()=>{try{return window.FlossFoxAlt?window.FlossFoxAlt():null}catch(e){return null}};
-const TANGLE=["Oops! Got a little tangled up!","I meant to do that. Probably."];let tn=0;
+const TANGLE=["Oops, got a little tangled up!","I meant to do that. Probably."];let tn=0;
 /* Central state map. pri follows the brief: 1 errors > 2 user-requested help > 3 duplicate/validation > 4 celebration > 5 helpful/curious > 6 playful > 7 sleepy.
    Base states come from the parse result; celebrating/tangled/sleepy are short overlays on top of a calm base. */
 const STATES={
- welcome:    {pose:'greeting',   pri:10, anim:'pop',   msg:()=>"Hi! I'm Pip. Let's get your threads sorted!"},
- welcomeBack:{pose:'greeting-alt',pri:10,anim:'pop',   msg:()=>'Welcome back! Ready for another list?'},
+ welcome:    {pose:'greeting',   pri:10, anim:'pop',   msg:()=>"Hi, I'm Pip! Let's get your threads sorted."},
+ welcomeBack:{pose:'greeting-alt',pri:10,anim:'pop',   msg:()=>'Welcome back! What are we stitching next?'},
  idle:       {pose:'neutral',    pri:12, anim:'fade',  msg:()=>'Paste a list whenever you\'re ready.'},
  attentive:  {pose:'curious',    pri:20, anim:'tilt',  msg:()=>'Ready when you are!'},
- empty:      {pose:'curious',    pri:20, anim:'tilt',  msg:()=>'Add a few thread numbers to get started.'},
+ empty:      {pose:'curious',    pri:20, anim:'tilt',  msg:()=>'I didn\'t find any colors yet. Pop a few DMC numbers in and I\'ll take a look.'},
  listReady:  {pose:'presenting', pri:20, anim:'pop',   msg:()=>"Your colors are ready! Let's see what you have."},
  recovered:  {pose:'reassuring', pri:21, anim:'fade',  msg:()=>'All fixed! Every line reads cleanly now.'},
- helpful:    {pose:'discovery',  pri:25, anim:'pop',   msg:()=>{const a=alt();return a&&a.matched?`Look! I found ${a.brand} options for ${a.matched} of your ${plural(a.total,'color')}.`:''}},
+ helpful:    {pose:'discovery',  pri:25, anim:'pop',   msg:()=>{const a=alt();return a&&a.matched?`Look! The chart has ${a.brand} matches for ${a.matched} of your ${plural(a.total,'color')}.`:''}},
  processing: {pose:'thinking',   pri:30, anim:'fade',  msg:()=>'Let me look at your list…'}, // reserved: parsing is instant, so never shown (no fake delays)
- celebrating:{pose:'celebrating',pri:35, anim:'cheer', msg:()=>'Yay! Your list is ready!'},
- duplicate:  {pose:'duplicates', pri:40, anim:'pop',   msg:r=>r.items.filter(i=>i.src.length>1).length===1?"Found a repeat! I've combined it for you.":"Found some repeats! I've combined them for you."},
- goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"Have fun! Ask me anytime."},
+ celebrating:{pose:'celebrating',pri:35, anim:'cheer', msg:()=>'Yay, your list is ready!'},
+ duplicate:  {pose:'duplicates', pri:40, anim:'pop',   msg:r=>r.items.filter(i=>i.src.length>1).length===1?"Found a repeat! I combined it and added up the skeins.":"Found some repeats! I combined them and added up the skeins."},
+ goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"Happy stitching! Tap Ask Pip anytime."},
  error:      {pose:errPose,      pri:50, anim:'tilt',  msg:errMsg},
  tangled:    {pose:'tangled',    pri:8,  anim:'wiggle',msg:()=>TANGLE[tn%2]},
  sleepy:     {pose:'sleepy',     pri:5,  anim:'doze',  msg:()=>''},
  // Contextual tips (overlays, at most once per session each, only over a calm state; see tour.js)
- hintStart:  {pose:()=>needlePose(),    pri:22, anim:'tilt',  msg:()=>'Not sure where to start? Try typing a DMC number, like 310!'},
+ hintStart:  {pose:()=>'peeking',    pri:22, anim:'tilt',  msg:()=>'Not sure where to start? Try typing a DMC number, like 310!'},
  hintCompare:{pose:'discovery',    pri:22, anim:'pop',   msg:()=>{const n=window.FlossFoxAltFor?Math.max(FlossFoxAltFor('sullivans'),FlossFoxAltFor('anchor')):0;return n?'Want to compare another thread brand? Try "Brand to buy" in your shopping list.':''}}
 };
 // Needle tips rotate between NEEDLE (happy) and NEEDLE-ALT (calm closed smile) for variety.

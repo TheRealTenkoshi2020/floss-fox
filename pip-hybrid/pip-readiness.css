@@ -1,0 +1,12 @@
+.ff-readiness{margin-bottom:16px}.ff-readiness h2{margin:0 0 7px}.ff-readiness h3{font-size:1rem;margin:12px 0 5px}
+.ff-readiness-controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:12px 0}.ff-readiness-controls label{font-weight:600}.ff-readiness-controls select{font:inherit;min-height:44px;min-width:min(100%,240px);max-width:100%;padding:8px;border:1px solid var(--line,#bbb);background:white;border-radius:10px}
+.ff-readiness-controls button{min-height:44px}.ff-readiness-list{padding-left:22px;max-height:240px;overflow:auto}.ff-readiness-list li{margin:4px 0;overflow-wrap:anywhere}
+.ff-readiness-heading{font-weight:700}.ff-readiness-result{overflow-wrap:anywhere}
+/* 2.0A in-project readiness details */
+.ff-readiness-inline{border:1.5px solid #e6dccb;border-radius:14px;padding:8px 12px;margin:12px 0;background:#fffaf2}
+.ff-readiness-inline>summary{font-weight:700;min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;cursor:pointer}
+.ff-readiness-inline .mut{color:#5d524b;font-weight:400}
+.ff-readiness-inline h4{margin:12px 0 4px;font-size:1rem}
+.ff-readiness-inline .ff-readiness-list{max-height:none}
+.ff-rg-have h4{color:#3d5a3a}.ff-rg-buy h4{color:#8a3b12}.ff-rg-review h4{color:#6b4d00}
+.ff-loc{color:#3b2f28}

@@ -19,7 +19,7 @@ function plan(){const mode=(document.querySelector('input[name="bkMode"]:checked
   ch.push({r,e,next,note})}
  return{mode,ch}}
 function open(){const t=$('thAdd').value;if(!t.trim()){$('thStatus').textContent='Type or paste DMC numbers first, one per line.';return}
- let r;try{r=FlossFoxBulkPasteReview.parse(t,DMC)}catch(e){$('thStatus').textContent='That list is too long to review at once.';return}
+ let r;try{r=FlossFoxBulkPasteReview.parse(t,DMC)}catch(e){$('thStatus').textContent='That list is too long to review at once. Try splitting it into smaller batches.';return}
  st={r,ok:{}};draw();$('bkPanel').hidden=false;$('bkPanel').focus()}
 function draw(){const P=$('bkPanel'),{mode,ch}=plan(),lab=c=>c+(DMC[c]?' '+DMC[c].name:'');
  const over=ch.filter(x=>x.next&&x.next.n>CAP()&&!(x.e&&x.next.n<=x.e.n)),bad=st.r.errors.length||ch.some(x=>x.next===false);
@@ -27,9 +27,9 @@ function draw(){const P=$('bkPanel'),{mode,ch}=plan(),lab=c=>c+(DMC[c]?' '+DMC[c
  const real=ch.filter(x=>x.next&&!(x.e&&x.e.n===x.next.n&&(x.e.confirmed===true)===(x.next.confirmed===true)));
  P.innerHTML=`<h3>Review before saving</h3><p class="hint">Nothing is saved yet. Partial-skein and Restock ticks are never changed here.</p>
 <fieldset class="bkmode"><legend>Amounts on your list mean:</legend><label><input type="radio" name="bkMode" value="set"${mode==='set'?' checked':''}> <b>Set to</b> (replace my count)</label> <label><input type="radio" name="bkMode" value="add"${mode==='add'?' checked':''}> <b>Add</b> (on top of my count)</label></fieldset>
-${st.r.errors.length?`<div class="errbox" role="alert"><b>${st.r.errors.length} line${st.r.errors.length===1?'':'s'} need fixing first:</b><ul>${st.r.errors.map(e=>`<li>Line ${e.line} “${esc(e.raw.trim())}”: ${esc(WHY[e.reason]||e.reason)}.</li>`).join('')}</ul>Stitch counts aren't skeins, so numbers like “310 1160” aren't guessed.</div>`:''}
+${st.r.errors.length?`<div class="errbox" role="alert"><b>${st.r.errors.length} line${st.r.errors.length===1?'':'s'} need fixing first:</b><ul>${st.r.errors.map(e=>`<li>Line ${e.line} “${esc(e.raw.trim())}”: ${esc(WHY[e.reason]||e.reason)}.</li>`).join('')}</ul>Stitch counts aren't skeins, so we don't guess at numbers like “310 1160”.</div>`:''}
 <div class="bkwrap"><table class="bktab"><thead><tr><th scope="col">Color</th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Note</th></tr></thead><tbody>${ch.map(x=>{const c=x.r.code,id='bkok-'+c.replace(/[^\w]/g,'_'),big=over.includes(x);
- return `<tr><th scope="row">DMC ${esc(lab(c))}</th><td>${x.e?x.e.n+(x.e.confirmed===true?'':' (not confirmed)'):'—'}</td><td>${x.next?x.next.n+(x.next.confirmed?'':' (not confirmed)'):'—'}</td><td>${esc(x.note)}${big?`<label class="bkok"><input type="checkbox" id="${id}" data-ok="${esc(c)}"${st.ok[c]?' checked':''}> Yes, ${x.next.n} full skeins is right (not a stitch count)</label>`:''}</td></tr>`}).join('')}</tbody></table></div>
+ return `<tr><th scope="row">DMC ${esc(lab(c))}</th><td>${x.e?x.e.n+(x.e.confirmed===true?'':' (not confirmed)'):'None'}</td><td>${x.next?x.next.n+(x.next.confirmed?'':' (not confirmed)'):'None'}</td><td>${esc(x.note)}${big?`<label class="bkok"><input type="checkbox" id="${id}" data-ok="${esc(c)}"${st.ok[c]?' checked':''}> Yes, ${x.next.n} full skeins is right (not a stitch count)</label>`:''}</td></tr>`}).join('')}</tbody></table></div>
 <p class="hint" id="bkWhy">${bad?'Fix the lines above in the box, then review again.':need?'Choose Set or Add to continue.':unconf?`Tick to confirm counts over ${CAP()}.`:real.length?`${real.length} change${real.length===1?'':'s'} ready.`:'Nothing would change.'}</p>
 <div class="row"><button type="button" class="pri" id="bkSave"${bad||need||unconf||!real.length?' disabled':''}>Save ${real.length} change${real.length===1?'':'s'}</button><button type="button" class="ghost" id="bkCancel">Cancel</button></div>`;
  P.querySelectorAll('input[name="bkMode"]').forEach(i=>i.onchange=()=>{draw();const n=P.querySelector('input[name="bkMode"]:checked');if(n)n.focus()});
@@ -40,7 +40,7 @@ function close(){st=null;const P=$('bkPanel');P.hidden=true;P.innerHTML=''}
 function save(real){if(!T.canSave()){$('thStatus').textContent='Not saved: saving is paused (see the note above).';return}
  const before=JSON.parse(JSON.stringify(T.data().threads)),next=JSON.parse(JSON.stringify(before)),now=new Date().toISOString(),C=T.core;
  for(const x of real){const v={n:x.next.n,partial:x.next.partial===true,restock:x.next.restock===true,updated:now,...(x.next.confirmed?{confirmed:true}:{})};const e=C.normEntry(x.r.code,v);if(!e){$('thStatus').textContent='Nothing saved: a row could not be checked.';return}next[x.r.code]=e}
- const ok=T.replaceAll({threads:next});if(!ok){T.replaceAll({threads:before});$('thStatus').textContent='Not saved: browser storage refused the change. Your collection is unchanged.';return}
+ const ok=T.replaceAll({threads:next});if(!ok){T.replaceAll({threads:before});$('thStatus').textContent='Not saved: your browser blocked the save. Your collection is unchanged.';return}
  undo=before;close();$('thAdd').value='';
  $('bkUndo').hidden=false;$('thStatus').textContent=`Saved ${real.length} change${real.length===1?'':'s'}. You can undo this.`;$('bkUndo').focus()}
 $('bkUndo').onclick=()=>{if(!undo)return;const ok=T.replaceAll({threads:undo});undo=null;$('bkUndo').hidden=true;$('thStatus').textContent=ok?'Undone. Your collection is back to how it was.':'Undo could not be saved in this browser.';$('thAdd').focus()};

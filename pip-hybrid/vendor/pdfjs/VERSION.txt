@@ -1,0 +1,6 @@
+pdfjs-dist 4.10.38 (Mozilla PDF.js), Apache License 2.0 (see LICENSE).
+Source: https://www.npmjs.com/package/pdfjs-dist/v/4.10.38 (npm pack).
+Files: build/pdf.min.mjs -> pdf.mjs, build/pdf.worker.min.mjs -> pdf.worker.mjs (unmodified).
+SHA-256:
+27fc2a057a00f92a4334ad06e17dbd7259912954e9fb7f76400bcca5fd190a9c  pdf.mjs
+1baa1844c89c80a5b2797c916e75ab29254be46d8e9cb53cb6364d7aad84be36  pdf.worker.mjs

@@ -1,0 +1,38 @@
+/* Scoped to the independent dialog; preserves existing Ask Pip layouts. */
+.piph-open{font:inherit;min-height:44px}
+.piph-dialog{border:1px solid #b7c6b3;border-radius:18px;padding:0;width:min(94vw,580px);max-height:min(90dvh,760px);background:#fffaf2;color:#25372f;box-shadow:0 16px 48px #14251955}
+.piph-dialog::backdrop{background:#142a2280}
+.piph-layout{display:flex;flex-direction:column;max-height:min(90dvh,760px)}
+.piph-header{display:flex;gap:12px;align-items:center;padding:16px;border-bottom:1px solid #dbe4d8}
+.piph-header img{width:52px;height:76px;object-fit:contain}
+.piph-header h2{margin:0;font-size:1.25rem}.piph-header p{margin:3px 0 0;font-size:.86rem}
+.piph-close{margin-left:auto;min-width:44px;min-height:44px}
+.piph-log{overflow:auto;overscroll-behavior:contain;min-height:160px;flex:1;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.piph-message{border-radius:12px;padding:9px 12px;max-width:92%;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45}
+.piph-message[data-role="user"]{align-self:flex-end;background:#e8f1e5}
+.piph-message[data-role="pip"]{align-self:flex-start;background:#fff;border:1px solid #dce6d8}
+.piph-source{display:block;font-size:.74rem;font-weight:650;opacity:.8;margin-bottom:4px}
+.piph-controls{padding:12px 16px;border-top:1px solid #dbe4d8}
+.piph-consent{display:flex;align-items:flex-start;gap:9px;margin-bottom:10px;font-size:.9rem}
+.piph-consent input{width:19px;height:19px;flex:none;margin-top:2px}
+.piph-note{font-size:.77rem;color:#4b6153;margin:0 0 8px}
+.piph-controls textarea{display:block;width:100%;min-height:66px;max-height:160px;resize:vertical;font:inherit;border:1px solid #a6b5a0;border-radius:10px;padding:10px;background:#fff;color:#25372f}
+.piph-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px}
+.piph-actions button{min-height:44px}.piph-status{font-size:.78rem;color:#425b46}
+.piph-dialog button:focus-visible,.piph-dialog textarea:focus-visible,.piph-dialog input:focus-visible{outline:3px solid #6b996c;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.piph-dialog *{animation:none!important;transition:none!important}}
+/* v0.2 offline flows, per-message review and non-persistent context */
+.piph-preview{margin:0 16px 14px;border:2px solid #afc8ab;border-radius:14px;padding:12px;background:#f5faf3;overflow:auto;max-height:37dvh}
+.piph-preview[hidden]{display:none}
+.piph-preview h3,.piph-preview h4{margin:0 0 6px;font-size:.94rem}
+.piph-preview h4{margin-top:10px;color:#35483b}
+.piph-preview pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;background:#fff;border:1px solid #dce6d8;border-radius:8px;padding:8px;max-height:90px;overflow:auto;font-size:.86rem}
+.piph-challenge{min-height:0;margin-top:8px}
+.piph-choices{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start;margin:3px 0 8px}
+.piph-chip{font-size:.84rem;padding:9px 12px;min-height:44px}
+.piph-link{display:block;margin-top:7px;text-decoration:underline;font-weight:650;color:#346245}
+.piph-controls .piph-actions{justify-content:flex-start}
+.piph-controls .piph-actions button{flex:0 1 auto}
+.piph-dialog{overscroll-behavior:contain}
+.piph-status{display:block;margin-top:8px}
+@media(max-width:480px){.piph-header{padding:10px}.piph-log{padding:10px;min-height:100px}.piph-controls{padding:10px}.piph-preview{margin:0 10px 10px;padding:10px}}

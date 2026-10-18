@@ -9,3 +9,13 @@ nav.tabs,.fcnav{display:flex;flex-wrap:wrap;gap:8px}
  nav.tabs>*,.fcnav a{grid-column:auto!important;padding:2px 6px!important;font-size:.88rem!important;line-height:1.15;text-align:center;white-space:normal!important;overflow-wrap:anywhere}}
 @media print{.fcnav,nav.tabs{display:none!important}}
 nav.tabs>a.tablink{border:1.5px solid #e6dccb!important;background:#fffaf2!important;color:#3b2f28!important}
+
+/* Shopping tab: keep label + count on one line; count is a small badge */
+#tabShop{white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all}
+#tabShop #shopCount{font-size:.78em;font-weight:700;margin-left:2px}
+@media(max-width:560px){#tabShop{gap:2px;padding:2px 4px!important}}
+@media(min-width:561px){nav.tabs>*{min-width:max-content!important}}
+/* never split a word inside a tab label (e.g. "Projec ts" at 344px); wrap at spaces only */
+@media(min-width:340px) and (max-width:560px){nav.tabs>*{overflow-wrap:normal!important;word-break:normal!important}}
+@media(max-width:380px){nav.tabs>*{font-size:.8rem!important;padding:2px 3px!important}}
+@media(max-width:560px){nav.tabs>button{flex-wrap:wrap;justify-content:center;column-gap:3px}}

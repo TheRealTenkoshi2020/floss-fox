@@ -53,7 +53,7 @@ with sync_playwright() as p:
     ok('C11 double tap on Add counts once', n(g, '666') == 2, n(g, '666'))
     add(g, '9999, hello, 815'); ok('C12 unreadable entries listed and left in the box; good ones added', n(g, '815') == 1 and '9999' in g.inner_text('#thErr') and 'hello' in g.input_value('#thAdd'))
     g.locator('#thList .th[data-code="815"] [data-del]').click(); g.wait_for_selector('#ffConfirm:not([hidden])')
-    ok('C13a Pip remove dialog opens', 'Wave goodbye to DMC 815?' in g.inner_text('#ffConfirmTitle') and 'Pip tilts their head' in g.inner_text('#ffConfirmBody'))
+    ok('C13a Pip remove dialog opens', 'Remove DMC 815 from your collection?' in g.inner_text('#ffConfirmTitle') and 'Are you sure' in g.inner_text('#ffConfirmBody'))
     g.click('#ffConfirmKeep'); g.wait_for_timeout(80)
     ok('C13b Keep it cancels', g.locator('#thList .th[data-code="815"]').count() == 1 and g.locator('#ffConfirm:not([hidden])').count() == 0)
     g.locator('#thList .th[data-code="815"] [data-del]').click(); g.wait_for_selector('#ffConfirm:not([hidden])'); g.click('#ffConfirmGo'); g.wait_for_timeout(80)

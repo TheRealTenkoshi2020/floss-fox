@@ -53,7 +53,7 @@ function init(){load();
  radios('fcMargin').forEach(r=>r.addEventListener('change',()=>{const was=S.marginIn;S.margin=r.value;$('fcMarginBox').hidden=S.margin!=='custom';if(S.margin==='custom'){S.marginIn=was;syncMarginInput()}run()}));
  $('fcMarginC').addEventListener('input',()=>{$('fcMarginC').dataset.dirty='1';run()});
  radios('fcUnit').forEach(r=>r.addEventListener('change',()=>{S.unit=r.value;syncMarginInput();run()}));
- $('fcCopy').addEventListener('click',async()=>{const t=text();if(!t){$('fcMsg').textContent='Fix the highlighted box first.';return}try{await navigator.clipboard.writeText(t);$('fcMsg').textContent='Copied to clipboard.'}catch(e){$('fcMsg').textContent='Copy blocked by your browser. Select the sizes above and copy them.'}});
+ $('fcCopy').addEventListener('click',async()=>{const t=text();if(!t){$('fcMsg').textContent='Fix the highlighted box first.';return}try{await navigator.clipboard.writeText(t);$('fcMsg').textContent='Copied to clipboard.'}catch(e){$('fcMsg').textContent='Couldn\'t copy automatically. Select the sizes above and copy them.'}});
  $('fcPrint').addEventListener('click',()=>print());
  run()}
 window.FlossFoxFabricUI={state:()=>({...S}),text,run};

@@ -58,7 +58,7 @@ function render(box,src,opts){
  const offline=typeof navigator!=='undefined'&&navigator.onLine===false;
  box.hidden=false;const s=el('section',{class:'wtb noprint','aria-labelledby':box.id+'-h','data-links':String(offline?0:r.linkCount)});
  s.appendChild(el('p',{class:'wtbeyebrow'},'Optional'));const h3=el('h3',{id:box.id+'-h'},'Where to buy your missing supplies');s.appendChild(h3);
- if(src.nothing){s.appendChild(el('p',{class:'hint'},'You have no confirmed items to buy.'));altRow(s,opts.context);box.appendChild(s);return r}
+ if(src.nothing){s.appendChild(el('p',{class:'hint'},'Nothing on your list to buy yet.'));altRow(s,opts.context);box.appendChild(s);return r}
  pipLine(box,s,h3);
  if(r.merchants.some(m=>m.mock))s.appendChild(el('p',{class:'wtbmock'},'Preview only: sample shops with made-up .example addresses. Nothing is tracked and nothing earns a commission.'));
  // group by retailer (render only; r.merchants is already A-Z from the selector)
@@ -91,5 +91,6 @@ function render(box,src,opts){
 function redraw(){LIVE.forEach((a,box)=>{if(!box.isConnected){LIVE.delete(box);return}render(box,a[0],a[1])})}
 if(typeof window!=='undefined'){window.addEventListener('online',redraw);window.addEventListener('offline',redraw)}
 window.FlossFoxShop={render,fromConverter,fromProject,
- anyEligible:()=>{try{return!!(O()&&CFG()&&O().select([],CFG(),ENV()).layer)}catch(e){return false}}};
+ anyEligible:()=>{try{return!!(O()&&CFG()&&O().select([],CFG(),ENV()).layer)}catch(e){return false}},
+ anyRealEligible:()=>{try{return!!(O()&&CFG()&&O().select([],Object.assign({},CFG(),{mockMerchants:[]}),ENV()).layer)}catch(e){return false}}};
 })();

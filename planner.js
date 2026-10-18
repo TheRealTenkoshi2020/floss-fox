@@ -26,7 +26,7 @@ function text(r){const buy=r.rows.filter(x=>x.status==='buy'),rev=r.rows.filter(
  r.issues.forEach(i=>o.push(`! ${r.names[i.projectId]||'A project'}${i.code?' (DMC '+i.code+')':''}: ${ISS[i.kind]||i.kind}`));
  if(!r.summary.canFinalize)o.push('','Not a final total: check the colors above first.');o.push('Covered by confirmed skeins: '+r.summary.covered+' color'+(r.summary.covered===1?'':'s')+'.');return o.join('\n')}
 function draw(){const C=$('planCard'),projs=P._store().projects.filter(p=>!p.demo);
- C.innerHTML=`<h2>Plan shopping for several projects</h2><p class="hint">Pick projects. Colors they share are added up, and each confirmed skein you own is counted once. Nothing in your projects or collection changes.</p>
+ C.innerHTML=`<h2>Plan shopping for several projects</h2><p class="hint">Pick the projects you're shopping for. We add up colors they share and count each confirmed skein you own once. Nothing in your projects or collection changes.</p>
 ${projs.length?`<fieldset class="bkmode"><legend>Projects</legend>${projs.map(p=>`<label style="display:block"><input type="checkbox" data-plan="${esc(p.id)}"> ${esc(p.name||'Untitled project')} <span class="mut">(${p.items.length} color${p.items.length===1?'':'s'})</span></label>`).join('')}</fieldset>`:'<p>No projects yet.</p>'}
 <div class="row"><button type="button" class="pri" id="planGo">Show shopping plan</button><button type="button" class="ghost" id="planClose">Close</button></div><div id="planOut" aria-live="polite"></div>`;
  $('planGo').onclick=()=>{const ids=[...C.querySelectorAll('[data-plan]:checked')].map(i=>i.dataset.plan);if(!ids.length){$('planOut').innerHTML='<p class="hint">Pick at least one project.</p>';return}last=compute(ids);show(last)};
@@ -46,8 +46,8 @@ ${r.issues.length?`<div class="errbox" id="planIssues"><ul>${r.issues.map(i=>`<l
   const lis=[...O.querySelectorAll('#planBuy > li[data-code]')];
   if(lis.length===needs.length)FlossFoxSkeinPreviewUI.inline(lis.map((li,i)=>({li,need:needs[i]})));
  }
- $('planCopy').onclick=()=>{const t=text(r);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$('planMsg').textContent='Copied.',()=>$('planMsg').textContent='Copy failed. Select the list and copy it.')};
- $('planPrint').onclick=()=>{const w=window.open('','_blank');if(!w){$('planMsg').textContent='Printing was blocked by the browser.';return}w.document.write('<!doctype html><title>Floss Fox shopping plan</title><pre style="white-space:pre-wrap;font:14px/1.4 sans-serif"></pre>');w.document.querySelector('pre').textContent=text(r);w.document.close();w.focus();w.print()}}
+ $('planCopy').onclick=()=>{const t=text(r);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$('planMsg').textContent='Copied.',()=>$('planMsg').textContent='Couldn\'t copy automatically. Select the list and copy it.')};
+ $('planPrint').onclick=()=>{const w=window.open('','_blank');if(!w){$('planMsg').textContent='Your browser blocked printing.';return}w.document.write('<!doctype html><title>Floss Fox shopping plan</title><pre style="white-space:pre-wrap;font:14px/1.4 sans-serif"></pre>');w.document.querySelector('pre').textContent=text(r);w.document.close();w.focus();w.print()}}
 $('planOpen').onclick=()=>{const C=$('planCard');C.hidden=false;draw();C.focus()};
 window.FlossFoxPlanner={compute,text};
 })();

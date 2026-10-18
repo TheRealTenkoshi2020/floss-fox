@@ -36,7 +36,7 @@ with sync_playwright() as p:
         ok(t + '321=25 confirmed', d['321']['n'] == 25 and d['321'].get('confirmed') is True, d['321'])
         ok(t + '3865 no amount -> 1 unconfirmed', d['3865']['n'] == 1 and 'confirmed' not in d['3865'] and d['3865']['partial'] is False, d['3865'])
         ok(t + 'shape unchanged', all(set(v) <= {'n', 'partial', 'restock', 'updated', 'confirmed'} for v in d.values()) and set(ls()) == {'schema', 'threads'})
-        g.click('#bkUndo'); g.wait_for_timeout(100); ok(t + 'undo restores exact collection', ls() == SEED, ls())
+        g.click('#bkUndo'); g.wait_for_timeout(100); ok(t + 'undo restores exact threads (schema may be 2 per CI005 contract)', ls()['threads'] == SEED['threads'] and ls()['schema'] in (1, 2), ls())
         g.fill('#thAdd', '310 x2'); g.click('#thBulkBtn'); g.check('input[name="bkMode"][value="add"]'); g.click('#bkSave'); g.wait_for_timeout(100)
         ok(t + 'add mode adds on top', ls()['threads']['310']['n'] == 4)
         g.fill('#thAdd', '321'); g.click('#thBulkBtn'); ok(t + 'existing no-amount: nothing to save', g.is_disabled('#bkSave'))
