@@ -67,11 +67,21 @@ function catalogOrder(validCodes){if(!validCodes||typeof validCodes!=='object')r
 // Share of codes that directly follow the previous code in catalog order (a chart page's tail, e.g. 5283 5284 5287 ... B5200 ECRU WHITE).
 function catalogAdjacent(codes,order){let adj=0,prev=null;for(const c of codes){const i=order.get(c);if(i!==undefined&&prev!==null&&i===prev+1)adj++;if(i!==undefined)prev=i}return codes.length>1?adj/(codes.length-1):0}
 function catalogRun(codes,order){let best=0,cur=0,prev=null;for(const c of codes){const i=order.get(c);if(i!==undefined&&prev!==null&&i===prev+1)cur++;else cur=1;if(i!==undefined)prev=i;best=Math.max(best,cur)}return best}
+// Pattern check v2: a text-layer chart row ("10 S S M M L ..." with an optional row label) is not legend text.
+// Drop that run of 6+ one- or two-character cells; keep anything after it (a key printed beside the chart: "... M = DMC 3607").
+function stripChartRun(line){const t=String(line).trim().split(/\s+/);let i=0;const codeish=x=>/^(?:\d{1,4}|BLANC|ECRU|B5200|=|DMC)$/i.test(x||'');
+ while(i<t.length&&t[i].length<=2&&!(i>0&&codeish(t[i+1])&&!/^\d+$/.test(t[i])))i++;if(i>=6)return t.slice(i).join(' ');
+ // An empty chart row's label in front of a key line beside the chart ("5 * 370 Name 39"): drop the label.
+ return /^\d{1,2}\s+[^\s\d]{1,2}\s+(?:=\s*)?(?:DMC\s*)?(?:\d{1,4}|BLANC|ECRU|B5200)\b/i.test(String(line).trim())?String(line).trim().replace(/^\d{1,2}\s+/,''):line}
 function parsePages(pages,validCodes){
  if(!Array.isArray(pages)||pages.length>100)throw new Error('That page list isn\'t valid.');
  let checked=0;const raw=[];const warnings=[];const skipped=[];
  for(const p of pages){let text=String(p.text||'');if(text.length>MAX_TEXT)text=text.slice(0,MAX_TEXT);
-  const lines=text.split(/\r?\n/);for(const line of lines){if(++checked>MAX_LINES){warnings.push('text-limit-reached');break}const segs=splitSegments(line,validCodes);for(const seg of segs){const row=parseRow(seg,validCodes,p.page);if(!row&&skipped.length<50&&(SPECIAL.test(seg)||/\bDMC\s*[:#-]?\s*[A-Za-z]?\d/i.test(seg)||UNKNOWN_ROW.test(String(seg).trim())))skipped.push({page:p.page||1,line:String(seg).trim().slice(0,160),reason:SPECIAL.test(seg)?'specialty':'unrecognized'});if(row){if(segs.length>1)row.warnings.push('two-column-row');if(!row.structured){row.lineCodes=[];for(const m of String(seg).matchAll(/(?:^|\s)(BLANC|WHITE|ECRU|B5200|\d{1,4})\s+(?=[A-Za-z])/gi)){const c=validCode(m[1],validCodes);if(c)row.lineCodes.push(c)}}raw.push(row);if(raw.length>=MAX_COLORS){warnings.push('color-limit-reached');break}}}if(raw.length>=MAX_COLORS)break}
+  const src=text.split(/\r?\n/);let lines=src.map(stripChartRun);
+  // A chart with row numbers on the left (5+ chart rows that start with a number): any other line starting with a 1 or 2 digit
+  // number followed by a word is a row label beside text ("1 FLOSS LEGEND ..."), not DMC 1. Drop the label.
+  if(src.filter((l,i)=>lines[i]!==l&&/^\s*\d{1,2}\s/.test(l)).length>=5)lines=lines.map(l=>l.replace(/^\s*\d{1,2}\s+(?=[A-Za-z])(?!(?:BLANC|ECRU|B5200|DMC)\b)/i,''));
+  lines=lines.filter(l=>l.trim());for(const line of lines){if(++checked>MAX_LINES){warnings.push('text-limit-reached');break}const segs=splitSegments(line,validCodes);for(const seg of segs){const row=parseRow(seg,validCodes,p.page);if(!row&&skipped.length<50&&(SPECIAL.test(seg)||/\bDMC\s*[:#-]?\s*[A-Za-z]?\d/i.test(seg)||UNKNOWN_ROW.test(String(seg).trim())))skipped.push({page:p.page||1,line:String(seg).trim().slice(0,160),reason:SPECIAL.test(seg)?'specialty':'unrecognized'});if(row){if(segs.length>1)row.warnings.push('two-column-row');if(!row.structured){row.lineCodes=[];for(const m of String(seg).matchAll(/(?:^|\s)(BLANC|WHITE|ECRU|B5200|\d{1,4})\s+(?=[A-Za-z])/gi)){const c=validCode(m[1],validCodes);if(c)row.lineCodes.push(c)}}raw.push(row);if(raw.length>=MAX_COLORS){warnings.push('color-limit-reached');break}}}if(raw.length>=MAX_COLORS)break}
   if(checked>MAX_LINES||raw.length>=MAX_COLORS)break;
  }
  // Barbara (3.0 feedback): a full DMC color chart/catalog page ("310 Black" on every line) is NOT the pattern's color key.

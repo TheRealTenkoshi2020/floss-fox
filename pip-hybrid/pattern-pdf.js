@@ -14,6 +14,8 @@
   }
   return lines.sort((a,b)=>b.y-a.y).map(l=>l.parts.sort((a,b)=>a.x-b.x).map(x=>x.str).join(' ')).join('\n');
  }
+ // v2 Pattern check: positioned text items so the chart grid (one symbol per cell) can be compared with the key. Local only.
+ function compactItems(items){if(!Array.isArray(items))return[];const o=[];for(const i of items){if(o.length>=40000)break;const s=typeof i?.str==='string'?i.str.trim():'';const m=i&&i.transform;if(!s||!Array.isArray(m)||!Number.isFinite(m[4])||!Number.isFinite(m[5]))continue;o.push({s,x:Math.round(m[4]*10)/10,y:Math.round(m[5]*10)/10,w:Math.round((+i.width||0)*10)/10})}return o}
  async function inspect(file,pdfjs,opts={}){
   if(!file||!Number.isInteger(file.size)||file.size<1||file.size>MAX_BYTES)throw new Error('That file is empty or larger than 20 MB.');
   const ext=(String(file.name||'').split('.').pop()||'').toLowerCase();
@@ -34,10 +36,10 @@
     const page=await document.getPage(p),content=await page.getTextContent();
     // PDF text item order is not always visual reading order. Flag uncertain tables.
     const text=textItemsToLines(content.items).slice(0,100000);
-    pages.push({page:p,text});
+    pages.push({page:p,text,items:compactItems(content.items)});
    }
    return{kind:'pdf',name:file.name,pages,warnings:[...(document.numPages>MAX_PAGES?['Only the first 30 pages were read. Import the rest separately.']:[]),...(pages.every(p=>!p.text.trim())?['This PDF has no text we can read, so it\'s probably scanned pages.']:[])],requiresReview:true};
   }finally{await document?.destroy?.().catch?.(()=>{});await loading?.destroy?.().catch?.(()=>{});}
  }
- const api={inspect,textItemsToLines,MAX_BYTES,MAX_PAGES};root.FlossFoxPatternPDF=api;if(typeof module==='object'&&module.exports)module.exports=api;
+ const api={inspect,textItemsToLines,compactItems,MAX_BYTES,MAX_PAGES};root.FlossFoxPatternPDF=api;if(typeof module==='object'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

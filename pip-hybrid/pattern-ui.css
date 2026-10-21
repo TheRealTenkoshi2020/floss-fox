@@ -19,3 +19,4 @@
 .pat-saved{background:#eef6ef;border:1px solid #9cc3a4;border-radius:12px;padding:12px 14px;margin:0 0 12px;color:#23402b}
 .pat-saved.errbox{background:#fdf1ea;border-color:#e9b9a4;color:#6b2a14}
 .pat-saved p{margin:4px 0 8px}
+.pat-check{border:1px solid #c9b48a;background:#fff8e8;border-radius:8px;padding:.5rem .75rem;margin:.5rem 0}.pat-check h3{font-size:1rem;margin:0 0 .25rem}.pat-check ul{margin:.25rem 0;padding-left:1.1rem}.pat-check li{margin:.15rem 0}.pat-check .hint,.pat-check-ok{margin:.25rem 0 0}

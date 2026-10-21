@@ -8,13 +8,16 @@
  const cfg=window.PIP_PATTERN_CONFIG||{};
  const endpoint=cfg.endpoint||(()=>{try{const u=new URL(config.endpoint);u.pathname='/v1/pattern/analyze';return u.href}catch{return''}})();
  const online=cfg.enabled===true&&!!endpoint&&/^https:\/\//.test(endpoint)&&!!config.turnstileSiteKey;
- let dialog,file,pdfjs,inspection,rows=[],previewBlob=null,turnstileToken='',turnstileId=null,selectedPage=1,abort;
+ let dialog,file,pdfjs,inspection,chartPages=null,rows=[],previewBlob=null,turnstileToken='',turnstileId=null,selectedPage=1,abort;
  const N=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n};
  const $=id=>dialog?.querySelector('#'+id);
  const WARN={'no-quantity-evidence':'No amount on this line, so it\'s left as Unknown','unlabeled-numbers-not-imported':'This line has numbers with no label (stitches or skeins?), so we didn\'t import them','duplicate-color-rows':'Listed more than once, so we cleared the amounts. Enter the total yourself','check-thread-brand':'Mentions Anchor. Check which brand this line means','specialty-stitch-review':'Backstitch, blend, half cross or fractional line. Check the amount','variegated-check-color':'Variegated thread. Check the exact color number','invalid-skein-amount':'The skein amount looked wrong, so we cleared it','invalid-stitch-count':'The stitch count looked wrong, so we cleared it','ai-proposed-not-verified':'AI proposal: not verified','leading-number-not-a-color':'We read the first number as a row number or symbol, not a color. Check the color number','range-amount':'The amount is a range, so it\'s left as Unknown. Enter what you plan to buy','approximate-amount':'The amount is approximate. Check it against your pattern'};let skippedLines=[];
  const info=t=>{if($('patInfo'))$('patInfo').textContent=t};
  const setRows=r=>{rows=r.map(x=>({...x,confirmed:false}));checkedAll=false;drawRows()};let checkedAll=false;
  function drawRows(){const host=$('patRows');host.replaceChildren();dialog?.querySelector('.pat-unreadable')?.remove();const title=N(rows.length?'p':'span','',rows.length?'':'');if(rows.length)title.textContent=`Found ${rows.length} color${rows.length===1?'':'s'}. Check every value against your pattern. Amounts we couldn't read stay unknown.`;host.append(title);
+  /* Pattern check (dev): read-only flags, never blocks saving or changes rows. */
+  if(rows.length||skippedLines.length){const PC=window.FlossFoxPatternCheck;if(PC){try{const r=PC.check({rows,skippedLines,skipped:skippedLines},DMC,window.FlossFoxSkeins,(()=>{try{const P=window.FlossFoxProjects,id=P&&P.openId&&P.openId(),pr=id&&P._store().projects.find(x=>x.id===id);return pr&&pr.skeinEstimator||null}catch(e){return null}})()),ls=PC.lines(r);/* v2: key vs chart, PDFs only */let note='';const PCH=window.FlossFoxPatternChart;if(PCH&&chartPages){try{const r2=PCH.check(chartPages,DMC),l2=PCH.lines(r2);ls.push(...l2);r.count+=l2.length;note=PCH.note(r2)}catch(e){}}const box=N('section','pat-check');box.id='patCheck';box.setAttribute('aria-label',PC.STR.title);box.dataset.flags=String(r.count);box.append(N('h3','',PC.STR.title));
+   if(ls.length){const ul=N('ul');ls.forEach(t=>ul.append(N('li','',t)));box.append(ul,N('p','hint',PC.STR.foot))}else box.append(N('p','pat-check-ok',PC.STR.clean));if(note){const pn=N('p','hint pat-chart-note',note);pn.id='patChartNote';box.append(pn)}host.append(box)}catch(e){}}}
   if(skippedLines.length){const d=N('details','pat-skipped');d.id='patSkipped';d.append(N('summary','',`${skippedLines.length} line${skippedLines.length===1?'':'s'} not imported (specialty threads, beads or color numbers we don't recognize)`),N('p','hint','We can only import standard DMC stranded cotton with a valid color number. Check these lines against your pattern and add anything you need by hand.'));const ul=N('ul');for(const x of skippedLines)ul.append(N('li','',`Page ${x.page}: ${x.line}${x.reason==='unrecognized'?' (color number not recognized)':''}`));d.append(ul);host.append(d)}
   if(!rows.length){validateReady();return}
   for(const row of rows){const div=N('div','pat-row'),h=N('b','',`DMC ${row.code}`);const evidence=N('small','',`Page ${row.sourcePage}: ${row.sourceLine||'AI proposal (not verified)'}`);
@@ -35,7 +38,7 @@ const unclear=r=>r.qty===null||badQty(r)||(r.warnings||[]).some(w=>w!=='no-quant
   why.textContent=u?uMsg:''}
  async function lib(){if(pdfjs)return pdfjs;try{/* CI005: import() in a classic script resolves against the script URL, so resolve against the page instead. */const V=u=>new URL('pip-hybrid/vendor/pdfjs/'+u,document.baseURI).href;pdfjs=await import(V('pdf.mjs'));pdfjs.GlobalWorkerOptions.workerSrc=V('pdf.worker.mjs');return pdfjs}catch{return null}}
  async function inspectFile(f){file=f;inspection=null;rows=[];skippedLines=[];$('patRows').replaceChildren();$('patAIReview').hidden=true;$('patImagePreview').replaceChildren();previewBlob=null;try{
-  info('Reading your file on this device…');const out=await I.inspect(file,await lib());inspection=out;const parsed=C.parsePages(out.pages,DMC);skippedLines=parsed.skipped||[];setRows(parsed.rows);
+  info('Reading your file on this device…');const out=await I.inspect(file,await lib());inspection=out;chartPages=out.kind==='pdf'?out.pages:null;const parsed=C.parsePages(out.pages,DMC);skippedLines=parsed.skipped||[];setRows(parsed.rows);
   $('patPage').max=String(Math.max(1,out.pages.length));$('patPage').value='1';$('patPageBox').hidden=!online||out.kind!=='pdf';/* page picker only feeds the AI preview */
   $('patName').value=(String(f.name||'').replace(/\.[^.]+$/,'').slice(0,100))||'Imported pattern';
   const cat=parsed.metadata?.catalogPages||[],noText=out.kind==='pdf'&&out.pages.length>0&&out.pages.every(p=>!String(p.text||'').trim()),limited=(out.warnings||[]).filter(w=>/first 30 pages/.test(w));
@@ -74,7 +77,7 @@ const unclear=r=>r.qty===null||badQty(r)||(r.warnings||[]).some(w=>w!=='no-quant
   }catch(e){info('AI pattern analysis unavailable: '+String(e.message||e)+'. Nothing has been added.')}
   finally{clearTimeout(timer);abort=null;$('patAIReview').hidden=true}
  }
- function manualParse(){const lines=$('patPaste').value;const parsed=C.parsePages([{page:1,text:lines}],DMC);skippedLines=parsed.skipped||[];setRows(parsed.rows);info(`Found ${parsed.rows.length} color${parsed.rows.length===1?'':'s'} in your legend. Check each row before importing. Nothing was sent online.`)}
+ function manualParse(){chartPages=null;const lines=$('patPaste').value;const parsed=C.parsePages([{page:1,text:lines}],DMC);skippedLines=parsed.skipped||[];setRows(parsed.rows);info(`Found ${parsed.rows.length} color${parsed.rows.length===1?'':'s'} in your legend. Check each row before importing. Nothing was sent online.`)}
  function saveProject(){try{
   if(window.FlossFoxProjects.canSave?.()===false)throw Error('Saving isn\'t available in this browser right now. Download a backup before importing.');
   if(!rows.length)throw Error('There are no colors to add yet');if(!checkedAll)throw Error('Tick “I checked these colors against my pattern” first');

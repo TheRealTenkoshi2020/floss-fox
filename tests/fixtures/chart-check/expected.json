@@ -1,0 +1,183 @@
+{
+ "match": {
+  "chartCounts": {
+   "O": 82,
+   "X": 92,
+   "+": 86,
+   "*": 79
+  },
+  "keySymbols": [
+   "X",
+   "O",
+   "+",
+   "*"
+  ],
+  "listedOverride": {},
+  "note": "key and chart agree"
+ },
+ "extra-symbol": {
+  "chartCounts": {
+   "X": 87,
+   "+": 77,
+   "O": 78,
+   "*": 91,
+   "%": 9
+  },
+  "keySymbols": [
+   "X",
+   "O",
+   "+",
+   "*"
+  ],
+  "listedOverride": {},
+  "note": "% in chart, not in key"
+ },
+ "unused-color": {
+  "chartCounts": {
+   "O": 66,
+   "+": 90,
+   "*": 80,
+   "X": 95
+  },
+  "keySymbols": [
+   "X",
+   "O",
+   "+",
+   "*",
+   "="
+  ],
+  "listedOverride": {},
+  "note": "= (797) in key, never in chart"
+ },
+ "wrong-counts": {
+  "chartCounts": {
+   "O": 87,
+   "+": 96,
+   "X": 83,
+   "*": 86
+  },
+  "keySymbols": [
+   "X",
+   "O",
+   "+",
+   "*"
+  ],
+  "listedOverride": {
+   "310": 143,
+   "321": 89
+  },
+  "note": "310 off by 60 (flag); 321 off by 2 (tolerated)"
+ },
+ "image-chart": {
+  "chartCounts": {
+   "+": 106,
+   "X": 70,
+   "*": 92,
+   "O": 82
+  },
+  "keySymbols": [
+   "X",
+   "O",
+   "+",
+   "*"
+  ],
+  "listedOverride": {},
+  "note": "chart is a picture; no symbols readable"
+ },
+ "two-column": {
+  "chartCounts": {
+   "=": 62,
+   "X": 58,
+   "*": 66,
+   "+": 58,
+   "O": 57,
+   "@": 73
+  },
+  "keySymbols": [
+   "X",
+   "O",
+   "+",
+   "*",
+   "=",
+   "@"
+  ],
+  "listedOverride": {},
+  "note": "two-column key, all agree"
+ },
+ "two-column-bad": {
+  "chartCounts": {
+   "+": 58,
+   "O": 75,
+   "*": 70,
+   "X": 76,
+   "=": 86,
+   "%": 9
+  },
+  "keySymbols": [
+   "X",
+   "O",
+   "+",
+   "*",
+   "=",
+   "@"
+  ],
+  "listedOverride": {},
+  "note": "two-column key, @ unused, % extra"
+ },
+ "ghost-replica": {
+  "chartCounts": {
+   "S": 124,
+   "@": 126,
+   "ii": 121,
+   "M": 240,
+   "L": 245,
+   "V": 112,
+   "H": 123,
+   "K": 110
+  },
+  "rows": 58,
+  "note": "Myke ghost image errors"
+ },
+ "ghost-below": {
+  "chartCounts": {
+   "S": 124,
+   "@": 126,
+   "ii": 121,
+   "M": 240,
+   "L": 245,
+   "V": 112,
+   "H": 123,
+   "K": 110
+  },
+  "rows": 58,
+  "note": "legend below the chart; Myke ghost image errors"
+ },
+ "barrel-replica": {
+  "chartCounts": {
+   "M": 312,
+   "*": 147,
+   "S": 312,
+   "\u2665": 152,
+   "Y": 157,
+   "B": 167,
+   "X": 167,
+   "x": 167
+  },
+  "rows": 60,
+  "note": "Myke barrel image errors"
+ },
+ "barrel-below": {
+  "chartCounts": {
+   "M": 312,
+   "*": 147,
+   "S": 312,
+   "\u2665": 152,
+   "Y": 157,
+   "B": 167,
+   "X": 167,
+   "x": 167
+  },
+  "rows": 60,
+  "note": "legend below the chart; Myke barrel image errors"
+ }
+}

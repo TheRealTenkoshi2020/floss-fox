@@ -34,7 +34,7 @@ function screen(){
  if(vis('helpView'))return'help';
  const r=$('results');return r&&!r.hidden?'results':'convert'}
 const entry=k=>(S().help||{})[k]||null;
-function topics(k){return((S().topics||{})[k]||[])}
+function topics(k){const t=((S().topics||{})[k]||[]);return k==='import'&&window.FF_PCHECK_HELP?t.concat([window.FF_PCHECK_HELP]):t}
 function blockHtml(k){const e=entry(k);if(!e)return'';const nx=doNext(k);
  return`<div class="ffhelp" data-ffscreen="${k}"><p class="ffeli5"><b>${esc(e.title)}</b><br>${esc(e.eli5)}</p>${nx&&nx.label?`<div class="row"><button type="button" class="pri" data-ffnext="${k}">${esc(nx.label)}</button></div>`:''}${topics(k).map(([q,a])=>`<details class="fftopic"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div>`}
 function bindBlock(root,onDo){root.querySelectorAll('[data-ffnext]').forEach(b=>b.onclick=()=>{const nx=doNext(b.dataset.ffnext);if(onDo)onDo();if(nx)nx.run()})}
