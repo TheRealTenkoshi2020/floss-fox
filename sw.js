@@ -1,5 +1,5 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v3.2-1';
+const CACHE = 'flossfox-v3.3-1';
 const CORE = [
   "pip-hybrid/vendor/pdfjs/pdf.mjs",
   "pip-hybrid/vendor/pdfjs/pdf.worker.mjs",
@@ -7,6 +7,7 @@ const CORE = [
   "pip-hybrid/pattern-ui.css",
   "pip-hybrid/pattern-check.js",
   "pip-hybrid/pattern-chart.js",
+  "analytics.js",
   "pip-hybrid/pattern-ui.js",
   "pip-hybrid/pattern-pdf.js",
   "pip-hybrid/pattern-core.js",
