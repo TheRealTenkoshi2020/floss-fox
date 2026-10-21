@@ -31,7 +31,7 @@ with sync_playwright() as p:
         else:
             mob = W < 600; ctx = br.new_context(viewport={'width': W, 'height': 800 if mob else 900}, is_mobile=mob, has_touch=mob, device_scale_factor=2 if mob else 1, accept_downloads=True)
             ctx.grant_permissions(['clipboard-read', 'clipboard-write'])
-        ctx.add_init_script(QUIET); ctx.add_init_script(SEED)
+        ctx.add_init_script(QUIET); ctx.add_init_script('window.FF_NO_AUTOCMP=true'); ctx.add_init_script(SEED)
         g = ctx.new_page(); g.on('pageerror', lambda e: errs.append(f'{W}: {e}')); g.on('dialog', lambda d: d.accept())
         g.goto(B); g.wait_for_load_state('networkidle'); g.click('#tabProjects'); g.click('[data-open="rc2"]'); g.wait_for_timeout(150)
         ls = lambda k: g.evaluate(f"localStorage.getItem({json.dumps(k)})")

@@ -21,7 +21,7 @@ with sync_playwright() as p:
     def page(seed=None, w=390):
         mob = w < 600
         ctx = br.new_context(viewport={'width': w, 'height': 800}, is_mobile=mob, has_touch=mob, accept_downloads=True)
-        ctx.add_init_script(QUIET)
+        ctx.add_init_script(QUIET); ctx.add_init_script('window.FF_NO_AUTOCMP=true')
         if seed: ctx.add_init_script(seed_js(seed))
         g = ctx.new_page(); g.on('pageerror', lambda e: errs.append(str(e)))
         def h(d):

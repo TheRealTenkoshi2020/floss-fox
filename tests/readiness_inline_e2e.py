@@ -11,7 +11,7 @@ SEED = "localStorage.setItem('%s.tour.v1','{\"status\":\"dismissed\"}');localSto
 with sync_playwright() as p:
     b = p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
     for w in (390, 884):
-        c = b.new_context(viewport={'width': w, 'height': 900}, is_mobile=w < 700, accept_downloads=True); c.add_init_script(SEED)
+        c = b.new_context(viewport={'width': w, 'height': 900}, is_mobile=w < 700, accept_downloads=True); c.add_init_script('window.FF_NO_AUTOCMP=true'); c.add_init_script(SEED)
         g = c.new_page(); E = []; g.on('pageerror', lambda e: E.append(str(e))); g.on('dialog', lambda d: d.accept())
         g.goto(B); g.fill('#inp', '310 x2\n321 x2\n3865 x1\n699'); g.click('#go'); g.fill('#newProjName', 'Readiness demo'); g.click('#saveProj'); g.click('#openSaved'); g.wait_for_timeout(150)
         ok(f'[{w}] standalone readiness panel with its own picker is gone', g.locator('#pipProjectReadiness').count() == 0 and g.locator('#ffReadinessProject').count() == 0)

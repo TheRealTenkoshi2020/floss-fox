@@ -32,7 +32,7 @@ const STATES={
  idle:       {pose:'neutral',    pri:12, anim:'fade',  msg:()=>'Paste a list whenever you\'re ready.'},
  attentive:  {pose:'curious',    pri:20, anim:'tilt',  msg:()=>'Ready when you are!'},
  empty:      {pose:'curious',    pri:20, anim:'tilt',  msg:()=>'I didn\'t find any colors yet. Pop a few DMC numbers in and I\'ll take a look.'},
- listReady:  {pose:'presenting', pri:20, anim:'pop',   msg:()=>"Your colors are ready! Let's see what you have."},
+ listReady:  {pose:'presenting', pri:20, anim:'pop',   msg:()=>((window.FF_P12||{})['p12.bubble.find.has.1'])||"Here are your colors. Save them as a project to check what you own."},
  recovered:  {pose:'reassuring', pri:21, anim:'fade',  msg:()=>'All fixed! Every line reads cleanly now.'},
  helpful:    {pose:'discovery',  pri:25, anim:'pop',   msg:()=>{const a=alt();return a&&a.matched?`Look! The chart has ${a.brand} matches for ${a.matched} of your ${plural(a.total,'color')}.`:''}},
  processing: {pose:'thinking',   pri:30, anim:'fade',  msg:()=>'Let me look at your list…'}, // reserved: parsing is instant, so never shown (no fake delays)
@@ -41,6 +41,7 @@ const STATES={
  goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"Happy stitching! Tap Ask Pip anytime."},
  error:      {pose:errPose,      pri:50, anim:'tilt',  msg:errMsg},
  tangled:    {pose:'tangled',    pri:8,  anim:'wiggle',msg:()=>TANGLE[tn%2]},
+ screen:     {pose:()=>screenPose||'reassuring', pri:20, anim:'fade',  msg:()=>screenT}, // per-screen line from pip-help.js (off Find floss)
  sleepy:     {pose:'sleepy',     pri:5,  anim:'doze',  msg:()=>''},
  // Contextual tips (overlays, at most once per session each, only over a calm state; see tour.js)
  hintStart:  {pose:()=>'peeking',    pri:22, anim:'tilt',  msg:()=>'Not sure where to start? Try typing a DMC number, like 310!'},
@@ -59,7 +60,8 @@ const img=$('pipImg'),src=$('pipSrc'),msg=$('pipMsg'),fig=$('pipFig'),tog=$('pip
 let greeted=false,touring=false,cur=null,base='welcome',lastR={items:[],errs:[]},over=null,overT=0,celebrated=false;
 const T={toast:3500,celebrate:4000,tangle:2600,tangleGap:60000,idle:90000,minSleep:4000,throttle:1000};
 const set=(a,ext)=>SIZES.map(w=>`assets/pip/pip-${a}-${w}.${ext} ${w}w`).join(', ');
-function show(name,r,anim=true){const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);const pz=typeof S.pose==='function'?S.pose(lastR):S.pose;
+let screenK=null,screenT='',screenPose=null;
+function show(name,r,anim=true){if(screenK&&name===base)name='screen';const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);const pz=typeof S.pose==='function'?S.pose(lastR):S.pose;
  if(cur===name&&msg.textContent===text&&el.dataset.pose===poseArt(pz))return; // nothing meaningful changed
  const a=poseArt(pz);cur=name;el.dataset.state=name;el.dataset.pose=a;
  if(img.dataset.art!==a){src.srcset=set(a,'webp');img.srcset=set(a,'png');img.src=`assets/pip/pip-${a}-320.png`;img.dataset.art=a}
@@ -109,6 +111,7 @@ const api={result,show,stateFor,STATES,ART,FUTURE,current:()=>cur,base:()=>base,
  setTour:on=>{touring=!!on;if(touring&&(over==='sleepy'||over==='tangled'||(over&&over.startsWith('hint')))){clearOver();show(base,null,false)}arm()},touring:()=>touring,
  hint:n=>{const S=STATES[n];if(!S||touring||over||quiet()||STATES[base].pri>CALM||!S.msg(lastR))return false;overlay(n,9000);arm();return true},
  errPose,
+ screen:(k,t,pose)=>{if(!k){if(!screenK)return;screenK=null;if(cur==='screen')show(base,null,false);return}screenK=k;screenT=String(t||'');screenPose=pose||null;clearOver();show('screen')},screenKey:()=>screenK,
  isHidden:()=>fig.hidden,
  // Brief decorative confirmation (wink + thumbs-up) next to the app's own status line, which is the one polite announcement.
  saved:(slot,text)=>{if(!slot||fig.hidden)return false;slot.querySelectorAll('.savedtoast').forEach(x=>x.remove());const t=document.createElement('span');t.className='savedtoast';t.setAttribute('aria-hidden','true');

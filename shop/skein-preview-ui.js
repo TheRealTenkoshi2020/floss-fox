@@ -5,6 +5,7 @@
 (function(root){
  'use strict';
  const get=()=>root.FlossFoxSkeinPreview;
+ const ASSUMED_NOTE='This amount is an estimate, so check your pattern before you buy.'; // placeholder for Pixel
  const add=(parent,tag,klass,text)=>{const e=document.createElement(tag);if(klass)e.className=klass;if(text!==undefined)e.textContent=text;parent.appendChild(e);return e};
  function render(container,needs){
   if(!container||!(root.FLOSS_FOX_ENV==='preview'||root.FLOSS_FOX_DIRECT_LINKS===true)||!get())return 0;
@@ -23,6 +24,7 @@
    const head=add(item,'div','ff-skein-head');
    add(head,'strong',null,'DMC '+row.code);
    add(head,'span',null,row.qty+' skein'+(row.qty===1?'':'s')+' to buy');
+   if(row.assumed)add(item,'p','ff-skein-asm',ASSUMED_NOTE);
    const actions=add(item,'div','ff-skein-actions');
    for(const l of row.links){
     const a=add(actions,'a','ff-skein-link',l.exact?'View skein · '+l.storeName:'Find color · '+l.storeName);
@@ -53,6 +55,7 @@
     a.href=l.url;a.target='_blank';a.rel='noopener noreferrer';a.dataset.store=l.storeId;a.dataset.match=l.type;a.dataset.kind='direct';a.dataset.tracked='false';
     a.setAttribute('aria-label',l.label+' (opens in new tab)');a.title=l.hint;
    }
+   if(x.need.assumed||row.assumed){const m=add(w,'small','ff-skein-asm',ASSUMED_NOTE);m.id='ffAsm-'+row.code;w.setAttribute('aria-describedby',m.id)}
    n++;
   }
   // One short disclosure per list: these are direct (untracked) links, kept apart from any future affiliate path.

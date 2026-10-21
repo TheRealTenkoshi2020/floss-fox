@@ -17,14 +17,15 @@
  async function inspect(file,pdfjs,opts={}){
   if(!file||!Number.isInteger(file.size)||file.size<1||file.size>MAX_BYTES)throw new Error('That file is empty or larger than 20 MB.');
   const ext=(String(file.name||'').split('.').pop()||'').toLowerCase();
-  if(!['pdf','png','jpg','jpeg','webp'].includes(ext))throw new Error('That file type isn\'t supported. Choose a PDF, PNG, JPG or WebP.');
+  if(['png','jpg','jpeg','webp','gif','heic','heif','bmp','tif','tiff'].includes(ext)||/^image\//.test(String(file.type||''))){const e=new Error((typeof window!=='undefined'&&window.FF_STR&&FF_STR.left&&FF_STR.left.imageWarning)||'Only PDFs work right now. Choose a PDF file, or type the color key into the box below.');e.pdfOnly=true;throw e}
+  if(ext!=='pdf')throw new Error('That file type isn\'t supported. Choose a PDF file.');
   const header=new Uint8Array(await file.slice(0,16).arrayBuffer());
   const pdf=header[0]===37&&header[1]===80&&header[2]===68&&header[3]===70&&header[4]===45;
   const png=header[0]===137&&header[1]===80&&header[2]===78&&header[3]===71&&header[4]===13&&header[5]===10&&header[6]===26&&header[7]===10;
   const jpg=header[0]===255&&header[1]===216&&header[2]===255;
   const webp=String.fromCharCode(...header.slice(0,4))==='RIFF'&&String.fromCharCode(...header.slice(8,12))==='WEBP';
   if(!((ext==='pdf'&&pdf)||(ext==='png'&&png)||(['jpg','jpeg'].includes(ext)&&jpg)||(ext==='webp'&&webp)))throw new Error('The file name and its contents don\'t match, so it may be damaged or mislabeled.');
-  if(!pdf)return {kind:'image',name:file.name,pages:[],warnings:['Images aren\'t read automatically. Type the legend in below, or approve an AI scan if it\'s available. Nothing was scanned.'],requiresReview:true};
+  if(!pdf)return {kind:'image',name:file.name,pages:[],warnings:[((typeof window!=='undefined'&&window.FF_STR&&FF_STR.left&&FF_STR.left.imageWarning)||'Only PDFs work right now.')],requiresReview:true};
   if(!pdfjs||typeof pdfjs.getDocument!=='function')return {kind:'pdf',name:file.name,pages:[],warnings:['The PDF reader isn\'t available here, so PDF text can\'t be read. You can still type the legend in below.'],requiresReview:true};
   const bytes=new Uint8Array(await file.arrayBuffer());const loading=pdfjs.getDocument({data:bytes});let document;
   try{document=await loading.promise;const pages=[];const limit=Math.min(document.numPages,MAX_PAGES);
@@ -35,7 +36,7 @@
     const text=textItemsToLines(content.items).slice(0,100000);
     pages.push({page:p,text});
    }
-   return{kind:'pdf',name:file.name,pages,warnings:[...(document.numPages>MAX_PAGES?['Only the first 30 pages were read. Import the rest separately.']:[]),...(pages.every(p=>!p.text.trim())?['No selectable text found, so these are probably scanned pages. Type the legend in below, or approve an AI scan if it\'s available.']:[])],requiresReview:true};
+   return{kind:'pdf',name:file.name,pages,warnings:[...(document.numPages>MAX_PAGES?['Only the first 30 pages were read. Import the rest separately.']:[]),...(pages.every(p=>!p.text.trim())?['This PDF has no text we can read, so it\'s probably scanned pages.']:[])],requiresReview:true};
   }finally{await document?.destroy?.().catch?.(()=>{});await loading?.destroy?.().catch?.(()=>{});}
  }
  const api={inspect,textItemsToLines,MAX_BYTES,MAX_PAGES};root.FlossFoxPatternPDF=api;if(typeof module==='object'&&module.exports)module.exports=api;

@@ -36,4 +36,50 @@ ok('"Row 12" is not a color',one('Row 12')===null);
 ok('"2 strands 310" is not DMC 02',one('2 strands 310')===null);
 ok('"Page 3" is not a color',one('Page 3')===null);
 ok('"310 Black 2 skeins" plain row still works',one('310 Black 2 skeins')?.code==='310'&&one('310 Black 2 skeins').qty===2&&!one('310 Black 2 skeins').warnings.length);
+// Barbara (3.0): a full DMC color chart must never become the pattern's colors
+{const n=c=>/^\d+$/.test(c)?+c:-1;const keys=Object.keys(DMC).sort((a,b)=>(n(a)<0)-(n(b)<0)||n(a)-n(b)||(a<b?-1:a>b?1:0));
+ const chart=keys.map(k=>k+' '+DMC[k].name).join('\n');let q=P(chart);
+ ok('catalog: full DMC chart on one page imports nothing, flagged',q.rows.length===0&&q.warnings.includes('catalog-page-skipped')&&q.metadata.catalogPages[0]===1,{n:q.rows.length,w:q.warnings});
+ const pages=[{page:1,text:'X 310 Black 2400 2\nO 321 Red 800 1\n* 3865 Winter White 120 1'}];for(let i=0;i<keys.length;i+=90)pages.push({page:pages.length+1,text:keys.slice(i,i+90).map(k=>k+' '+DMC[k].name).join('\n')});
+ q=C.parsePages(pages,DMC);ok('catalog: pattern + appended chart keeps only the key colors',JSON.stringify(q.rows.map(x=>x.code))==='["310","321","3865"]',q.rows.map(x=>x.code).slice(0,10));
+ const thirds=[];for(let i=0;i<keys.length;i+=3)thirds.push(keys[i]+' '+DMC[keys[i]].name);const sp=[];for(let i=0;i<thirds.length;i+=90)sp.push({page:sp.length+1,text:thirds.slice(i,i+90).join('\n')});
+ q=C.parsePages(sp,DMC);ok('catalog: 3-column chart (>150 codes across pages) imports nothing',q.rows.length===0&&q.warnings.includes('catalog-document'),q.warnings);
+ const real=['150','310','321','415','498','666','700','725','797','815','938','3865','3713','3799','550','White'].map((c,i)=>'X'.charAt(0)+' '+c+' '+((DMC[c.toUpperCase()]||{}).name||'')+' '+(i+1)+' skeins').join('\n');
+ q=P(real);ok('catalog: a real 16-color key is NOT flagged',q.rows.length===16&&!q.warnings.includes('catalog-page-skipped'),{n:q.rows.length,w:q.warnings});
+ const sorted=['208','310','321','415','498','550','666','700','725','797','815','938','3713','3799','3865'].map(c=>c+' '+DMC[c].name+' 1 skein').join('\n');
+ q=P(sorted);ok('catalog: a sorted 15-color key is NOT flagged',q.rows.length===15&&!q.warnings.includes('catalog-page-skipped'),{n:q.rows.length,w:q.warnings});}
+
+// Small-legend fixes (Barbara follow-up): sorted single-family keys, two-column keys, bare symbol/code/count rows.
+{const nm=c=>(DMC[c]||{}).name||'';const S='X O # + * @ % & = ~ ^ ?'.split(' ');
+ const fam=['150','151','152','153','154','3685','3687','3688'];
+ let q=P(fam.map((c,i)=>S[i]+' '+c+' '+nm(c)+' '+(300+i*7)+' 1').join('\n'));
+ ok('small: sorted 8-color single-family key imports all 8 (not a chart)',q.rows.length===8&&!q.warnings.includes('catalog-page-skipped'),{n:q.rows.map(x=>x.code),w:q.warnings});
+ const g10=['469','470','471','472','3345','3346','3347','3348','310','WHITE'];
+ q=P(g10.map((c,i)=>S[i]+' '+c+' '+nm(c)+' '+(200+i)).join('\n'));
+ ok('small: sorted 10-color green family imports all 10',q.rows.length===10&&!q.warnings.includes('catalog-page-skipped'),{n:q.rows.map(x=>x.code),w:q.warnings});
+ q=P(fam.map(c=>'DMC '+c+' '+nm(c)+' 1 skein').join('\n'));
+ ok('small: sorted family with "DMC n ... 1 skein" rows imports',q.rows.length===8&&q.rows.every(x=>x.qty===1),q.rows.map(x=>x.code));
+ const two=[];for(let i=0;i<4;i++)two.push(S[i]+' '+fam[i]+' '+nm(fam[i])+' '+(400+i)+' '+S[i+4]+' '+fam[i+4]+' '+nm(fam[i+4])+' '+(500+i));
+ q=P(two.join('\n'));
+ ok('two columns: both columns read (8 codes)',JSON.stringify(q.rows.map(x=>x.code).sort())===JSON.stringify([...fam].sort()),q.rows.map(x=>x.code));
+ ok('two columns: unlabeled numbers still not amounts',q.rows.every(x=>x.qty===null&&x.stitchCount===null&&x.warnings.includes('unlabeled-numbers-not-imported')),q.rows);
+ q=P(['X 310 1446 stitches 1 skein O 321 737 stitches 1 skein'].join('\n'));
+ ok('two columns: labeled amounts stay with their own code',by(q,'310')?.stitchCount===1446&&by(q,'321')?.stitchCount===737&&by(q,'310')?.qty===1,q.rows);
+ q=P('Symbol DMC Stitches Skeins\nX 310 1446 1\nO 321 737 1\n# 415 1737 1\n+ BLANC 2786 2');
+ ok('bare rows: symbol code count imports codes',JSON.stringify(q.rows.map(x=>x.code))==='["310","321","415","WHITE"]',q.rows.map(x=>x.code));
+ ok('bare rows: unlabeled numbers not imported as amounts, flagged',q.rows.every(x=>x.qty===null&&x.stitchCount===null&&x.warnings.includes('unlabeled-numbers-not-imported')),q.rows);
+ q=P('X 150 437 * 154 1513\nO 151 2405 @ 3685 2967');
+ ok('bare two columns: all 4 codes',JSON.stringify(q.rows.map(x=>x.code).sort())==='["150","151","154","3685"]',q.rows.map(x=>x.code));
+ q=P('Design size 98 x 120 stitches\n14 count Aida\n2 strands\nX 9999 120 1');
+ ok('bare rows: dimensions, fabric count, strands and unknown codes are not colors',q.rows.length===0,q.rows);
+ ok('bare rows: unknown code is listed, not silently dropped',q.skipped.some(x=>/9999/.test(x.line)),q.skipped);
+ const chart=Object.keys(DMC).slice(0,60).map(c=>c+' '+DMC[c].name).join('\n');
+ q=P(chart);ok('chart: 60 catalog rows with no symbols or counts still rejected',q.rows.length===0&&q.warnings.includes('catalog-page-skipped'),q.rows.length);
+ const keys=Object.keys(DMC);const c3=[];for(let i=0;i<90;i+=3)c3.push(keys.slice(i,i+3).map(c=>c+' '+DMC[c].name).join(' '));
+ q=P(c3.join('\n'));ok('chart: 3-column catalog page still rejected',q.rows.length===0,q.rows.length);
+ q=P(keys.slice(0,160).map((c,i)=>S[i%12]+' '+c+' '+DMC[c].name+' '+(i+10)).join('\n'));
+ ok('chart: more than 150 codes still rejected even with symbols and counts',q.rows.length===0,q.rows.length);
+ q=P(keys.slice(40,60).map((c,i)=>S[i%12]+' '+c+' '+DMC[c].name+' '+(i+10)).join('\n'));
+ ok('chart: 20 catalog-adjacent rows with symbols are still flagged as a chart run',q.rows.length===0||q.warnings.includes('catalog-page-skipped'),q.rows.length);
+}
 console.log(`${pass} passed, ${fail} failed`);process.exit(fail?1:0);

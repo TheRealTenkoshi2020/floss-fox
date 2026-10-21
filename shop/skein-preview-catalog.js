@@ -51,7 +51,8 @@
   function eligible(n, env) {
     if ((env !== 'preview' && env !== 'direct') || !n || n.brand !== 'dmc' || n.family !== 'six-strand-cotton') return false;
     if (n.pack && n.pack !== 'single-skein') return false;
-    if (n.disputed || n.assumed || n.substitutionUnapproved) return false;
+    // Myke (flow phase 3): assumed amounts get links too; the UI adds a "check your pattern" note on those rows.
+    if (n.disputed || n.substitutionUnapproved) return false;
     if (!Number.isSafeInteger(n.qty) || n.qty < 1 || n.qty > 9999) return false;
     return !!normalize(n.code);
   }
@@ -78,7 +79,7 @@
     // Duplicate colors are a planner-data error: WITHHOLD the code instead of
     // silently taking the first quantity or subtracting inventory twice.
     return candidates.filter(n=>counts.get(normalize(n.code))===1)
-      .map(n=>Object.freeze({code:normalize(n.code),qty:n.qty,links:linksFor(n,env)}));
+      .map(n=>Object.freeze({code:normalize(n.code),qty:n.qty,assumed:!!n.assumed,links:linksFor(n,env)}));
   }
   return Object.freeze({linksFor,rowsFor,eligible,normalize,validUrl,LAST_CHECKED});
 });

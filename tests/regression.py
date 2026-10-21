@@ -11,6 +11,10 @@ from playwright.sync_api import Page as _Page
 # 2.0A+: the project shopping list lives in its own Shopping tab (#shopView). Before acting on an element that sits
 # in a hidden top-level view, click that view's tab first, like a user would. Selectors Playwright-only (text=...) are left alone.
 _VIEW_TAB = {'shopView': '#tabShop', 'projectsView': '#tabProjects'}
+_OPEN_JS = "e=>{if(!e)return;let d=(e.tagName==='SUMMARY'?e.parentElement:e).parentElement;d=d&&d.closest('#projEdit details,#shopBody details');while(d){if(!d.open){const sm=d.querySelector(':scope>summary');if(sm)sm.click();else d.open=true}d=d.parentElement&&d.parentElement.closest('#projEdit details,#shopBody details')}}"
+def _open_folds(self, sel):  # flow phase 3: project sections are folded; open the section first, like a user would
+    try: self.evaluate("s=>{let e;try{e=document.querySelector(s)}catch(_){return}(" + _OPEN_JS + ")(e)}", sel)
+    except Exception: pass
 def _route_view(self, sel):
     try:
         v = self.evaluate("s=>{let e;try{e=document.querySelector(s)}catch(_){return null}if(!e)return null;const w=e.closest('#shopView,#projectsView');return w&&w.hidden?w.id:null}", sel)
@@ -21,6 +25,7 @@ def _route_view(self, sel):
     except Exception:
         pass
     if v: _ORIG['click'](self, _VIEW_TAB[v]); self.wait_for_timeout(60)
+    _open_folds(self, sel)
 _ORIG = {}
 from playwright.sync_api import Locator as _Locator
 _LORIG = {}
@@ -33,6 +38,8 @@ for _m in ('click', 'check', 'uncheck', 'fill'):
             except Exception:
                 v = None
             if v: _ORIG['click'](self.page, _VIEW_TAB[v]); self.page.wait_for_timeout(60)
+            try: self.first.evaluate(_OPEN_JS, timeout=2000)
+            except Exception: pass
             return _LORIG[name](self, *a, **k)
         return f
     setattr(_Locator, _m, _lwrap(_m))
@@ -128,7 +135,7 @@ with sync_playwright() as p:
 
     # ---------- Projects ----------
     conv(pg, REAL, 'dmc'); pg.fill('#newProjName', 'Real pattern'); pg.click('#saveProj')
-    ok('save as project', 'Saved "Real pattern"' in pg.inner_text('#copymsg'), pg.inner_text('#copymsg'))
+    ok('save as project', 'Saved “Real pattern” in this browser on this device.' in pg.inner_text('#copymsg'), pg.inner_text('#copymsg'))
     pg.click('#tabProjects'); ok('project listed', 'Real pattern' in pg.inner_text('#projList') and '10 colors' in pg.inner_text('#projList'), pg.inner_text('#projList'))
     pg.click('[data-open]'); pg.wait_for_timeout(100)
     expand(pg, '310'); expand(pg, 'WHITE')
@@ -394,7 +401,7 @@ with sync_playwright() as p:
     s1 = sub(pp, '310\n9999'); ok('P3 unknown number -> reassuring (let us fix that)', s1 == ['error', 'reassuring', "Let's fix that one. I couldn't read “9999” as a DMC number. It's highlighted below."], s1)
     s2 = sub(pp, '310\n310 x2'); ok('P3b duplicate -> duplicates, and the claim is true (one line, amounts summed)', s2[:2] == ['duplicate', 'duplicates'] and s2[2] == 'Found a repeat! I combined it and added up the skeins.' and pp.evaluate("state.items.length") == 1 and pp.evaluate("state.items[0].qty") == 3, s2)
     s3 = sub(pp, '310, 321'); ok('P3c first clean list -> one celebration', s3 == ['celebrating', 'celebrating', 'Yay, your list is ready!'], s3)
-    pp.wait_for_timeout(4300); s3b = pst(pp); ok('P3c2 celebration settles to calm presenting, no new animation loop', s3b == ['listReady', 'presenting', "Your colors are ready! Let's see what you have."] and pp.evaluate("document.getElementById('pipFig').className.includes('pip-')") is False, (s3b, pp.evaluate("document.getElementById('pipFig').className")))
+    pp.wait_for_timeout(4300); s3b = pst(pp); ok('P3c2 celebration settles to calm presenting, no new animation loop', s3b == ['listReady', 'presenting', 'Here are your colors. Save them as a project to check what you own.'] and pp.evaluate("document.getElementById('pipFig').className.includes('pip-')") is False, (s3b, pp.evaluate("document.getElementById('pipFig').className")))
     s3c = sub(pp, '310, 321, 415'); ok('P3c3 later clean lists do not celebrate again', s3c[0] == 'listReady', s3c)
     s4 = sub(pp, '310\n310\nzzz'); ok('P3d priority: error beats duplicate', s4[0] == 'error', s4)
     s5 = sub(pp, '   '); ok('P3e empty submit -> curious guidance', s5[:2] == ['empty', 'curious'], s5)
@@ -732,31 +739,23 @@ with sync_playwright() as p:
     def addlist(g, t): g.fill('#inp', t); g.click('#go'); g.wait_for_timeout(80)
     def nxt(g): g.click('#tourCard [data-t=next]'); g.wait_for_timeout(80)
     g = tp()
-    ok('T1 first visit: inline invite with the exact words and two choices', g.locator('#tourInvite').is_visible() and "Hi, I'm Pip! Want me to show you around? It only takes five quick steps." in g.inner_text('#tourInvite') and g.inner_text('#tourYes') == 'Show me around' and g.inner_text('#tourNo') == "I'll explore on my own")
+    ok('T1 first visit: inline invite with the exact words and two choices', g.locator('#tourInvite').is_visible() and "New here? I can show you around in five quick steps." in g.inner_text('#tourInvite') and g.inner_text('#tourYes') == 'Show me around' and g.inner_text('#tourNo') == "I'll explore on my own")
     ok('T1b invite is not a modal (no dialog, page stays usable) and Add my colors stays on the first screen', g.locator('[role=dialog],dialog[open]').count() == 0 and g.evaluate("document.getElementById('go').getBoundingClientRect().bottom") <= 860)
     ok('T1c invite carries greeting Pip', 'pip-greeting-160' in g.evaluate("document.querySelector('#tourInvite img').currentSrc"))
     g.click('#tourYes')
     ok('T2 start: step 1 of 5, heading focused, real input highlighted', step(g) == 0 and 'Step 1 of 5' in g.inner_text('#tourCard') and g.evaluate("document.activeElement.id") == 'tourH' and g.evaluate("document.getElementById('inp').classList.contains('tour-target')") and g.locator('#tourInvite').count() == 0)
     g.wait_for_timeout(120); ok('T2b step change announced politely', 'step 1 of 5' in g.inner_text('#tourLive') and g.get_attribute('#tourLive', 'aria-live') == 'polite')
-    ok('T2c S1 words and example offer', 'First, pop your DMC thread numbers in here! You can type them or paste your whole list.' in g.inner_text('#tourCard') and g.locator('#tourCard [data-t=example]').count() == 1 and g.input_value('#inp') == '')
+    ok('T2c S1 words and example offer', "Paste the DMC numbers from your pattern here. Have a PDF? Tap Import a pattern (PDF) and I'll look for its color key." in g.inner_text('#tourCard') and g.locator('#tourCard [data-t=example]').count() == 1 and g.input_value('#inp') == '')
     ok('T15 S1 pose pointing at the real input (right image, not mirrored)', cpose(g) == ['pointing', 'pointing'] and g.get_attribute('#tourCard', 'data-mirror') == 'false', cpose(g))
     ok('T2d the highlighted input stays usable', (g.fill('#inp', '310 x2\n321') or True) and g.input_value('#inp') == '310 x2\n321')
     g.click('#go'); g.wait_for_timeout(100)
-    ok('T6 real list advances to step 2, card inside results', step(g) == 1 and g.evaluate("!!document.querySelector('#results #tourCard')") and "Here's what I found!" in g.inner_text('#tourCard') and 'recognized 2 colors' in g.inner_text('#tourCard'), g.inner_text('#tourCard'))
-    ok('T15b S2 results pose presenting on a clean list', cpose(g) == ['presenting', 'presenting'], cpose(g))
-    nxt(g); ok('T4 step 3 points at the real Buy in selector and says charts may not be exact', step(g) == 2 and g.evaluate("document.getElementById('dest').classList.contains('tour-target')") and 'may not be exact' in g.inner_text('#tourCard') and 'cheaper' not in g.inner_text('#tourCard').lower() and 'estimates' in g.inner_text('#tourCard'))
-    g.select_option('#dest', 'sullivans'); g.wait_for_timeout(80)
-    ok('T4b S3 live text tells the true Sullivans match count', "Sullivans now: 2 colors of 2 have a chart match" in g.inner_text('#tourCard') and g.locator('#shop li').count() == 2, g.inner_text('#tourCard'))
-    g.select_option('#dest', 'dmc'); nxt(g)
-    ok('T4c step 4 introduces only real controls; no store-link talk when links are off', step(g) == 3 and all(x in g.inner_text('#tourCard') for x in ['Print list', 'Copy as text', 'Save project', 'Shop my list', 'CSV']) and (('optional affiliate links' in g.inner_text('#tourCard').lower() and 'never need them' in g.inner_text('#tourCard')) if g.evaluate("!!(window.FlossFoxShop&&FlossFoxShop.anyEligible())") else 'affiliate' not in g.inner_text('#tourCard').lower()) and g.evaluate("[...document.querySelectorAll('#shopcard button')].filter(b=>b.textContent.trim()==='Print list'&&!b.closest('.wtb')).length") == 1 and g.locator('#copy').count() == 1 and g.locator('#saveProj').count() == 1)
-    g.click('#tourCard [data-t=back]'); g.wait_for_timeout(80); ok('T5 Back returns to step 3', step(g) == 2); nxt(g); nxt(g)
-    ok('T4d step 5 finish: goodbye, both buttons', step(g) == 4 and ("You've got it! Save this list as a project when you're ready, and I'll help you check what you already have." in g.inner_text('#tourCard') or "You've got it! Add your colors whenever you're ready, and I'll help you plan." in g.inner_text('#tourCard')) and cpose(g) == ['goodbye', 'goodbye'] and g.locator('#tourCard [data-t=start]').count() == 1 and g.locator('#tourCard [data-t=tips]').count() == 1, cpose(g))
-    ok('F1261e tour finish finish uses the with-colors line after a real list', "You've got it! Save this list as a project when you're ready, and I'll help you check what you already have." in g.inner_text('#tourCard'), g.inner_text('#tourCard'))
-    fin = "FlossFoxTour.STEPS.find(s=>s.id==='finish').msg()"
+    ok('T6 real list: step 1 stays and says how many colors were added (no jump to another tab)', step(g) == 0 and 'added 2 colors' in g.inner_text('#tourCard') and not g.locator('#convertView').is_hidden(), g.inner_text('#tourCard'))
+    nxt(g); ok('T4 step 2 switches to My threads and points at the add box (Pixel copy)', step(g) == 1 and not g.locator('#threadsView').is_hidden() and g.evaluate("document.getElementById('thAdd').classList.contains('tour-target')") and 'Tell me what you own' in g.inner_text('#tourCard'), g.inner_text('#tourCard'))
+    nxt(g); ok('T4b step 3 switches to Projects', step(g) == 2 and not g.locator('#projectsView').is_hidden() and 'Save it as a project' in g.inner_text('#tourCard'))
+    nxt(g); ok('T4c step 4 switches to Shopping and says the true thing', step(g) == 3 and not g.locator('#shopView').is_hidden() and 'Get your shopping list' in g.inner_text('#tourCard'))
+    g.click('#tourCard [data-t=back]'); g.wait_for_timeout(80); ok('T5 Back returns to step 3 (Projects)', step(g) == 2 and not g.locator('#projectsView').is_hidden()); nxt(g); nxt(g)
+    ok('T4d step 5 finish: back on Find floss, goodbye, Pixel words, both buttons', step(g) == 4 and not g.locator('#convertView').is_hidden() and "That's the tour!" in g.inner_text('#tourCard') and g.locator('#tourCard [data-t=start]').count() == 1 and g.locator('#tourCard [data-t=tips]').count() == 1, g.inner_text('#tourCard'))
     _sv = g.evaluate("[state.items, document.getElementById('inp').value]")
-    ok('F1261f tour finish typed colors in the box (not converted yet) -> with-colors line', g.evaluate("(()=>{state.items=[];document.getElementById('inp').value='310\\n321';return "+fin+"})()") == "You've got it! Save this list as a project when you're ready, and I'll help you check what you already have.")
-    ok('F1261g tour finish empty box and no results -> no-colors line', g.evaluate("(()=>{state.items=[];document.getElementById('inp').value='';return "+fin+"})()") == "You've got it! Add your colors whenever you're ready, and I'll help you plan.")
-    ok('F1261h tour finish box with no recognizable colors -> no-colors line', g.evaluate("(()=>{state.items=[];document.getElementById('inp').value='hello there';return "+fin+"})()") == "You've got it! Add your colors whenever you're ready, and I'll help you plan.")
     g.evaluate("([it,v])=>{state.items=it;document.getElementById('inp').value=v}", _sv)
     g.click('#tourCard [data-t=start]'); g.wait_for_timeout(80)
     ok('T4e Start using: card gone, data kept, user on results, marked done', g.locator('#tourCard').count() == 0 and g.input_value('#inp') == '310 x2\n321' and not g.locator('#results').is_hidden() and g.evaluate("document.activeElement.closest('#results')!==null") and json.loads(g.evaluate(f"localStorage.getItem('{TK}')"))['status'] == 'done')
@@ -779,15 +778,15 @@ with sync_playwright() as p:
     # invalid / duplicates
     v = tp(); v.click('#tourYes'); addlist(v, '310\n9999')
     ok('T8 invalid list: stays on step 1, reassuring, explains, Pip shows the error', step(v) == 0 and cpose(v) == ['reassuring', 'reassuring'] and "couldn't be read" in v.inner_text('#tourCard') and v.evaluate("FlossFoxPip.current()") == 'error', (step(v), cpose(v)))
-    nxt(v); ok('T8b results step with an error: reassuring + honest text', step(v) == 1 and cpose(v)[0] == 'reassuring' and "couldn't be read" in v.inner_text('#tourCard'))
-    addlist(v, '310\n310 x2'); ok('T8c duplicates during the tour: duplicates pose, true claim', cpose(v) == ['duplicates', 'duplicates'] and 'appeared more than once' in v.inner_text('#tourCard') and v.evaluate("state.items[0].qty") == 3, cpose(v))
+    ok('T8b step 1 with an error: reassuring + honest text', step(v) == 0 and cpose(v)[0] == 'reassuring' and "couldn't be read" in v.inner_text('#tourCard'))
+    addlist(v, '310\n310 x2'); ok('T8c duplicates during the tour: combined, card still true', v.evaluate("state.items[0].qty") == 3 and 'added 1 color' in v.inner_text('#tourCard'), v.inner_text('#tourCard'))
     v.evaluate("FlossFoxPip._timing({idle:300,tangleGap:0})"); addlist(v, '310, 321'); v.wait_for_timeout(5000)
-    ok('T17 sleepy never interrupts a tour step', v.evaluate("FlossFoxPip.overlay()") != 'sleepy' and step(v) == 1, v.evaluate("FlossFoxPip.overlay()"))
+    ok('T17 sleepy never interrupts a tour step', v.evaluate("FlossFoxPip.overlay()") != 'sleepy' and step(v) == 0, v.evaluate("FlossFoxPip.overlay()"))
     v.click('#pipHi'); ok('T17b tangled never interrupts a tour step', v.evaluate("FlossFoxPip.current()") != 'tangled')
     # switching views mid-tour
-    v.click('#tabProjects'); ok('T18 switching views mid-tour: card stays with Add colors, page fine', v.locator('#tourCard').is_hidden() and step(v) == 1)
-    v.click('#askPipBtn'); ok('T18b Ask Pip offers Back to the tour', v.locator('#askPip [data-a=resume]').count() == 1 and 'step 2 of 5' in v.inner_text('#askPip'))
-    v.click('#askPip [data-a=resume]'); ok('T18c back to the tour returns to the same step on Add colors', not v.locator('#convertView').is_hidden() and v.locator('#tourCard').is_visible() and step(v) == 1)
+    v.click('#tabProjects'); ok('T18 switching views mid-tour: card stays with Add colors, page fine', v.locator('#tourCard').is_hidden() and step(v) == 0)
+    v.click('#askPipBtn'); ok('T18b Ask Pip offers Back to the tour', v.locator('#askPip [data-a=resume]').count() == 1 and 'step 1 of 5' in v.inner_text('#askPip'))
+    v.click('#askPip [data-a=resume]'); ok('T18c back to the tour returns to the same step on Add colors', not v.locator('#convertView').is_hidden() and v.locator('#tourCard').is_visible() and step(v) == 0)
     # refresh mid-tour
     v.reload(); v.wait_for_timeout(100)
     ok('T19 refresh mid-tour: offers a clean restart (list isn\'t kept for the tour)', v.locator('#tourInvite').is_visible() and 'Restart the tour' in v.inner_text('#tourInvite') and v.locator('#tourCard').count() == 0)
@@ -885,7 +884,7 @@ with sync_playwright() as p:
     def tinfo(g): return g.evaluate("""(()=>{const c=document.getElementById('tourCard'),i=c.querySelector('.tpip'),t=document.querySelector('.tour-target');const a=i.getBoundingClientRect();let ov=false,dir=null;
       if(t){const b=t.getBoundingClientRect();ov=!(a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom);dir=(b.left+b.right)/2<(a.left+a.right)/2}return [c.dataset.pose,c.dataset.mirror||null,ov,dir,i.classList.contains('mirror')]})()""")
     poses.append(tinfo(pt)); addlist(pt, '310 x2\n321'); poses.append(tinfo(pt)); nxt(pt); poses.append(tinfo(pt)); nxt(pt); poses.append(tinfo(pt)); nxt(pt); poses.append(tinfo(pt))
-    ok('M9 tour: pointing on the control steps (1, 3, 4), presenting on results, goodbye at the end', [x[0] for x in poses] == ['pointing', 'presenting', 'pointing', 'pointing', 'goodbye'], poses)
+    ok('M9 tour: pointing on step 1 (before and after a list), organizing on My threads, presenting on Projects, helpful on Shopping with no project open (Pixel)', [x[0] for x in poses] == ['pointing', 'pointing', 'organizing', 'presenting', 'helpful'], poses)
     ok('M9b pointing Pip never covers the target and mirrors exactly when the target is on his other side', all(not x[2] and x[4] == x[3] for x in poses if x[0] == 'pointing'), poses)
     pd2 = tp(1280); pd2.click('#tourYes'); d1 = tinfo(pd2); ok('M9c desktop step 1 pointing, not covering the input', d1[0] == 'pointing' and not d1[2] and d1[4] == d1[3], d1)
     lay2 = []

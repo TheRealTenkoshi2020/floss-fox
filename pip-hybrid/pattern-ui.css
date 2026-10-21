@@ -11,3 +11,11 @@
 .pat-preview canvas{display:block;max-width:100%;border:1px solid #ccc}
 .pat-layout details{border:1px solid #ddd;padding:10px;border-radius:12px}.pat-layout textarea{width:100%}
 @media(prefers-reduced-motion:reduce){.pat-dialog *{animation:none!important;transition:none!important}}
+/* Barbara feedback: one confirmation, explanation beside the button, visible save confirmation */
+.pat-all{display:flex;gap:8px;align-items:center;min-height:44px;font-weight:600;margin:10px 0}
+.pat-all input{width:22px;height:22px}
+.pat-why{margin:6px 0 0}
+.pat-row .ghost.small{min-height:44px}
+.pat-saved{background:#eef6ef;border:1px solid #9cc3a4;border-radius:12px;padding:12px 14px;margin:0 0 12px;color:#23402b}
+.pat-saved.errbox{background:#fdf1ea;border-color:#e9b9a4;color:#6b2a14}
+.pat-saved p{margin:4px 0 8px}

@@ -22,7 +22,7 @@ const why=x=>[...new Set(x.reviewReasons.map(k=>WHY[k]||k))].join('; ');
 const range=x=>x.maximumWholeSkeinsToBuy===null?(x.minimumWholeSkeinsToBuy?`buy at least ${x.minimumWholeSkeinsToBuy}`:'amount to buy unknown'):x.minimumWholeSkeinsToBuy===x.maximumWholeSkeinsToBuy?`buy ${x.maximumWholeSkeinsToBuy}`:`buy ${x.minimumWholeSkeinsToBuy} to ${x.maximumWholeSkeinsToBuy}`;
 function text(r){const buy=r.rows.filter(x=>x.status==='buy'),rev=r.rows.filter(x=>x.status==='review'),o=[`Floss Fox shopping plan: ${r.summary.selectedProjects} project${r.summary.selectedProjects===1?'':'s'}`];
  o.push('',`NEED TO BUY${r.summary.canFinalize?` (${r.summary.exactBuyTotal} skeins)`:''}:`);buy.forEach(x=>o.push(`- ${lab(x.code)}: ${x.maximumWholeSkeinsToBuy} (${per(x)}; ${haveTxt(x)})`));if(!buy.length)o.push('- nothing');
- o.push('','CHECK FIRST:');rev.forEach(x=>o.push(`- ${lab(x.code)}: ${range(x)}. ${why(x)} (${per(x)}; ${haveTxt(x)})`));if(!rev.length)o.push('- nothing');
+ o.push('','CHECK FIRST:');rev.forEach(x=>o.push(`- ${lab(x.code)}: ${range(x)}${asm(x)?' (Estimated)':''}. ${why(x)} (${per(x)}; ${haveTxt(x)})`));if(!rev.length)o.push('- nothing');
  r.issues.forEach(i=>o.push(`! ${r.names[i.projectId]||'A project'}${i.code?' (DMC '+i.code+')':''}: ${ISS[i.kind]||i.kind}`));
  if(!r.summary.canFinalize)o.push('','Not a final total: check the colors above first.');o.push('Covered by confirmed skeins: '+r.summary.covered+' color'+(r.summary.covered===1?'':'s')+'.');return o.join('\n')}
 function draw(){const C=$('planCard'),projs=P._store().projects.filter(p=>!p.demo);
@@ -31,10 +31,11 @@ ${projs.length?`<fieldset class="bkmode"><legend>Projects</legend>${projs.map(p=
 <div class="row"><button type="button" class="pri" id="planGo">Show shopping plan</button><button type="button" class="ghost" id="planClose">Close</button></div><div id="planOut" aria-live="polite"></div>`;
  $('planGo').onclick=()=>{const ids=[...C.querySelectorAll('[data-plan]:checked')].map(i=>i.dataset.plan);if(!ids.length){$('planOut').innerHTML='<p class="hint">Pick at least one project.</p>';return}last=compute(ids);show(last)};
  $('planClose').onclick=()=>{C.hidden=true;C.innerHTML='';$('planOpen').focus()}}
+const ASM=new Set(['assumed-quantity','assumed-portion','partly-assumed','assumed']);const asm=x=>(x.reviewReasons||[]).some(k=>ASM.has(k));
 function show(r){const buy=r.rows.filter(x=>x.status==='buy'),rev=r.rows.filter(x=>x.status==='review'),O=$('planOut');
- const li=(x,b)=>`<li${b?` data-code="${esc(x.code)}"`:''}><b>${esc(lab(x.code))}</b>: ${b?`buy <b>${x.maximumWholeSkeinsToBuy}</b>`:esc(range(x))}<br><span class="hint">${b?'':esc(why(x))+'. '}${esc(per(x))}. ${esc(haveTxt(x))}.</span></li>`;
- O.innerHTML=`<h3 id="planBuyH">Need to buy${r.summary.canFinalize?` (${r.summary.exactBuyTotal} skein${r.summary.exactBuyTotal===1?'':'s'})`:''}</h3><ul id="planBuy">${buy.map(x=>li(x,true)).join('')||'<li>Nothing.</li>'}</ul>
-<h3>Check first</h3><ul id="planCheck">${rev.map(x=>li(x,false)).join('')||'<li>Nothing.</li>'}</ul>
+ const li=(x,b)=>`<li${b||asm(x)?` data-code="${esc(x.code)}"`:''}${asm(x)?' data-asm="1"':''}><b>${esc(lab(x.code))}</b>: ${b?`buy <b>${x.maximumWholeSkeinsToBuy}</b>`:esc(range(x))}${asm(x)?FF_EST.badge:''}<br><span class="hint">${b?'':esc(why(x))+'. '}${esc(per(x))}. ${esc(haveTxt(x))}.</span></li>`;
+ O.innerHTML=`<h3 id="planBuyH">Need to buy${r.summary.canFinalize?` (${r.summary.exactBuyTotal} skein${r.summary.exactBuyTotal===1?'':'s'})`:''}</h3>${FF_EST.line(buy.filter(asm).length,'planEstBuy')}<ul id="planBuy">${buy.map(x=>li(x,true)).join('')||'<li>Nothing.</li>'}</ul>
+<h3>Check first</h3>${FF_EST.line(rev.filter(asm).length,'planEstCheck')}<ul id="planCheck">${rev.map(x=>li(x,false)).join('')||'<li>Nothing.</li>'}</ul>
 ${r.issues.length?`<div class="errbox" id="planIssues"><ul>${r.issues.map(i=>`<li>${esc(r.names[i.projectId]||'A project')}${i.code?' (DMC '+esc(i.code)+')':''}: ${esc(ISS[i.kind]||i.kind)}.</li>`).join('')}</ul></div>`:''}
 <p class="hint" id="planNote">${r.summary.canFinalize?'Every color is checked.':'<b>Not a final total</b>: check the colors under Check first.'} ${r.summary.covered} color${r.summary.covered===1?'':'s'} covered by confirmed skeins. Estimates are approximate. Bought or received thread is not subtracted until it's in your collection.</p>
 <div class="row"><button type="button" class="sec" id="planCopy">Copy list</button><button type="button" class="ghost" id="planPrint">Print</button></div><p class="hint" id="planMsg" role="status"></p>`;
@@ -45,6 +46,10 @@ ${r.issues.length?`<div class="errbox" id="planIssues"><ul>${r.issues.map(i=>`<l
     qty:x.maximumWholeSkeinsToBuy,assumed:false,disputed:false}));
   const lis=[...O.querySelectorAll('#planBuy > li[data-code]')];
   if(lis.length===needs.length)FlossFoxSkeinPreviewUI.inline(lis.map((li,i)=>({li,need:needs[i]})));
+  // Myke (flow phase 3): assumed-amount colors stay under Check first (grouping and math unchanged) but get the same links + note.
+  const cq=x=>[x.maximumWholeSkeinsToBuy,x.minimumWholeSkeinsToBuy].find(v=>Number.isInteger(v)&&v>=1);
+  const ca=rev.filter(x=>asm(x)&&x.maximumWholeSkeinsToBuy!==0).map(x=>({x,li:O.querySelector('#planCheck > li[data-asm][data-code="'+CSS.escape(x.code)+'"]')})).filter(o=>o.li);
+  if(ca.length)FlossFoxSkeinPreviewUI.inline(ca.map(o=>({li:o.li,need:{brand:'dmc',code:o.x.code,family:typeof fam==='function'&&fam(o.x.code)==='solid'?'six-strand-cotton':'specialty',pack:'single-skein',qty:cq(o.x)||1/* link eligibility only; inline pills never show a quantity, and the plan's amounts are untouched */,assumed:true,disputed:false}})));
  }
  $('planCopy').onclick=()=>{const t=text(r);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$('planMsg').textContent='Copied.',()=>$('planMsg').textContent='Couldn\'t copy automatically. Select the list and copy it.')};
  $('planPrint').onclick=()=>{const w=window.open('','_blank');if(!w){$('planMsg').textContent='Your browser blocked printing.';return}w.document.write('<!doctype html><title>Floss Fox shopping plan</title><pre style="white-space:pre-wrap;font:14px/1.4 sans-serif"></pre>');w.document.querySelector('pre').textContent=text(r);w.document.close();w.focus();w.print()}}

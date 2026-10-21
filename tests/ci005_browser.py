@@ -22,7 +22,7 @@ with sync_playwright() as p:
    if tab=='#tabProjects':g.click('[data-open="t20a"]');g.wait_for_timeout(150)
    if g.evaluate('document.documentElement.scrollWidth')>w:bad.append(tab)
    if w==390:g.screenshot(path=f'{SH}/{w}-{tab[4:].lower()}.png',full_page=False)
-  g.click('#tabConvert');g.click('text=Import a full pattern (PDF or image)');g.wait_for_timeout(200)
+  g.click('#tabConvert');g.click('#convertView .pat-launch');g.wait_for_timeout(200)
   dlg=g.evaluate("(()=>{const d=document.getElementById('ffPatternDialog');const r=d.getBoundingClientRect();return{open:d.open,w:r.width,right:r.right,ow:document.documentElement.scrollWidth}})()")
   if w in(390,884,1280):g.screenshot(path=f'{SH}/{w}-pattern-dialog.png')
   g.keyboard.press('Escape');g.wait_for_timeout(100)
@@ -51,10 +51,10 @@ with sync_playwright() as p:
  # Local router (read-only command)
  # Pattern import
  g.click('#askPipBtn') if g.is_visible('#askPip') else None
- g.click('#tabConvert');g.click('text=Import a full pattern (PDF or image)');g.wait_for_timeout(200)
+ g.click('#tabConvert');g.click('#convertView .pat-launch');g.wait_for_timeout(200)
  def load(fn,wait='Reading selected file locally'):
   g.set_input_files('#patFile',os.path.join(FX,fn));g.wait_for_function("t=>!document.getElementById('patInfo').textContent.includes(t)",arg=wait,timeout=20000);g.wait_for_timeout(300)
-  return g.evaluate("({info:document.getElementById('patInfo').textContent,rows:[...document.querySelectorAll('#patRows .pat-row')].map(r=>r.querySelector('b').textContent+' | '+[...r.querySelectorAll('input[type=number]')].map(i=>i.value||'?').join('/')+' | '+r.querySelector('.pat-warnings').textContent),txt:document.getElementById('patRows').innerText,imgs:document.querySelectorAll('#patRows img').length,dis:document.getElementById('patImport').disabled})")
+  return g.evaluate("({info:document.getElementById('patInfo').textContent+' '+((document.getElementById('patUnreadable')||{}).textContent||''),rows:[...document.querySelectorAll('#patRows .pat-row')].map(r=>r.querySelector('b').textContent+' | '+[...r.querySelectorAll('input[type=number]')].map(i=>i.value||'?').join('/')+' | '+r.querySelector('.pat-warnings').textContent),txt:document.getElementById('patRows').innerText,imgs:document.querySelectorAll('#patRows img').length,dis:document.getElementById('patImport').disabled})")
  r=load('native-legend.pdf');print('native:',r)
  codes=[x.split(' | ')[0] for x in r['rows']]
  ok('native PDF: 310/321/666 extracted locally',{'DMC 310','DMC 321','DMC 666'}<=set(codes),r)
@@ -62,10 +62,9 @@ with sync_playwright() as p:
  ok('native PDF: 666 skeins unknown (not invented)',any(x.startswith('DMC 666 | ?/') for x in r['rows']),r['rows'])
  ok('native PDF: invalid DMC 9999 not accepted as color',not any('9999' in x.split(' | ')[0] for x in r['rows']),r['rows'])
  ok('XSS in imported text inert (no img element, no JS dialog)',r['imgs']==0 and not any('JS dialog' in e for e in E),E)
- ok('import blocked until every row verified',r['dis'])
+ ok('import blocked until the one "I checked these colors" confirmation',r['dis'] and 'Tick the box above' in g.inner_text('#patWhy'))
  n0=len(g.evaluate("FlossFoxProjects._store().projects"))
- g.locator('#patRows .pat-row input[type=checkbox]').first.check();ok('still blocked with 1 of N verified',g.evaluate("document.getElementById('patImport').disabled") or len(r['rows'])==1)
- for cb in g.locator('#patRows .pat-row input[type=checkbox]').all():cb.check()
+ g.check('#patAll');ok('one confirmation enables Create (no per-color ticking)',not g.evaluate("document.getElementById('patImport').disabled"))
  g.fill('#patName','Imported fixture');g.click('#patImport');g.wait_for_timeout(400)
  ps=g.evaluate("FlossFoxProjects._store().projects");new=[x for x in ps if x['name']=='Imported fixture']
  ok('reviewed import saves ONE project via FlossFoxProjects.add',len(ps)==n0+1 and len(new)==1,len(ps))
@@ -74,8 +73,8 @@ with sync_playwright() as p:
   ok('saved project keeps stitchCount distinct from skein qty',i310 and i310[0].get('qty')==2 and i310[0].get('stitchCount')==2400,new[0]['items'])
   ok('unknown skein qty stays unknown/uncertain in saved project',i666 and (i666[0].get('qty') is None or i666[0].get('stated') is False),i666)
  ok('importer keeps no raw pattern in storage',not g.evaluate("Object.keys(localStorage).some(k=>/pattern|pdf/i.test(k)||/%PDF|Fox Sampler legend/.test(localStorage.getItem(k)))"))
- if not g.evaluate("(document.getElementById('ffPatternDialog')||{}).open"):g.click('#tabConvert');g.click('text=Import a full pattern (PDF or image)');g.wait_for_timeout(200)
- for fn,expect,label in (('multicolumn-legend.pdf',None,'multi-column legend'),('scanned-image-only.pdf','selectable','scanned PDF has no selectable text'),('large-35pages.pdf','30','35-page PDF limited to 30'),('password-protected.pdf',None,'password-protected PDF'),('fake.pdf',"don't match",'fake .pdf rejected by signature'),('legend-scan.png',"aren't read automatically",'image needs manual transcription'),('table-unlabeled-legend.pdf','no label','unlabeled column table: codes taken, unlabeled numbers not imported (2.0A rule)'),('repeated-legend.pdf',None,'repeated legend')):
+ if not g.evaluate("(document.getElementById('ffPatternDialog')||{}).open"):g.click('#tabConvert');g.click('#convertView .pat-launch');g.wait_for_timeout(200)
+ for fn,expect,label in (('multicolumn-legend.pdf',None,'multi-column legend'),('scanned-image-only.pdf','no text we can read','scanned PDF has no selectable text'),('large-35pages.pdf','30','35-page PDF limited to 30'),('password-protected.pdf',None,'password-protected PDF'),('fake.pdf',"don't match",'fake .pdf rejected by signature'),('legend-scan.png','Only PDFs work right now','image refused: only PDFs work right now'),('table-unlabeled-legend.pdf','no label','unlabeled column table: codes taken, unlabeled numbers not imported (2.0A rule)'),('repeated-legend.pdf',None,'repeated legend')):
   try:r=load(fn);print(fn,r['info'][:160],r['rows'][:8])
   except Exception as e:r={'info':'TIMEOUT '+str(e)[:80],'rows':[]}
   if fn=='multicolumn-legend.pdf':ok('multi-column legend: 6 colors found (or flagged for review)',len(r['rows'])>=6,r)
@@ -130,10 +129,10 @@ with sync_playwright() as p:
  g.focus('#tabConvert');seen=[]
  for _ in range(30):
   g.keyboard.press('Tab');seen.append(g.evaluate("document.activeElement.textContent.trim().slice(0,40)"))
- ok('keyboard reaches Import a full pattern entry',any('Import a full pattern' in s for s in seen),seen)
- while 'Import a full pattern' not in g.evaluate("document.activeElement.textContent"):g.keyboard.press('Tab')
+ ok('keyboard reaches Import a pattern (PDF) entry',any('Import a pattern (PDF)' in s for s in seen),seen)
+ while 'Import a pattern (PDF)' not in g.evaluate("document.activeElement.textContent"):g.keyboard.press('Tab')
  g.keyboard.press('Enter');g.wait_for_timeout(200);ok('Enter opens pattern dialog; focus inside',g.evaluate("(document.getElementById('ffPatternDialog')||{}).open&&document.getElementById('ffPatternDialog').contains(document.activeElement)"))
- g.keyboard.press('Escape');g.wait_for_timeout(100);ok('focus returns to entry after Escape',('Import a full pattern' in g.evaluate("document.activeElement.textContent")),g.evaluate("document.activeElement.outerHTML.slice(0,80)"))
+ g.keyboard.press('Escape');g.wait_for_timeout(100);ok('focus returns to entry after Escape',('Import a pattern (PDF)' in g.evaluate("document.activeElement.textContent")),g.evaluate("document.activeElement.outerHTML.slice(0,80)"))
  ok('reduced motion: no page errors',not E,E);c.close()
  # Offline with AI off
  c=ctx(b,390,mob=True,sw='allow');g=c.new_page();E=[];g.on('pageerror',lambda e:E.append(str(e)));g.goto(B);g.wait_for_load_state('networkidle')
@@ -144,7 +143,7 @@ with sync_playwright() as p:
  g.click('#askPipBtn');g.click('[data-piph-open]');g.fill('#piphMessage','How do I find a stored thread?');g.click('#pipHybridDialog button:has-text("Ask offline")');g.wait_for_timeout(300)
  ok('offline (AI off): Pip offline answer works',len(g.inner_text('#pipHybridDialog'))>120)
  g.keyboard.press('Escape');g.click('#askPipBtn') if g.is_visible('#askPip') else None
- g.click('#tabConvert');g.click('text=Import a full pattern (PDF or image)');g.wait_for_timeout(200)
+ g.click('#tabConvert');g.click('#convertView .pat-launch');g.wait_for_timeout(200)
  try:g.set_input_files('#patFile',os.path.join(FX,'native-legend.pdf'));g.wait_for_function("!document.getElementById('patInfo').textContent.includes('Reading selected file locally')",timeout=20000);g.wait_for_timeout(300);n=g.locator('#patRows .pat-row').count()
  except Exception as e:n=-1
  ok('offline: native PDF still extracted locally from cached PDF.js',n>=3,n)

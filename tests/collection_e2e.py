@@ -23,6 +23,7 @@ with sync_playwright() as p:
         ctx = br.new_context(viewport={'width': w, 'height': 800 if mob else 900}, is_mobile=mob, has_touch=mob, device_scale_factor=2 if mob else 1)
         ctx.grant_permissions(['clipboard-read', 'clipboard-write'])
         if quiet: ctx.add_init_script(QUIET)
+        ctx.add_init_script('window.FF_NO_AUTOCMP=true')  # legacy suite drives Use my collection by hand; auto-compare has its own suite (flow_p12_e2e)
         if init: ctx.add_init_script(init)
         g = ctx.new_page(); g.on('pageerror', lambda e: errs.append(str(e))); g.on('dialog', lambda d: d.accept() if DLG['m'] == 'accept' else d.dismiss()); g.goto(B); g.wait_for_load_state('networkidle'); return g
     def add(g, t): g.fill('#thAdd', t); g.click('#thAddBtn'); g.wait_for_timeout(60)

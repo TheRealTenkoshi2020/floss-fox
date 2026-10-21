@@ -23,6 +23,7 @@ with sync_playwright() as p:
         def launch():
             c = p.chromium.launch_persistent_context(prof, executable_path=A.chrome, args=['--no-sandbox'], viewport={'width': W, 'height': 800 if mob else 900},
                                                      is_mobile=mob, has_touch=mob, device_scale_factor=2 if mob else 1, accept_downloads=True)
+            c.add_init_script('window.FF_NO_AUTOCMP=true')  # legacy suite drives Use my collection by hand
             c.grant_permissions(['clipboard-read', 'clipboard-write'])
             g = c.pages[0] if c.pages else c.new_page(); g.on('pageerror', lambda e: errs.append(f'{W}: {e}')); g.on('dialog', lambda d: d.accept())
             g.goto(B); g.wait_for_load_state('networkidle'); return c, g

@@ -24,43 +24,22 @@ const TOUR_SAMPLE='310\n321\n666\n699';
 const linksOn=()=>!!(window.FlossFoxShop&&FlossFoxShop.anyRealEligible&&FlossFoxShop.anyRealEligible());
 const inView=v=>!$(v).hidden;
 const toConvert=()=>{if(!inView('convertView'))$('tabConvert').click()};
+const TABS={convert:'tabConvert',threads:'tabThreads',projects:'tabProjects',shop:'tabShop'};const toView=v=>{if(!inView(v+'View'))$(TABS[v]).click()};
 
 /* ---------- Step configuration (single source of truth) ---------- */
+const TS=i=>((window.FF_STR||{}).tour||[])[i]||{};
 const STEPS=[
- {id:'enter',title:'Add your colors',target:()=>$('inp'),anchor:()=>document.querySelector('.hero .row'),
+ {id:'enter',title:TS(0).title||'Add your colors',view:'convert',target:()=>$('inp'),anchor:()=>document.querySelector('.hero .row'),
   pose:()=>st().errs.length?PIP().errPose(st()):'pointing',
-  msg:()=>"First, pop your DMC thread numbers in here! You can type them or paste your whole list.",
+  msg:()=>TS(0).body||"",
   more:()=>st().errs.length?`${plural(st().errs.length,'line')} couldn't be read yet. They're listed in red under Your colors.`:st().items.length?`You've added ${plural(st().items.length,'color')}. Tap Next when you're ready.`:"Then tap Add my colors. Want to practice first? I can fill in a short sample list.",
   extra:()=>st().items.length?'':`<button type="button" class="sec" data-t="example">Try an example (310, 321, 666, 699)</button>`,
   done:()=>st().items.length>0,
   help:''},
- {id:'results',title:'Check your results',target:()=>$('results').hidden?null:$('results'),anchor:()=>$('summary'),
-  pose:()=>st().errs.length?PIP().errPose(st()):dupN()?'duplicates':'presenting',
-  msg:()=>"Here's what I found! You can check your colors and see if anything needs attention.",
-  more:()=>{const s=st();if(!s.items.length&&!s.errs.length)return'No results yet. Go back and add your colors, or skip this step.';const b=[];
-   if(s.items.length)b.push(`I recognized ${plural(s.items.length,'color')}; each row shows the DMC color and its chart matches.`);
-   if(s.errs.length)b.push(`${plural(s.errs.length,'line')} couldn't be read. You can fix this in the box above, then tap Add my colors again.`);
-   if(dupN())b.push(`${plural(dupN(),'color')} appeared more than once, so I combined them and added up the skeins.`);
-   if(s.items.some(i=>i.stated===false||i.assumed))b.push('Amounts marked "assumed" had no number, so I counted 1 skein.');return b.join(' ')},
-  ready:()=>!$('results').hidden,
-  help:'Swatches show the DMC color on screen, which is only an approximation.'},
- {id:'brands',title:'Other thread brands',target:()=>$('shopcard').hidden?null:$('dest'),anchor:()=>document.querySelector('#shopcard .toggle'),
-  pose:()=>'pointing',
-  msg:()=>"Did you know you can switch to other thread brands too? Let's take a look.",
-  more:()=>`Use <b>Brand to buy</b> to switch between DMC, Sullivans and Anchor. Matches come from published conversion charts, so colors may not be exact. Compare real thread if it matters. The cost table shows rough price estimates for each brand, before shipping; prices change, so check the store.${destV()!=='dmc'?` You're looking at ${BR[destV()]} now: ${plural(window.FlossFoxAltFor?FlossFoxAltFor(destV()):0,'color')} of ${st().items.length} have a chart match.`:''}`,
-  ready:()=>!$('shopcard').hidden,optional:true,
-  help:'Metallic and variegated threads are never swapped automatically.'},
- {id:'shop',title:'Your shopping list',target:()=>$('shopcard').hidden?null:$('shop'),anchor:()=>$('shop'),
-  pose:()=>'pointing',
-  msg:()=>"Now let's get your threads organized so they're easier to shop for!",
-  more:()=>`Tick the boxes as you shop, or use <b>Print list</b> and <b>Copy as text</b> below. <b>Save project</b> keeps the list in this browser; in My Projects you can mark what you have, open <b>Shop my list</b> in the store, and download a spreadsheet (CSV).${linksOn()?' Floss Fox may earn a commission if you buy through these links, at no extra cost to you. You never need them to use Floss Fox.':''}`,
-  ready:()=>!$('shopcard').hidden,
-  help:'Floss Fox never uploads your projects or thread collection: they live on this device.'},
- {id:'finish',title:"You're all set",target:()=>null,anchor:()=>$('shopcard').hidden?document.querySelector('.hero .row'):document.querySelector('#shopcard h2'),
-  pose:()=>'goodbye',
-  msg:()=>hasColors()?"You've got it! Save this list as a project when you're ready, and I'll help you check what you already have.":"You've got it! Add your colors whenever you're ready, and I'll help you plan.",
-  more:()=>"You can take the tour again any time from Ask Pip or the Help tab.",
-  final:true}
+ {id:'threads',title:TS(1).title||'My threads',view:'threads',target:()=>$('thAdd'),anchor:()=>$('thAdd'),pose:()=>'organizing',msg:()=>TS(1).body||'',more:()=>'',help:''},
+ {id:'project',title:TS(2).title||'Projects',view:'projects',target:()=>{const e=$('projEdit');return e&&!e.hidden?e.querySelector('.ptitle'):$('newEmpty')},anchor:()=>{const e=$('projEdit');return e&&!e.hidden?e.querySelector('.ptitle'):$('newEmpty').parentElement},pose:()=>'presenting',msg:()=>TS(2).body||'',more:()=>'',help:''},
+ {id:'shop',title:TS(3).title||'Shopping',view:'shop',target:()=>{const b=$('shopBody');return b&&!b.hidden?b:null},anchor:()=>$('shopPickRow')&&!$('shopPickRow').hidden?$('shopPickRow'):$('shopCard').firstElementChild,pose:()=>'pointing',msg:()=>TS(3).body||'',more:()=>'',help:''},
+ {id:'finish',title:TS(4).title||"You're all set",view:'convert',target:()=>null,anchor:()=>document.querySelector('.hero .row'),pose:()=>'goodbye',msg:()=>TS(4).body||'',more:()=>'',final:true}
 ];
 
 /* ---------- Tour card ---------- */
@@ -71,10 +50,10 @@ let idx=-1,card=null,tgt=null,returnFocus=null,readSince=0;
 const live=t=>{const l=$('tourLive');if(l){l.textContent='';setTimeout(()=>{l.textContent=t},30)}};
 function clearTarget(){if(tgt)tgt.classList.remove('tour-target');tgt=null}
 function removeCard(){if(card)card.remove();card=null;clearTarget()}
-function place(el,anchor,focus){const a=anchor&&anchor.isConnected&&anchor.offsetParent!==null?anchor:document.querySelector('.hero .row');a.insertAdjacentElement('afterend',el);
+function place(el,anchor,focus){const v=document.querySelector('#convertView:not([hidden]),#threadsView:not([hidden]),#projectsView:not([hidden]),#shopView:not([hidden])');const a=anchor&&anchor.isConnected&&anchor.offsetParent!==null?anchor:(v&&v.id!=='convertView'?v.querySelector('h2')||v.firstElementChild:document.querySelector('.hero .row'));a.insertAdjacentElement('afterend',el);
  const r=el.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)el.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
  if(focus){const h=el.querySelector('h2');h.focus({preventScroll:true})}}
-function render(focus){const S=STEPS[idx];if(!S)return;toConvert();removeCard();
+function render(focus){const S=STEPS[idx];if(!S)return;toView(S.view||'convert');removeCard();
  const t=S.target();const missing=!t&&!S.final;const notReady=S.ready&&!S.ready();
  if(t){t.classList.add('tour-target');tgt=t}
  const c=document.createElement('section');c.className='tourcard noprint';c.id='tourCard';c.setAttribute('aria-labelledby','tourH');c.dataset.step=S.id;let pose=S.pose();if(pose==='pointing'&&!t)pose='helpful';c.dataset.pose=pose;
@@ -96,7 +75,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('#tourCard [data-
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('askPip')&&!$('askPip').hidden){closeAsk(true);return}if(idx>=0)end('dismissed')});
 // React to the real list while touring: step 1 completes on a valid list; other steps refresh their (true) text.
 document.addEventListener('flossfox:result',e=>{if(idx<0)return;const S=STEPS[idx];
- if(S.id==='enter'&&S.done()&&e.detail.submitted&&!st().errs.length){go(1);return}
+ 
  const f=card&&card.contains(document.activeElement)?document.activeElement.dataset.t:null;render(false);if(f){const b=card.querySelector(`[data-t="${f}"]`);if(b)b.focus()}});
 window.addEventListener('resize',()=>{if(card&&tgt&&!tgt.isConnected)render(false);else aim()});
 
@@ -104,7 +83,7 @@ window.addEventListener('resize',()=>{if(card&&tgt&&!tgt.isConnected)render(fals
 let invite=null;
 function removeInvite(){if(invite)invite.remove();invite=null;$('pip').classList.remove('inviting')}
 function showInvite(resume){const c=document.createElement('section');c.className='tourcard noprint';c.id='tourInvite';c.setAttribute('aria-labelledby','inviteH');
- c.innerHTML=`${pipImg('greeting','tpip')}<div><h2 id="inviteH" class="sr" tabindex="-1">${resume?'Pick up the tour?':'Meet Pip'}</h2><p class="tmsg">${resume?"Looks like we didn't finish the tour last time. I don't keep your list for the tour, so let's start again from the beginning.":"Hi, I'm Pip! Want me to show you around? It only takes five quick steps."}</p></div><div class="row"><button type="button" class="pri" id="tourYes">${resume?'Restart the tour':'Show me around'}</button><button type="button" class="ghost" id="tourNo">${resume?'No thanks':"I'll explore on my own"}</button></div>`;
+ c.innerHTML=`${pipImg('greeting','tpip')}<div><h2 id="inviteH" class="sr" tabindex="-1">${resume?'Pick up the tour?':'Meet Pip'}</h2><p class="tmsg">${resume?"Looks like we didn't finish the tour last time. I don't keep your list for the tour, so let's start again from the beginning.":((window.FF_STR||{}).tourInvite||"Hi, I'm Pip! Want me to show you around? It only takes five quick steps.")}</p></div><div class="row"><button type="button" class="pri" id="tourYes">${resume?'Restart the tour':'Show me around'}</button><button type="button" class="ghost" id="tourNo">${resume?'No thanks':"I'll explore on my own"}</button></div>`;
  c.classList.add('invite');if(matchMedia('(max-width:879px)').matches){$('pip').before(c);$('pip').classList.add('inviting')}else document.querySelector('.hero .steps').insertAdjacentElement('afterend',c);invite=c;
  $('tourYes').onclick=start;$('tourNo').onclick=()=>{removeInvite();setTourPref({status:'dismissed'});$('inp').focus()}}
 const pref=tourPref();
@@ -115,6 +94,7 @@ const ask=$('askPip'),askBtn=$('askPipBtn');
 function context(){
  if(idx>=0)return{key:'tour',text:`We're on step ${idx+1} of ${STEPS.length} of the tour.`};
  if(inView('projectsView'))return $('projEdit')&&!$('projEdit').hidden?{key:'project',text:'This is one of your projects. Mark each color Have enough, Need to buy or Not sure, then use Shop my list.'}:{key:'projects',text:'These are your saved projects. They stay in this browser on this device.'};
+ if(FH()&&['threads','shop'].includes(scr())){const e=FH().entry(scr());if(e)return{key:scr(),text:''}}
  if(inView('helpView'))return{key:'help',text:'This page explains how Floss Fox works and what the words mean.'};
  const s=st();
  if(s.errs.length)return{key:'errors',text:`${plural(s.errs.length,'line')} couldn't be read. ${s.errs.length===1?"It's":"They're"} listed in red under Your colors. Fix the box above and tap Add my colors again.`};
@@ -123,20 +103,21 @@ function context(){
  if(s.items.length)return{key:'results',text:`I found ${plural(s.items.length,'color')}. Your results and shopping list are below.`};
  return{key:'empty',text:'Your list is empty. Start by typing or pasting your DMC numbers into the box.'}}
 const TOPICS=[
- ['enter','How do I enter my colors?','Type or paste DMC numbers into the box on Find My Floss, one per line or separated by commas, then tap Add my colors. Add amounts like 310 x2, or 310 x? if you don\'t know. Blanc, Ecru and B5200 work too.'],
+ ['enter','How do I enter my colors?','Type or paste DMC numbers into the box on Find floss, one per line or separated by commas, then tap Add my colors. Add amounts like 310 x2, or 310 x? if you don\'t know. Blanc, Ecru and B5200 work too.'],
  ['results','What does this result mean?','Your colors lists every DMC color I recognized, with its Anchor and Sullivans chart matches. Lines I couldn\'t read appear in red so you can fix them. Repeats are combined, and amounts marked "assumed" had no number, so I counted 1 skein.'],
  ['alts','What are thread alternatives?','These are Sullivans and Anchor threads that published conversion charts match to your DMC colors. Pick one in Brand to buy on the shopping list. Chart matches are close, not exact, and metallic or variegated threads aren\'t swapped. Cost figures are rough estimates.'],
  ['shop','How do I use my shopping list?','Tick colors as you shop, or Print or Copy the list. Save it as a project to mark what you already have; then Shop my list in My Projects gives you a store checklist, and you can download a spreadsheet (CSV).'],
  ['tour','Start the tour again','']];
 let lastTopic=null;
 const poseFor=k=>k==='enter'?(PIP()&&PIP().needlePose?PIP().needlePose():'needle'):k==='shop'?'organizing':'thinking';
-function renderAsk(){const c=context();const a=TOPICS.find(t=>t[0]===lastTopic);
- ask.innerHTML=`${a?'':`<span class="apeek" aria-hidden="true">${pipImg('peeking','')}</span>`}<div class="ahead${a?'':' peek'}" data-pose="${a?(a.pose=a.pose||poseFor(a[0])):'face-icon'}">${pipImg(a?a.pose:'face-icon','')}<div><h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}">${esc(c.text)}</p></div></div>
+const FH=()=>window.FFHelp,scr=()=>FH()?FH().screen():'convert',offConvert=()=>idx<0&&!['convert','results'].includes(scr());
+function renderAsk(){const c=context();const a=TOPICS.find(t=>t[0]===lastTopic);const ffk=FH()?scr():null,ffb=ffk&&idx<0?FH().blockHtml(ffk):'';
+ ask.innerHTML=`${a?'':`<span class="apeek" aria-hidden="true">${pipImg('peeking','')}</span>`}<div class="ahead${a?'':' peek'}" data-pose="${a?(a.pose=a.pose||poseFor(a[0])):'face-icon'}">${pipImg(a?a.pose:'face-icon','')}<div><h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}">${esc(c.text)}</p></div></div>${ffb}
  ${idx>=0?'<div class="row"><button type="button" class="pri" data-a="resume">Back to the tour</button></div>':''}
- <div class="atopics" role="group" aria-label="Help topics">${TOPICS.map(t=>`<button type="button" class="sec" data-a="${t[0]}"${t[0]===lastTopic?' aria-pressed="true"':''}>${esc(t[1])}</button>`).join('')}</div>
+ <div class="atopics" role="group" aria-label="Help topics">${(offConvert()?TOPICS.filter(t=>t[0]==='tour'):TOPICS).map(t=>`<button type="button" class="sec" data-a="${t[0]}"${t[0]===lastTopic?' aria-pressed="true"':''}>${esc(t[1])}</button>`).join('')}</div>
  ${a?`<div class="aans" id="askAns" tabindex="-1"><b>${esc(a[1])}</b><p>${esc(a[2])}</p></div>`:''}
  <div class="row"><label class="hintpref"><input type="checkbox" id="hintsAsk"${hintsOn()?' checked':''}> Show Pip's tips while I work</label><button type="button" class="ghost" data-a="close">Close</button></div>`;
- window.FlossFoxPipHybrid?.decorateAskPanel(ask);
+ if(ffb&&FH())FH().bindBlock(ask,()=>closeAsk(false));window.FlossFoxPipHybrid?.decorateAskPanel(ask);
  $('hintsAsk').onchange=e=>setHints(e.target.checked)}
 function openAsk(){lastTopic=null;renderAsk();ask.hidden=false;askBtn.setAttribute('aria-expanded','true');$('askPipH').focus()}
 function closeAsk(focus){if(ask.hidden)return;ask.hidden=true;askBtn.setAttribute('aria-expanded','false');if(focus)askBtn.focus()}
@@ -144,7 +125,7 @@ askBtn.onclick=()=>ask.hidden?openAsk():closeAsk(true);
 ask.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
  if(a==='close')closeAsk(true);else if(a==='tour')start();else if(a==='resume'){closeAsk(false);go(idx)}
  else{lastTopic=a;const t=TOPICS.find(x=>x[0]===a);if(t)delete t.pose;renderAsk();$('askAns').focus()}});
-['tabConvert','tabProjects','tabHelp'].forEach(id=>$(id).addEventListener('click',()=>{if(!ask.hidden)renderAsk()}));
+['tabConvert','tabProjects','tabHelp','tabThreads','tabShop'].forEach(id=>$(id).addEventListener('click',()=>{if(!ask.hidden)renderAsk()}));
 $('helpTour').onclick=start;
 
 /* ---------- Contextual tips ---------- */
