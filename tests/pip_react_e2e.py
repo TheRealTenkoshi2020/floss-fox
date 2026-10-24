@@ -9,7 +9,7 @@ _rows = list(csv.reader(open('/workspace/pip-art/m-involved/a-strings.csv', enco
 assert all(len(r) == 6 for r in _rows), 'a-strings.csv must parse as 6 columns'
 TH = {'schema': 2, 'threads': {'310': {'n': 3, 'partial': False, 'restock': False, 'updated': '2026-10-01T00:00:00Z'}, '321': {'n': 0, 'partial': True, 'restock': False, 'updated': '2026-10-01T00:00:00Z'}}}
 def init(extra=''):
-    return f"if(!sessionStorage.getItem('i')){{sessionStorage.setItem('i','1');localStorage.setItem('{PFX}.tour.v1','{{\"status\":\"dismissed\"}}');localStorage.setItem('{PFX}.hints.v1','off');{extra}}}"
+    return f"if(!sessionStorage.getItem('i')){{sessionStorage.setItem('i','1');localStorage.setItem('{PFX}.tour.v1','{{\"status\":\"dismissed\"}}');localStorage.setItem('{PFX}.hints.v1','off');localStorage.setItem('{PFX}.pipFirstProject.v1','shown');{extra}}}"
 DUMP = f"JSON.stringify(Object.keys(localStorage).filter(k=>k.startsWith('{PFX}')&&!/pip/.test(k)).sort().map(k=>[k,localStorage.getItem(k)]))"
 with sync_playwright() as p:
     br = p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
@@ -57,7 +57,7 @@ with sync_playwright() as p:
     ok('important: no save bubble; the small saved wink still shows', bub(g) is None and g.locator('#copymsg .savedtoast').count() == 1, bub(g))
     g.click('#openSaved'); g.wait_for_timeout(700); b = bub(g); ban = g.inner_text('#pAuto') if g.locator('#pAuto').count() else ''
     ok('auto-compare bubble shows below #pAuto with a cmp key', b is not None and b['key'].startswith('pipA.cmp.') and g.evaluate("document.querySelector('#pAuto').nextElementSibling.classList.contains('pipA-bubble')"), (b, ban[:200]))
-    ok('auto-compare bubble pose matches the key', b and b['pose'] in ('presenting', 'thinking'), b)
+    ok('auto-compare bubble pose matches the key', b and b['pose'] in ('presenting', 'thinking', 'magnifier'), b)
     ok('one bubble visible', b and b['n'] == 1, b)
     shot(g, 'event-autocompare-390.png', '.pipA-bubble')
     g.click('#pAutoUndo'); g.wait_for_timeout(300); b = bub(g)
@@ -95,6 +95,24 @@ with sync_playwright() as p:
     ok('check-in: max 1 per 20 s', r == [True, False], r)
     ok('no page errors', not g.errs, g.errs[:3]); g.context.close()
     # --- chatty real events: save bubble once per session, check-in
+    # new-15 first-project moment: one time per device (UI pref key only), shy-heart, then the normal save path; skipped when quiet/off
+    FK = f"{PFX}.pipFirstProject.v1"
+    TAB = lambda g, t: (g.evaluate(f"document.getElementById('{t}').click()"), g.wait_for_timeout(700))
+    FIRSTB = "(()=>{const b=document.querySelector('.pipA-bubble[data-key=\\'pipA.save.first\\']');return b?b.getBoundingClientRect().height>0:false})()"
+    g = page(extra=f"localStorage.removeItem('{FK}')"); g.fill('#inp', '310 x1'); g.click('#go'); g.wait_for_timeout(300); g.fill('#newProjName', 'First'); g.click('#saveProj'); g.wait_for_timeout(700)
+    ok('first project: never on the Find floss shopping list after save, flag not spent', not g.evaluate(FIRSTB) and g.evaluate(f"localStorage.getItem('{FK}')") is None)
+    ok('first project: firstProject() refuses off the Projects view', g.evaluate("FlossFoxPip.firstProject(document.body)") is False and g.evaluate(f"localStorage.getItem('{FK}')") is None)
+    TAB(g, 'tabShop')
+    ok('first project: never on the Shopping tab, flag not spent', not g.evaluate(FIRSTB) and g.evaluate(f"localStorage.getItem('{FK}')") is None)
+    TAB(g, 'tabProjects'); b = bub(g)
+    ok('first project: shy-heart shows once on Projects at the default level', b and b['key'] == 'pipA.save.first' and b['pose'] == 'shy-heart' and g.evaluate("!document.getElementById('projectsView').hidden") and g.evaluate(f"localStorage.getItem('{FK}')") == 'shown', b)
+    ok('first project: flag is a UI pref only (not in projects data)', 'pipFirstProject' not in (g.evaluate(f"localStorage.getItem('{PFX}.v1')") or ''))
+    g.evaluate("FlossFoxPip.closeBubble()"); TAB(g, 'tabConvert'); TAB(g, 'tabProjects')
+    ok('first project: not repeated on the next Projects visit', not g.evaluate(FIRSTB))
+    g.reload(); g.wait_for_timeout(300); TAB(g, 'tabConvert'); g.fill('#inp', '321 x1'); g.click('#go'); g.wait_for_timeout(300); g.fill('#newProjName', 'Second'); g.click('#saveProj'); g.wait_for_timeout(400); TAB(g, 'tabProjects')
+    ok('first project: never shows again', not g.evaluate(FIRSTB))
+    g = page(extra=f"localStorage.removeItem('{FK}');localStorage.setItem('{LVK}','quiet')"); g.fill('#inp', '310 x1'); g.click('#go'); g.wait_for_timeout(300); g.fill('#newProjName', 'Q'); g.click('#saveProj'); g.wait_for_timeout(400); TAB(g, 'tabProjects')
+    ok('first project: skipped when Pip is quiet, flag not spent', bub(g) is None and g.evaluate(f"localStorage.getItem('{FK}')") is None)
     g = page(extra=f"localStorage.setItem('{LVK}','chatty')"); g.fill('#inp', '310 x1'); g.click('#go'); g.wait_for_timeout(300); g.fill('#newProjName', 'Chatty'); g.click('#saveProj'); g.wait_for_timeout(400); b = bub(g)
     ok('chatty: save bubble pipA.save.ok, pose saved; the saved wink is skipped', b and b['key'] == 'pipA.save.ok' and b['pose'] == 'saved' and g.locator('#copymsg .savedtoast').count() == 0, b)
     ok('save: Pip line not put in the shared live region (site status announces it)', g.evaluate("document.getElementById('pipALive').textContent") == '')

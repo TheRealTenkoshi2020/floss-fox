@@ -161,7 +161,7 @@ function renderList(){const L=$('projList');$('projCount').textContent=store.pro
  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delProject(b.dataset.del));{const ol=$('projOpenLast');if(ol){const last=store.projects.slice().sort((a,b)=>b.updated.localeCompare(a.updated))[0];ol.hidden=!last;if(last){const H=(window.FF_STR||{}).helpAlt||{},nm=last.name.length>18?last.name.slice(0,18)+'…':last.name,lb=FX(H.projectsHas,{name:nm});ol.textContent=lb&&lb.length<=28?lb:(H.projectsHasFallback||'Open my last project');ol.onclick=()=>openProject(last.id)}}}
  const ea=$('emptyAdd');if(ea)ea.onclick=()=>{showView('convert');$('inp').focus()};const ei=$('emptyImport');if(ei)ei.onclick=()=>window.FFImportOpen&&window.FFImportOpen()}
 async function delProject(id){const p=proj(id);if(!p)return;
- const ok=await FlossFoxConfirm.ask({pose:'thinking',title:`Delete "${p.name}"?`,
+ const ok=await FlossFoxConfirm.ask({pose:'worried',title:`Delete "${p.name}"?`,
   body:"Are you sure? This removes the project from this browser, and it can't be undone unless you have a backup.",go:'Delete'});
  if(!ok)return;
  store.projects=store.projects.filter(x=>x.id!==id);save();if(openId===id){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}ensureShop();renderList();pstatus(`Deleted "${p.name}".`)}
@@ -474,7 +474,7 @@ function undoImportRow(){const el=$('undoImport');if(!el)return;let s=null;try{s
   location.hash='#projects';location.reload()}}
 const RPIP=p=>`<picture><source type="image/webp" srcset="assets/pip/pip-${p}-160.webp"><img class="rpip" data-pose="${p}" src="assets/pip/pip-${p}-160.png" width="160" height="240" alt=""></picture>`;
 function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBox').open=true;if(file.size>5e6){R.hidden=false;R.innerHTML='<b class="warn">That file is too large to be a Floss Fox backup. Nothing was changed.</b>';return}
- R.hidden=false;R.innerHTML=RPIP('thinking')+'<p>Let me check this backup…</p>'; // shown only while the file is really being read and checked
+ R.hidden=false;R.innerHTML=RPIP('magnifier')+'<p>Let me check this backup…</p>'; // shown only while the file is really being read and checked
  file.text().then(t=>{let d;try{d=JSON.parse(t)}catch(e){d=null}const c=checkBackup(d);
   if(c.err){pendingRestore=null;R.hidden=false;R.innerHTML=RPIP('puzzled')+`<b class="warn">${c.err==='new'?'This backup was made by a newer version of Floss Fox and can\'t be restored here. Nothing was changed.':'This file isn\'t a valid Floss Fox backup (it may be damaged or from another app). Nothing was changed.'}</b>`;pstatus('Restore failed. Nothing was changed.');return}
   pendingRestore=c.projects;const clash=pendingRestore.filter(p=>proj(p.id)).length,T=TUI(),mine=T?T.data().threads:{};
@@ -500,7 +500,8 @@ function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBo
   .catch(()=>{R.hidden=false;R.innerHTML='<b class="warn">Couldn\'t read that file. Nothing was changed.</b>'})}
 
 // ---- Wiring ----
-function showView(v,fromHash){{const pc=$('planCard');if(pc&&!pc.hidden){pc.hidden=true;pc.innerHTML=''}}if(!fromHash&&location.hash!=='#'+v)history.pushState(null,'','#'+v);const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp'],shop:['shopView','tabShop'],settings:['settingsView','tabSettings']};
+let pipFirstPending=false;function pipFirstTry(){const P=window.FlossFoxPip;if(!pipFirstPending||!P||!P.firstProject)return;let seen=false;try{seen=!!localStorage.getItem(P.FIRST_KEY)}catch(e){seen=true}if(seen||P.firstProject($('projList')||$('projectsView')))pipFirstPending=false}
+function showView(v,fromHash){if(v==='projects'&&pipFirstPending)setTimeout(pipFirstTry,350);{const pc=$('planCard');if(pc&&!pc.hidden){pc.hidden=true;pc.innerHTML=''}}if(!fromHash&&location.hash!=='#'+v)history.pushState(null,'','#'+v);const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp'],shop:['shopView','tabShop'],settings:['settingsView','tabSettings']};
  const T=window.FlossFoxThreadsUI;if(T&&!$('threadsView').hidden&&v!=='threads')T.leaveView();if(T&&!$('projectsView').hidden&&v!=='projects')T.tipDone('compare');
  for(const k in V){if(!$(V[k][0])||!$(V[k][1]))continue;const on=k===v;$(V[k][0]).hidden=!on;const t=$(V[k][1]);t.setAttribute('aria-pressed',String(on));if(on)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')}
  if(v==='threads'&&T)T.render();if(v==='shop')ensureShop();if(v==='projects'){renderList();if(openId&&proj(openId)){renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true}else{$('projEdit').hidden=true;$('projListCard').hidden=false}}window.scrollTo(0,0)}
@@ -519,7 +520,7 @@ $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg')
  $('copymsg').innerHTML=(ok?`<span class="ffsaved">${esc(FX(FS('savedOk'),{name:p.name}))}</span> <span class="ffrename"><label for="savedName">${esc(FS('nameLabel'))}</label> <input type="text" id="savedName" maxlength="100" value="${esc(p.name)}" placeholder="${esc(FS('namePlaceholder'))}" aria-describedby="savedNameHint"><button type="button" class="ghost small" id="savedRename">${esc(FS('rename'))}</button></span><span class="hint" id="savedNameHint">${esc(FS('nameHint'))}</span>`:esc(FS('savedFail')||"Saved for now only: this browser isn't letting Floss Fox store projects, so download a backup from My Projects."))+` <button type="button" class="pri small" id="openSaved">${esc(FS('next').review)} →</button>`;
  {const rn=$('savedRename');if(rn)rn.onclick=()=>{const v=$('savedName').value.trim().slice(0,100);if(!v)return;p.name=v;touch(p);renderList();const b=$('copymsg').querySelector('.ffsaved');if(b)b.textContent=FX(FS('savedOk'),{name:v})}}
  $('newProjName').value='';renderList();
- $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip){/* Pip A: the save bubble replaces the small saved wink; the wink still runs when the bubble doesn't show */if(!(FlossFoxPip.react&&FlossFoxPip.react('pipA.save.ok',{},$('copymsg'),{siteAnnounces:true})))FlossFoxPip.saved($('copymsg'))}};
+ $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip){/* Pip A: the save bubble replaces the small saved wink; the wink still runs when the bubble doesn't show */if(store.projects.length===1&&FlossFoxPip.firstProject)pipFirstPending=true; /* new-15: first-project moment waits for the Projects view (never on Shopping) */if(!(FlossFoxPip.react&&FlossFoxPip.react('pipA.save.ok',{},$('copymsg'),{siteAnnounces:true})))FlossFoxPip.saved($('copymsg'))}};
 load();renderList();
 window.FlossFoxProjects={openId:()=>openId,lastProject:()=>store.projects.slice().sort((a,b)=>b.updated.localeCompare(a.updated))[0]||null,openProject:id=>openProject(id),estimateInput,plan,planText,csv,migrate,backup,fullBackup,downloadBackupText:download,restoreFile,checkBackup,PREKEY,_store:()=>store,KEY,canSave:()=>canSave,
  replaceAll:data=>{store={schema:SCHEMA,projects:data.projects};canSave=true;storeMsg('');openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false;const ok=save();renderList();return ok},

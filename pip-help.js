@@ -55,9 +55,11 @@ function bubbleKeys(k){const pr=curProj();
   case'import':return[];}
  return[]}
 function pickLine(k){const ks=bubbleKeys(k).filter(x=>B(x[0]));if(!ks.length)return null;const c=ks.map(x=>x[0]).join('|');rot[c]=(rot[c]===undefined?-1:rot[c])+1;const [key,v]=ks[rot[c]%ks.length];return{key,text:FX(B(key),v),pose:META(key)}}
-let last=null,lastKey=null;function bubble(){const k=screen();const g=k==='readiness'?'project':k==='backup'?'projects':k;if(g===last)return;last=g;const Pp=window.FlossFoxPip;
+let last=null,lastKey=null,lastL=null,lastB=false;function bubble(){const k=screen();const g=k==='readiness'?'project':k==='backup'?'projects':k,bk=k==='backup',Pp=window.FlossFoxPip;
+ /* new-15: same line, calm meditating art while Backup is open (no new line, no rotation) */
+ if(g===last){if(bk!==lastB&&lastL&&Pp&&Pp.screen){lastB=bk;Pp.screen(g,lastL.text,bk?'meditating':lastL.pose)}return}last=g;lastB=bk;
  if(g==='convert'||g==='results'){lastKey=null;if(Pp&&Pp.screen)Pp.screen(null);return}
- const l=pickLine(g);lastKey=l&&l.key;if(g==='fabric'){fabricLine(l);return}if(!Pp||!Pp.screen)return;if(l)Pp.screen(g,l.text,l.pose);else Pp.screen(null)}
+ const l=pickLine(g);lastKey=l&&l.key;lastL=l;if(g==='fabric'){fabricLine(l);return}if(!Pp||!Pp.screen)return;if(l)Pp.screen(g,l.text,bk?'meditating':l.pose);else Pp.screen(null)}
 /* refresh the project/shop line when its condition changes (e.g. becomes ready), still one line per condition */
 let lastCond='';function bubbleCond(){const g=last;if(!['project','shop','threads','projects'].includes(g))return;const c=bubbleKeys(g).map(x=>x[0]).join('|');if(c===lastCond)return;const first=!lastCond;lastCond=c;if(first)return;last=null;bubble()}
 function fabricLine(l){const slot=$('ffFabricPip');if(!slot||!l)return;slot.querySelector('.ffpipline').textContent=l.text;slot.dataset.key=l.key}

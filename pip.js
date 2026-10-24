@@ -8,7 +8,9 @@ const SIZES=[160,320,480];
 const ART={greeting:'greeting',curious:'curious',puzzled:'puzzled',duplicates:'duplicates',helpful:'helpful',tangled:'tangled',celebrating:'celebrating',sleepy:'sleepy',
  thinking:'thinking',pointing:'pointing',peeking:'peeking',neutral:'neutral','greeting-alt':'greeting-alt',
  reassuring:'reassuring',presenting:'presenting',discovery:'discovery',saved:'saved','face-icon':'face-icon',
- needle:'needle','needle-alt':'needle-alt',organizing:'organizing',goodbye:'goodbye','cross-stitch':'cross-stitch'};
+ needle:'needle','needle-alt':'needle-alt',organizing:'organizing',goodbye:'goodbye','cross-stitch':'cross-stitch',
+ // new-15 (Pixel's placement plan): only these 11 are placed; wink, skeptical, determined, rainbow-hoop are held
+ magnifier:'magnifier',phew:'phew','dropped-bobbin':'dropped-bobbin','floss-box':'floss-box','proud-finish':'proud-finish',explorer:'explorer',meditating:'meditating','shy-heart':'shy-heart','grumpy-knot':'grumpy-knot',worried:'worried',surprised:'surprised'};
 const FUTURE={proud:'greeting',teaching:'curious'};
 const poseArt=p=>ART[p]||ART[FUTURE[p]]||'greeting';
 const short=t=>{t=String(t).replace(/\s+/g,' ').trim();return t.length>24?t.slice(0,23)+'…':t};
@@ -23,6 +25,7 @@ function errMsg(r){if(r.errs.length>1)return errPose(r)==='reassuring'?`No worri
 const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
 // Real alternatives only: counts DMC colors the chart actually matched in the chosen non-DMC brand (read from the converter's own list).
 const alt=()=>{try{return window.FlossFoxAlt?window.FlossFoxAlt():null}catch(e){return null}};
+let dupR='',dupN=0; // duplicates rotate with surprised per new set of repeats: 1st set keeps the original art, 2nd shows surprised, and so on
 const TANGLE=["Oops, got a little tangled up!","I meant to do that. Probably."];let tn=0;
 /* Central state map. pri follows the brief: 1 errors > 2 user-requested help > 3 duplicate/validation > 4 celebration > 5 helpful/curious > 6 playful > 7 sleepy.
    Base states come from the parse result; celebrating/tangled/sleepy are short overlays on top of a calm base. */
@@ -37,7 +40,7 @@ const STATES={
  helpful:    {pose:'discovery',  pri:25, anim:'pop',   msg:()=>{const a=alt();return a&&a.matched?`Look! The chart has ${a.brand} matches for ${a.matched} of your ${plural(a.total,'color')}.`:''}},
  processing: {pose:'thinking',   pri:30, anim:'fade',  msg:()=>'Let me look at your list…'}, // reserved: parsing is instant, so never shown (no fake delays)
  celebrating:{pose:'celebrating',pri:35, anim:'cheer', msg:()=>'Yay, your list is ready!'},
- duplicate:  {pose:'duplicates', pri:40, anim:'pop',   msg:r=>r.items.filter(i=>i.src.length>1).length===1?"Found a repeat! I combined it and added up the skeins.":"Found some repeats! I combined them and added up the skeins."},
+ duplicate:  {pose:r=>{const g=r&&r.items?r.items.filter(i=>i.src&&i.src.length>1).map(i=>i.code+':'+i.src.length).join('|'):'';if(g&&g!==dupR){dupR=g;dupN++}return dupN%2===0&&dupN?'surprised':'duplicates'}, pri:40, anim:'pop',   msg:r=>r.items.filter(i=>i.src.length>1).length===1?"Found a repeat! I combined it and added up the skeins.":"Found some repeats! I combined them and added up the skeins."},
  goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"Happy stitching! Tap Ask Pip anytime."},
  error:      {pose:errPose,      pri:50, anim:'tilt',  msg:errMsg},
  tangled:    {pose:'tangled',    pri:8,  anim:'wiggle',msg:()=>TANGLE[tn%2]},
@@ -154,11 +157,20 @@ const AS={ // GENERATED from /workspace/pip-art/m-involved/a-strings.csv (Pixel)
  'pipA.ready':v=>`Every color is covered and checked. Ready to stitch!`};
 const AL={label:"How much should Pip chat?",chatty:"Chatty: every helpful moment",important:"Just the important ones (recommended)",quiet:"Quiet: only when I ask",off:"Off: hide Pip",saved:"Pip setting saved on this device.",dismiss:"Dismiss Pip's message",settings:'Pip settings'};
 // event -> pose, levels, cap. gapFree: direct result of the user's tap (Undo, Ready), so no 20 s gap.
-const EV={save:{pose:'saved',lv:['chatty'],cap:'session'},cmp:{lv:['chatty','important'],cap:'project'},empty:{pose:'organizing',lv:['chatty'],cap:'session'},
- nothing:{pose:'curious',lv:['chatty'],cap:'project'},undo:{pose:'reassuring',lv:['chatty','important'],cap:'none',gapFree:true},
- pcheck:{lv:['chatty','important'],cap:'file'},checkin:{pose:'organizing',lv:['chatty'],cap:'checkin'},ready:{pose:'cross-stitch',lv:['chatty','important'],cap:'none',gapFree:true}};
-const POSE={'pipA.cmp.done.many':'presenting','pipA.cmp.done.one':'presenting','pipA.cmp.done.none':'thinking','pipA.cmp.unsure':'thinking','pipA.cmp.unsure.one':'thinking','pipA.pcheck.fake':'puzzled','pipA.pcheck.fake.one':'puzzled','pipA.pcheck.other':'curious'};
-const EVOF={'pipA.save.ok':'save','pipA.cmp.done':'cmp','pipA.cmp.empty':'empty','pipA.cmp.nothing':'nothing','pipA.cmp.undo':'undo','pipA.pcheck.fake':'pcheck','pipA.pcheck.other':'pcheck','pipA.checkin':'checkin','pipA.ready':'ready'};
+const EV={save:{pose:'saved',lv:['chatty'],cap:'session'},cmp:{lv:['chatty','important'],cap:'project'},empty:{pose:'floss-box',lv:['chatty'],cap:'session'},
+ nothing:{pose:'dropped-bobbin',lv:['chatty'],cap:'project'},undo:{pose:'phew',lv:['chatty','important'],cap:'none',gapFree:true},
+ pcheck:{lv:['chatty','important'],cap:'file'},checkin:{pose:'floss-box',lv:['chatty'],cap:'checkin'},ready:{pose:'proud-finish',lv:['chatty','important'],cap:'none',gapFree:true},
+ first:{pose:'shy-heart',lv:['chatty','important'],cap:'none',gapFree:true}}; // first: one-time first-project moment (see firstProject)
+const POSE={'pipA.cmp.done.many':'presenting','pipA.cmp.done.one':'presenting','pipA.cmp.done.none':'thinking','pipA.cmp.unsure':'magnifier','pipA.cmp.unsure.one':'magnifier','pipA.pcheck.fake':'puzzled','pipA.pcheck.fake.one':'puzzled','pipA.pcheck.other':'magnifier'};
+const EVOF={'pipA.save.ok':'save','pipA.cmp.done':'cmp','pipA.cmp.empty':'empty','pipA.cmp.nothing':'nothing','pipA.cmp.undo':'undo','pipA.pcheck.fake':'pcheck','pipA.pcheck.other':'pcheck','pipA.checkin':'checkin','pipA.ready':'ready','pipA.save.first':'first'};
+/* Approved by Pixel (review of 6377560; not in a-strings.csv yet): first project saved, shown once per device. */
+AS['pipA.save.first']=v=>`Your first project is saved! Next, let's check it against your threads.`;
+// One-time flag: a UI preference key only (same prefix as pipLevel), never part of the saved data or backups.
+const FIRST_KEY=PIP_KEY.replace(/\.pip\.v1$/,'.pipFirstProject.v1');
+function firstProject(anchor){try{if(localStorage.getItem(FIRST_KEY))return false}catch(e){return false}
+ /* never on Shopping or Find floss: only while the Projects view is on screen; the flag is not spent otherwise */
+ {const pv=document.getElementById('projectsView');if(!pv||pv.hidden||!pv.getClientRects().length)return false}
+ if(!react('pipA.save.first',{},anchor,{siteAnnounces:true}))return false;try{localStorage.setItem(FIRST_KEY,'shown')}catch(e){}return true}
 // Singular/plural: choose the variant key from numbers the caller passed (same rule as projects.js plural/s2: n===1 is singular).
 function variant(key,v){v=v||{};
  if(key==='pipA.cmp.done'){if(v.u>=1)return v.u===1?'pipA.cmp.unsure.one':'pipA.cmp.unsure';return v.total===1?'pipA.cmp.done.one':v.have===0?'pipA.cmp.done.none':'pipA.cmp.done.many'}
@@ -200,6 +212,6 @@ function mountSettings(){const h=document.querySelector('#helpView .card.help');
  f.addEventListener('change',e=>{if(e.target.name!=='pipLevel')return;setLevel(e.target.value);document.getElementById('pipLevelMsg').textContent=AL.saved})}
 function syncSettings(){const f=document.getElementById('pipSettings');if(!f)return;const c=f.querySelector(`input[value="${level()}"]`);if(c)c.checked=true}
 mountSettings();tog.addEventListener('click',()=>{syncSettings();if(fig.hidden)closeBubble()});
-Object.assign(api,{react,level,setLevel,variant,LEVEL_DEFAULT,LEVEL_KEY,STRINGS_A:AS,closeBubble,_capsReset:()=>{capS.clear();capT.gap=-1e9;capT.checkin=-1e9;capT.checkinN=0}});
+Object.assign(api,{react,firstProject,FIRST_KEY,level,setLevel,variant,LEVEL_DEFAULT,LEVEL_KEY,STRINGS_A:AS,closeBubble,_capsReset:()=>{capS.clear();capT.gap=-1e9;capT.checkin=-1e9;capT.checkinN=0}});
 window.FlossFoxPip=api;
 })();

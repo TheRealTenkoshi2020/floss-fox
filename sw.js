@@ -1,5 +1,5 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v3.4-1';
+const CACHE = 'flossfox-v3.5-1';
 const CORE = [
   "backup-core.js",
   "backup-ui.js",
@@ -146,6 +146,29 @@ const CORE = [
   "assets/pip/pip-thinking-160.png",
   "assets/pip/pip-thinking-160.webp",
   "assets/pip/pip-thinking-320.webp",
+  "assets/pip/pip-magnifier-160.png",
+  "assets/pip/pip-magnifier-160.webp",
+  "assets/pip/pip-phew-160.png",
+  "assets/pip/pip-phew-160.webp",
+  "assets/pip/pip-dropped-bobbin-160.png",
+  "assets/pip/pip-dropped-bobbin-160.webp",
+  "assets/pip/pip-floss-box-160.png",
+  "assets/pip/pip-floss-box-160.webp",
+  "assets/pip/pip-proud-finish-160.png",
+  "assets/pip/pip-proud-finish-160.webp",
+  "assets/pip/pip-explorer-160.png",
+  "assets/pip/pip-explorer-160.webp",
+  "assets/pip/pip-meditating-160.png",
+  "assets/pip/pip-meditating-160.webp",
+  "assets/pip/pip-shy-heart-160.png",
+  "assets/pip/pip-shy-heart-160.webp",
+  "assets/pip/pip-grumpy-knot-160.png",
+  "assets/pip/pip-grumpy-knot-160.webp",
+  "assets/pip/pip-worried-160.png",
+  "assets/pip/pip-worried-160.webp",
+  "assets/pip/pip-surprised-160.png",
+  "assets/pip/pip-surprised-160.webp",
+  "offline.html",
   'manifest.webmanifest'
 ];
 self.addEventListener('install', e => {
@@ -160,7 +183,7 @@ self.addEventListener('fetch', e => {
   const html = r.mode === 'navigate' || (r.headers.get('accept') || '').includes('text/html');
   if (html) {
     e.respondWith(fetch(r).then(res => { if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return res; })
-      .catch(() => caches.match(r, {ignoreSearch: true}).then(m => m || caches.match('./'))));
+      .catch(() => caches.match(r, {ignoreSearch: true}).then(m => m || caches.match('./')).then(m => m || caches.match('offline.html'))));
   } else {
     e.respondWith(caches.match(r).then(m => m || fetch(r).then(res => { if (res.ok && res.type === 'basic') { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return res; })));
   }

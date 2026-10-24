@@ -915,7 +915,7 @@ with sync_playwright() as p:
     b2.select_option('#dest', 'dmc'); b2.select_option('#dest', 'dmc')
     ok('B4b compare-brands tip uses discovery; start tip uses peeking', b2.evaluate("FlossFoxPip.STATES.hintCompare.pose") == 'discovery' and b2.evaluate("[FlossFoxPip.STATES.hintStart.pose(),FlossFoxPip.STATES.hintStart.pose()]") == ['peeking', 'peeking'])
     b2.close()
-    sv = page(412, True, init=SEED); sv.goto(B); sv.fill('#inp', '310 x2\n321'); sv.click('#go'); sv.wait_for_timeout(4300)
+    sv = page(412, True, init=SEED + "try{localStorage.setItem('%s','shown')}catch(e){}" % KEY.replace('.v1', '.pipFirstProject.v1')); sv.goto(B); sv.fill('#inp', '310 x2\n321'); sv.click('#go'); sv.wait_for_timeout(4300)  # flag above: first-project moment already seen (covered in pip_react_e2e)
     toast = lambda sel: sv.evaluate(f"(()=>{{const t=document.querySelector('{sel} .savedtoast');if(!t)return null;const i=t.querySelector('img');return [t.getAttribute('aria-hidden'),i.naturalWidth>0||i.complete,/pip-saved-160/.test(i.currentSrc||i.src)]}})()")
     sv.click('#copy'); sv.wait_for_timeout(200); c1 = toast('#copymsg')
     ok('B5 copied -> saved toast (wink) beside the status, decorative, status text announced once', c1 == ['true', True, True] and sv.inner_text('#copymsg').count('Copied') == 1, (c1, sv.inner_text('#copymsg')))

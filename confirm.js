@@ -13,7 +13,7 @@ function onKey(e){if(!done)return;if(e.key==='Escape'){e.preventDefault();e.stop
  if(e.key!=='Tab')return;const bs=host.querySelectorAll('.ffconfirm-panel button:not([disabled])');if(!bs.length)return;
  const a=bs[0],z=bs[bs.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
 /** @param {{title:string,body:string,pose?:string,keep?:string,go?:string}} o */
-function ask(o){o=o||{};ensure();if(done)finish(false);const pose=o.pose||'thinking',h=o.height||(pose==='peeking'?221:241);
+function ask(o){o=o||{};ensure();if(done)finish(false);const pose=o.pose||'thinking',h=o.height||(pose==='peeking'?221:pose==='worried'?223:241);
  const img=host.querySelector('#ffConfirmImg'),webp=host.querySelector('#ffConfirmWebp');
  webp.srcset='assets/pip/pip-'+pose+'-160.webp';img.src='assets/pip/pip-'+pose+'-160.png';img.width=160;img.height=h;img.dataset.pose=pose;
  host.querySelector('#ffConfirmTitle').textContent=o.title||'Are you sure?';

@@ -1,5 +1,8 @@
 /* ---- Key map used by the code (FF_STR). Values come from Pixel's FF_P12 where Pixel wrote one.
    Anything marked PLACEHOLDER has no Pixel copy yet; see /workspace/flow-p12/STRINGS_FOR_PIXEL.md. ---- */
+/* new-15 pose swap (Pixel's placement plan): My threads Pip strip, organizing -> floss-box. Art only, copy unchanged.
+   (The p12.screen.* poses are not drawn anywhere, so the swap goes on the strip lines that really show.) */
+(()=>{const M=window.FF_P12_META||{};['p12.bubble.threads.empty.1','p12.bubble.threads.has.1'].forEach(k=>{if(M[k]&&M[k].pose==='organizing')M[k].pose='floss-box'})})();
 (function(){const P=window.FF_P12||{},p=k=>P[k],PH=s=>s; /* PH() = PLACEHOLDER */
 const help=(k,sk)=>({title:p(`p12.screen.${k}.title`),eli5:p(`p12.screen.${k}.body`),doNext:p(`p12.screen.${k}.next`),pose:(window.FF_P12_META[`p12.screen.${k}.title`]||{}).pose});
 window.FF_STR={

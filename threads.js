@@ -109,7 +109,7 @@ function bind(){const L=$('thList');
  L.querySelectorAll('[data-rs]').forEach(x=>x.onchange=()=>{const c=x.dataset.rs,e=MM(x)[c];e.restock=x.checked;stamp(e);save();render();keepFocus(x.id)});
  L.querySelectorAll('[data-verify]').forEach(b=>b.onclick=()=>{const c=b.dataset.verify,e=MM(b)[c];e.confirmed=true;stamp(e);save();render();keepFocus('tn-'+(b.dataset.m==='d'?'d_':'')+c.replace(/[^\w]/g,'_'));say(`Confirmed ${e.n} full skein${e.n===1?'':'s'} of DMC ${lab(c)}.`)});
  L.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const c=b.dataset.del,M=MM(b),demo=b.dataset.m==='d',L=lab(c);
-  const ok=await FlossFoxConfirm.ask({pose:'thinking',title:demo?`Remove demo DMC ${L}?`:`Remove DMC ${L} from your collection?`,
+  const ok=await FlossFoxConfirm.ask({pose:'worried',title:demo?`Remove demo DMC ${L}?`:`Remove DMC ${L} from your collection?`,
    body:demo?'Demo threads are just for trying Floss Fox. You can load them again anytime.':'Are you sure? You can add it back anytime.'});
   if(!ok)return;delete M[c];if(data.demo&&!Object.keys(data.demo).length)delete data.demo;save();render();say(`Removed DMC ${L}.`);$('thAdd').focus()});
  const rd=$('thRemoveDemo');if(rd)rd.onclick=removeDemo;
