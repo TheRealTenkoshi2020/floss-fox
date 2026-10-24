@@ -1,0 +1,17 @@
+# Completed development work: backup controls and reminders
+
+Samira implemented this directly against development commit `b9e6c8d8cf91908e348ec4516db3b115a57545b4` to reduce Mouse's remaining implementation work. The patch was rebased over the newer Pip A speech/layout changes and shorter navigation labels without replacing them; the existing Pip navigation assertion includes Settings. This is a prepared development patch, not a production release. The GitHub connection refused branch/tree creation (403), so no remote branch or PR was created; the supplied apply script creates a local review branch.
+
+- Settings tab and deep link, with Export/Import Backup at the top and links from Fabric/About/Privacy.
+- Existing v2 full exporter, import preview, merge/replace and undo are reused. Project/thread schemas and storage keys are unchanged.
+- Reminders are opt-in, with a two-week default interval and optional major-edit prompts. Major means at least 10 changed colors or 20 full-skein changes in one saved operation. Snooze lasts one day; nothing runs while the app is closed.
+- Legacy Download buttons still download. Settings uses a supported file picker, otherwise a download. A download is never recorded as saved until confirmed; a picker save is recorded only after the writer closes successfully.
+- Cancellation and failures preserve prior history. Confirming an older exported copy leaves a newer major-edit reminder pending. Unreadable app data is not marked as a complete backup.
+- Reminder preferences are an optional field in the existing v2 full backup and participate in restore/undo. Device-specific save history/snooze are separate and never exported. Future reminder schemas pause changes without overwriting their raw values.
+- Inventory-save hooks cover ordinary edits and bulk location edits/undo. No server, account, data migration or new runtime package was added.
+- Merge note (Myke): GoatCounter is kept. analytics.js, tests/analytics_e2e.py and the privacy GoatCounter text are unchanged; the no-analytics stub, privacy rewrite and new privacy paragraph were held back. Legacy backup buttons keep their old wording; the confirm step lives only in Settings.
+- New settings scripts/styles are included in a distinct development service-worker cache. Preserve the normal production namespace/cache transformation during promotion.
+
+Local checks: 17 policy/file-writing/controller integration tests passed, using the actual v2 exporter, plus 46 existing parser and 28 existing inventory checks (91 total). All new/modified JavaScript and inline-script syntax checks passed. `tests/backup_settings_e2e.cjs` is written to exercise phone/Fold-sized/desktop Chromium viewports, download confirmation, data edits after export, file-save success/cancel/failure, existing restore/undo, future settings, snooze and simulated production privacy. It was not executed here: this environment has no browser binary and GitHub write access was refused. An optional branch-specific GitHub Actions workflow is provided separately, is not part of the patch and has not run. Do not infer a browser pass from local syntax/controller checks.
+
+Mouse's remaining work: review the diff and check result, perform a brief real-device sanity check, then merge into development if acceptable. Do not implement these controls again or rerun unrelated suites without a reason. Myke must approve any production release. Hosted sync, OCR integration and brand/schema refactoring remain separate work.

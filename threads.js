@@ -66,8 +66,9 @@ function load(){let raw=null;try{raw=localStorage.getItem(KEY)}catch(e){canSave=
   msg((m&&m.tooNew?'<b>Your thread collection was saved by a newer version of Floss Fox.</b> It is left untouched and saving is paused.':'<b>Your saved thread collection couldn\'t be read.</b> It was left as it was (a copy is kept in browser storage) and saving is paused, so nothing gets overwritten.')+' <button type="button" class="sec small" id="thReset">Start a new collection</button>');
   $('thReset').onclick=()=>{if(!confirm('Start a new, empty collection? The unreadable copy stays in browser storage under a separate name.'))return;canSave=true;data=C.empty();save();msg('');render()};return}
  data=m.data;if(m.skipped)msg(`${m.skipped} saved thread${m.skipped===1?'':'s'} couldn't be read and ${m.skipped===1?'was':'were'} skipped.`)}
+function backupChanged(){window.dispatchEvent(new CustomEvent('ff:data-saved',{detail:{area:'threads'}}));}
 function save(){bulkStorageUndoState=null;if(!canSave){if(!mem)say('Not saved: saving is paused (see the note above).');return false}
- try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){say(e&&(e.name==='QuotaExceededError'||e.code===22)?'Not saved: browser storage is full.':'Not saved: your browser blocked the save.');return false}}
+ try{localStorage.setItem(KEY,JSON.stringify(data));backupChanged();return true}catch(e){say(e&&(e.name==='QuotaExceededError'||e.code===22)?'Not saved: browser storage is full.':'Not saved: your browser blocked the save.');return false}}
 const nm=c=>DMC[c].name.replace(/\b(vy|dk|lt|md|ul)\b/gi,m=>({vy:'very',dk:'dark',lt:'light',md:'medium',ul:'ultra'}[m.toLowerCase()]));
 const ST={stock:'In stock',partial:'Partial skein only',out:'Out of stock'};
 const MM=x=>x&&x.dataset&&x.dataset.m==='d'?(data.demo||{}):data.threads;
@@ -147,7 +148,7 @@ function setStorageLocation(code,storage,opts){
  const nextMap={...map,[code]:e};
  const next=demo?{...data,demo:nextMap}:{...data,threads:nextMap};
  try{localStorage.setItem(KEY,JSON.stringify(next))}catch(e){return{ok:false,error:'Your browser blocked the save. Nothing was applied.'}}
- data=next;bulkStorageUndoState=null;render();return{ok:true};
+ data=next;bulkStorageUndoState=null;backupChanged();render();return{ok:true};
 }
 
 // Bulk storage updates: single localStorage transaction; last-batch undo is session-only.
@@ -166,7 +167,7 @@ function bulkStorageApply(codes,change,expected){
  const B=root.FlossFoxBulkStorageCore,at=new Date().toISOString();
  const next={...data,threads:B.applyCopy(data.threads,candidate,at)};
  try{localStorage.setItem(KEY,JSON.stringify(next))}catch(e){return{ok:false,error:'Your browser blocked the save. Nothing was applied.'}}
- data=next;bulkStorageUndoState={changes:candidate.changes,at};render();
+ data=next;bulkStorageUndoState={changes:candidate.changes,at};backupChanged();render();
  return{ok:true,changed:candidate.changes.length};
 }
 function bulkStorageUndo(){
@@ -182,7 +183,7 @@ function bulkStorageUndo(){
  }
  const next={...data,threads:B.reverseCopy(data.threads,undo.changes)};
  try{localStorage.setItem(KEY,JSON.stringify(next))}catch(e){return{ok:false,error:'Your browser blocked the undo. Nothing was changed.'}}
- data=next;bulkStorageUndoState=null;render();return{ok:true,changed:undo.changes.length};
+ data=next;bulkStorageUndoState=null;backupChanged();render();return{ok:true,changed:undo.changes.length};
 }
 
 window.FlossFoxThreadsUI={setStorageLocation,bulkStoragePreview,bulkStorageApply,bulkStorageUndo,bulkCanUndo:()=>!!bulkStorageUndoState,render,data:()=>data,KEY,TIPKEY,tip,tipDone:n=>tipSeen.add(n),reload:()=>{data=C.empty();canSave=true;mem=false;msg('');load();render()},canSave:()=>canSave,

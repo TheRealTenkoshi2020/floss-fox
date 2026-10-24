@@ -130,5 +130,76 @@ const inp=$('inp');inp.addEventListener('focus',()=>{if(['welcome','welcomeBack'
 // Leaving an empty box: settle to the calm idle companion (curious stays for focus/exploring).
 inp.addEventListener('blur',()=>{if(cur==='attentive'&&!inp.value.trim()&&!over){greeted=true;base='idle';show('idle')}});
 arm();
+/* ---- Pip direction A (dev): Pip reacts to real events, plus a Pip level setting. Strings are Pixel's (a-strings.csv), verbatim.
+   One helper, FlossFoxPip.react(key, vars, anchor, opts): level + caps + layout + live region in one place. Callers pass
+   numbers the app already computed; the helper only picks the singular/plural variant. Caps live in memory (this session). */
+const LEVEL_DEFAULT='important'; // "Just the important ones", confirmed by Myke (Oct 21 2026). Change here only.
+const LEVEL_KEY=PIP_KEY.replace(/\.pip\.v1$/,'.pipLevel.v1'),LEVELS=['chatty','important','quiet','off'];
+const AS={ // GENERATED from /workspace/pip-art/m-involved/a-strings.csv (Pixel). Do not edit by hand.
+ 'pipA.save.ok':v=>`Saved in this browser. Next, let's check it against your threads.`,
+ 'pipA.cmp.done.many':v=>`You have enough of ${v.have} of these ${v.total} colors. I only filled in undecided ones.`,
+ 'pipA.cmp.done.none':v=>`None of these ${v.total} colors have enough in your collection yet.`,
+ 'pipA.cmp.done.one':v=>`I checked this color against your threads and filled it in.`,
+ 'pipA.cmp.unsure':v=>`${v.n} are in your collection, but I can't tell if there's enough. I marked them Not sure.`,
+ 'pipA.cmp.unsure.one':v=>`One is in your collection, but I can't tell if there's enough. I marked it Not sure.`,
+ 'pipA.cmp.empty':v=>`Your thread collection is empty. Add threads you own and I'll compare them.`,
+ 'pipA.cmp.nothing':v=>`Every color here already has a choice. I didn't change any of them.`,
+ 'pipA.cmp.undo':v=>`Done. ${v.n} colors are undecided again, and I won't fill them in on my own.`,
+ 'pipA.cmp.undo.one':v=>`Done. That color is undecided again, and I won't fill it in on my own.`,
+ 'pipA.pcheck.fake':v=>`${v.n} numbers aren't DMC colors I know. See Pattern check. I haven't changed anything.`,
+ 'pipA.pcheck.fake.one':v=>`1 number isn't a DMC color I know. See Pattern check. I haven't changed anything.`,
+ 'pipA.pcheck.other':v=>`A few things are worth a second look. See Pattern check. I haven't changed anything.`,
+ 'pipA.checkin.full':v=>`Checked in. That thread now counts as yours for this project.`,
+ 'pipA.checkin.part':v=>`Got part of it. I've kept the rest on your shopping list.`,
+ 'pipA.ready':v=>`Every color is covered and checked. Ready to stitch!`};
+const AL={label:"How much should Pip chat?",chatty:"Chatty: every helpful moment",important:"Just the important ones (recommended)",quiet:"Quiet: only when I ask",off:"Off: hide Pip",saved:"Pip setting saved on this device.",dismiss:"Dismiss Pip's message",settings:'Pip settings'};
+// event -> pose, levels, cap. gapFree: direct result of the user's tap (Undo, Ready), so no 20 s gap.
+const EV={save:{pose:'saved',lv:['chatty'],cap:'session'},cmp:{lv:['chatty','important'],cap:'project'},empty:{pose:'organizing',lv:['chatty'],cap:'session'},
+ nothing:{pose:'curious',lv:['chatty'],cap:'project'},undo:{pose:'reassuring',lv:['chatty','important'],cap:'none',gapFree:true},
+ pcheck:{lv:['chatty','important'],cap:'file'},checkin:{pose:'organizing',lv:['chatty'],cap:'checkin'},ready:{pose:'cross-stitch',lv:['chatty','important'],cap:'none',gapFree:true}};
+const POSE={'pipA.cmp.done.many':'presenting','pipA.cmp.done.one':'presenting','pipA.cmp.done.none':'thinking','pipA.cmp.unsure':'thinking','pipA.cmp.unsure.one':'thinking','pipA.pcheck.fake':'puzzled','pipA.pcheck.fake.one':'puzzled','pipA.pcheck.other':'curious'};
+const EVOF={'pipA.save.ok':'save','pipA.cmp.done':'cmp','pipA.cmp.empty':'empty','pipA.cmp.nothing':'nothing','pipA.cmp.undo':'undo','pipA.pcheck.fake':'pcheck','pipA.pcheck.other':'pcheck','pipA.checkin':'checkin','pipA.ready':'ready'};
+// Singular/plural: choose the variant key from numbers the caller passed (same rule as projects.js plural/s2: n===1 is singular).
+function variant(key,v){v=v||{};
+ if(key==='pipA.cmp.done'){if(v.u>=1)return v.u===1?'pipA.cmp.unsure.one':'pipA.cmp.unsure';return v.total===1?'pipA.cmp.done.one':v.have===0?'pipA.cmp.done.none':'pipA.cmp.done.many'}
+ if(key==='pipA.cmp.undo')return v.n===1?'pipA.cmp.undo.one':key;
+ if(key==='pipA.pcheck.fake')return v.n===1?'pipA.pcheck.fake.one':key;
+ if(key==='pipA.checkin')return v.full?'pipA.checkin.full':'pipA.checkin.part';
+ return key}
+function level(){if(fig.hidden)return'off';let s=null;try{s=localStorage.getItem(LEVEL_KEY)}catch(e){}return s&&LEVELS.includes(s)&&s!=='off'?s:LEVEL_DEFAULT}
+// Off stays in sync with the existing hide key: hidden there = Off here (old hidden users stay hidden). Nothing else is touched.
+function setLevel(l){if(!LEVELS.includes(l))return false;try{localStorage.setItem(LEVEL_KEY,l)}catch(e){}vis(l!=='off',true);if(l==='off')closeBubble();return true}
+const capS=new Set(),capT={gap:-1e9,checkin:-1e9,checkinN:0};let bub=null,bubT=null;
+const live=(()=>{let r=document.getElementById('pipALive');if(!r){r=document.createElement('div');r.id='pipALive';r.className='sr';r.setAttribute('aria-live','polite');document.body.appendChild(r)}return r})();
+function closeBubble(){clearTimeout(bubT);if(bub){bub.remove();bub=null}}
+const BUB_MS=8000; // fade after 8 s; paused while hovered or focused. Separate from T.toast (3.5 s) which only times the small saved wink.
+function armFade(){clearTimeout(bubT);if(bub&&!bub.matches(':hover')&&!bub.contains(document.activeElement))bubT=setTimeout(closeBubble,BUB_MS)}
+function react(key,vars,anchor,opts){opts=opts||{};vars=vars||{};if(key==='pipA.cmp.done'&&vars.u>=1)vars={...vars,n:vars.u};const k=variant(key,vars),ev=EV[EVOF[key]||EVOF[k]];if(!ev||!AS[k])return false;
+ const lv=level();if(lv==='off'||lv==='quiet'||!ev.lv.includes(lv))return false;
+ if(touring||document.querySelector('#ffConfirm:not([hidden])'))return false;
+ const now=performance.now(),id=EVOF[key]+':'+(ev.cap==='project'?opts.id:ev.cap==='file'?opts.id:'');
+ if((ev.cap==='session'||ev.cap==='project'||ev.cap==='file')&&capS.has(id))return false;
+ if(ev.cap==='checkin'&&(capT.checkinN>=3||now-capT.checkin<20000))return false;
+ if(!ev.gapFree&&now-capT.gap<20000)return false;
+ const a=typeof anchor==='function'?anchor():typeof anchor==='string'?document.querySelector(anchor):anchor;if(!a||!a.isConnected)return false;
+ if(ev.cap!=='none'&&ev.cap!=='checkin')capS.add(id);if(ev.cap==='checkin'){capT.checkin=now;capT.checkinN++}if(!ev.gapFree)capT.gap=now;
+ closeBubble();const pose=ev.pose||POSE[k]||'neutral',text=AS[k](vars);const b=document.createElement('div');b.className='pipA-bubble';b.dataset.key=k;b.dataset.pose=pose;
+ b.innerHTML=`<picture aria-hidden="true"><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img src="assets/pip/pip-${pose}-160.png" alt="" aria-hidden="true" width="48" height="71" decoding="async"></picture><p class="pipA-text"></p><button type="button" class="pipA-x" aria-label="${AL.dismiss}">✕</button><a href="#pipSettings" class="pipA-set">${AL.settings}</a>`;
+ b.querySelector('.pipA-text').textContent=text;b.querySelector('.pipA-x').onclick=closeBubble;
+ b.querySelector('.pipA-set').onclick=e=>{e.preventDefault();closeBubble();const t=document.getElementById('tabHelp');if(t)t.click();setTimeout(()=>{const s=document.getElementById('pipSettings');if(s)s.scrollIntoView({block:'start'})},50)};
+ b.addEventListener('keydown',e=>{if(e.key==='Escape')closeBubble()});['mouseenter','focusin'].forEach(x=>b.addEventListener(x,()=>clearTimeout(bubT)));['mouseleave','focusout'].forEach(x=>b.addEventListener(x,()=>setTimeout(armFade,0)));
+ a.insertAdjacentElement('afterend',b);bub=b;armFade();
+ // One polite announcement: if the site already announces this event (opts.siteAnnounces), Pip's line is visual only.
+ if(!opts.siteAnnounces){live.textContent='';setTimeout(()=>{live.textContent=text},30)}
+ return true}
+// Help: "How much should Pip chat?" radio group (next to the site's other settings; the hero Hide/Show Pip button stays as is).
+function mountSettings(){const h=document.querySelector('#helpView .card.help');if(!h||document.getElementById('pipSettings'))return;
+ const f=document.createElement('fieldset');f.id='pipSettings';f.className='pipA-settings';const cur=level();
+ f.innerHTML=`<legend>${AL.label}</legend>`+['chatty','important','quiet','off'].map(l=>`<label><input type="radio" name="pipLevel" value="${l}"${l===cur?' checked':''}> ${AL[l]}</label>`).join('')+'<p class="hint" id="pipLevelMsg" role="status" aria-live="polite"></p>';
+ const before=[...h.querySelectorAll('h3')].find(x=>/Your data/.test(x.textContent));h.insertBefore(f,before||null);
+ f.addEventListener('change',e=>{if(e.target.name!=='pipLevel')return;setLevel(e.target.value);document.getElementById('pipLevelMsg').textContent=AL.saved})}
+function syncSettings(){const f=document.getElementById('pipSettings');if(!f)return;const c=f.querySelector(`input[value="${level()}"]`);if(c)c.checked=true}
+mountSettings();tog.addEventListener('click',()=>{syncSettings();if(fig.hidden)closeBubble()});
+Object.assign(api,{react,level,setLevel,variant,LEVEL_DEFAULT,LEVEL_KEY,STRINGS_A:AS,closeBubble,_capsReset:()=>{capS.clear();capT.gap=-1e9;capT.checkin=-1e9;capT.checkinN=0}});
 window.FlossFoxPip=api;
 })();

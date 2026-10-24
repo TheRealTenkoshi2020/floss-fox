@@ -95,6 +95,7 @@ function context(){
  if(idx>=0)return{key:'tour',text:`We're on step ${idx+1} of ${STEPS.length} of the tour.`};
  if(inView('projectsView'))return $('projEdit')&&!$('projEdit').hidden?{key:'project',text:'This is one of your projects. Mark each color Have enough, Need to buy or Not sure, then use Shop my list.'}:{key:'projects',text:'These are your saved projects. They stay in this browser on this device.'};
  if(FH()&&['threads','shop'].includes(scr())){const e=FH().entry(scr());if(e)return{key:scr(),text:''}}
+ if(inView('settingsView'))return{key:'settings',text:''};
  if(inView('helpView'))return{key:'help',text:'This page explains how Floss Fox works and what the words mean.'};
  const s=st();
  if(s.errs.length)return{key:'errors',text:`${plural(s.errs.length,'line')} couldn't be read. ${s.errs.length===1?"It's":"They're"} listed in red under Your colors. Fix the box above and tap Add my colors again.`};
@@ -110,26 +111,37 @@ const TOPICS=[
  ['tour','Start the tour again','']];
 let lastTopic=null;
 const poseFor=k=>k==='enter'?(PIP()&&PIP().needlePose?PIP().needlePose():'needle'):k==='shop'?'organizing':'thinking';
-const FH=()=>window.FFHelp,scr=()=>FH()?FH().screen():'convert',offConvert=()=>idx<0&&!['convert','results'].includes(scr());
-function renderAsk(){const c=context();const a=TOPICS.find(t=>t[0]===lastTopic);const ffk=FH()?scr():null,ffb=ffk&&idx<0?FH().blockHtml(ffk):'';
- ask.innerHTML=`${a?'':`<span class="apeek" aria-hidden="true">${pipImg('peeking','')}</span>`}<div class="ahead${a?'':' peek'}" data-pose="${a?(a.pose=a.pose||poseFor(a[0])):'face-icon'}">${pipImg(a?a.pose:'face-icon','')}<div><h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}">${esc(c.text)}</p></div></div>${ffb}
+const FH=()=>window.FFHelp,scr=()=>FH()?FH().screen():'convert',offConvert=()=>idx<0&&!['convert','results'].includes(scr())||idx<0&&inView('settingsView');
+/* Ask Pip card: the Fabric card pattern (heading, screen help with one primary button, Close). Live Find floss context
+   (errors, duplicates, alternatives, results) and the tour's Back button still show when they apply.
+   Help topics, Chat with Pip and the tips checkbox live in Help (renderHelpPip). */
+const LIVE_CTX=['tour','errors','duplicates','alternatives','results'];
+function renderAsk(){const c=context();const ffk=FH()?(FH().tabKey?FH().tabKey():scr()):null,ffb=ffk&&idx<0?(FH().tabBody?FH().tabBody(ffk):FH().blockHtml(ffk)):'';const live=LIVE_CTX.includes(c.key)&&c.text;
+ ask.innerHTML=`<h2 id="askPipH" tabindex="-1">Ask Pip</h2><p class="actx" data-ctx="${c.key}"${live?'':' hidden'}>${esc(c.text)}</p>${ffb}
  ${idx>=0?'<div class="row"><button type="button" class="pri" data-a="resume">Back to the tour</button></div>':''}
- <div class="atopics" role="group" aria-label="Help topics">${(offConvert()?TOPICS.filter(t=>t[0]==='tour'):TOPICS).map(t=>`<button type="button" class="sec" data-a="${t[0]}"${t[0]===lastTopic?' aria-pressed="true"':''}>${esc(t[1])}</button>`).join('')}</div>
- ${a?`<div class="aans" id="askAns" tabindex="-1"><b>${esc(a[1])}</b><p>${esc(a[2])}</p></div>`:''}
- <div class="row"><label class="hintpref"><input type="checkbox" id="hintsAsk"${hintsOn()?' checked':''}> Show Pip's tips while I work</label><button type="button" class="ghost" data-a="close">Close</button></div>`;
- if(ffb&&FH())FH().bindBlock(ask,()=>closeAsk(false));window.FlossFoxPipHybrid?.decorateAskPanel(ask);
- $('hintsAsk').onchange=e=>setHints(e.target.checked)}
+ <div class="row"><button type="button" class="ghost" data-a="close">Close</button></div>`;
+ if(ffb&&FH()){FH().bindBlock(ask,()=>closeAsk(false));if(FH().tabBind)FH().tabBind(ask,()=>closeAsk(false))}}
+/* Help > Pip, your helper: the Find floss questions, Chat with Pip (pip-hybrid) and the tips checkbox (already in Help) */
+const helpPip=$('helpPip');
+function renderHelpPip(focusAns){if(!helpPip)return;const a=TOPICS.find(t=>t[0]===lastTopic);const list=TOPICS.filter(t=>t[0]!=='tour');
+ helpPip.innerHTML=`${a?'':`<span class="apeek" aria-hidden="true">${pipImg('peeking','')}</span>`}<div class="ahead${a?'':' peek'}" data-pose="${a?(a.pose=a.pose||poseFor(a[0])):'face-icon'}">${pipImg(a?a.pose:'face-icon','')}</div><div class="atopics" role="group" aria-label="Help topics">${list.map(t=>`<button type="button" class="sec" data-a="${t[0]}"${t[0]===lastTopic?' aria-pressed="true"':''}>${esc(t[1])}</button>`).join('')}</div>
+ ${a?`<div class="aans" id="askAns" tabindex="-1"><b>${esc(a[1])}</b><p>${esc(a[2])}</p></div>`:''}`;
+ window.FlossFoxPipHybrid?.decorateAskPanel(helpPip);if(focusAns&&$('askAns'))$('askAns').focus()}
+if(helpPip){helpPip.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;if(a==='tour'){start();return}
+ lastTopic=a;const t=TOPICS.find(x=>x[0]===a);if(t)delete t.pose;renderHelpPip(true)});
+ /* render only when Help is shown, so its Pip images load with that view (A1) */
+ const hv=$('helpView'),lazy=()=>{if(hv&&!hv.hidden&&!helpPip.childElementCount)renderHelpPip(false)};if(hv)new MutationObserver(lazy).observe(hv,{attributes:true,attributeFilter:['hidden']});lazy()}
 function openAsk(){lastTopic=null;renderAsk();ask.hidden=false;askBtn.setAttribute('aria-expanded','true');$('askPipH').focus()}
 function closeAsk(focus){if(ask.hidden)return;ask.hidden=true;askBtn.setAttribute('aria-expanded','false');if(focus)askBtn.focus()}
 askBtn.onclick=()=>ask.hidden?openAsk():closeAsk(true);
 ask.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
  if(a==='close')closeAsk(true);else if(a==='tour')start();else if(a==='resume'){closeAsk(false);go(idx)}
- else{lastTopic=a;const t=TOPICS.find(x=>x[0]===a);if(t)delete t.pose;renderAsk();$('askAns').focus()}});
-['tabConvert','tabProjects','tabHelp','tabThreads','tabShop'].forEach(id=>$(id).addEventListener('click',()=>{if(!ask.hidden)renderAsk()}));
+ });
+['tabConvert','tabProjects','tabHelp','tabThreads','tabShop','tabSettings'].filter(id=>$(id)).forEach(id=>$(id).addEventListener('click',()=>{if(!ask.hidden)renderAsk()}));
 $('helpTour').onclick=start;
 
 /* ---------- Contextual tips ---------- */
-function setHints(on){put(HKEY,on?'on':'off');['hintsAsk','hintsHelp'].forEach(i=>{if($(i))$(i).checked=on})}
+function setHints(on){put(HKEY,on?'on':'off');['hintsHelp'].forEach(i=>{if($(i))$(i).checked=on})}
 $('hintsHelp').checked=hintsOn();$('hintsHelp').onchange=e=>setHints(e.target.checked);
 const shown=new Set();let lastType=0,hT=0;
 $('inp').addEventListener('input',()=>{lastType=performance.now()});

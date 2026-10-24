@@ -1,6 +1,8 @@
 /* Pip everywhere (local, no AI, no network): one per-screen help table that feeds Ask Pip, the floating bubble,
    the import window, backup, the Fabric page and the "?" term chips. All wording comes from flow-strings.js (placeholders). */
 (function(){'use strict';
+/* New strings for the tab Ask Pip cards: PLACEHOLDERS for Pixel (see /workspace/ask-pip-tabs/STRINGS_FOR_PIXEL.md). */
+window.FF_ASKTAB=window.FF_ASKTAB||{findNext:'Paste or import my list',projectsNext:'Create a project',shopNext:'Open my shopping list',settingsTitle:'Backup and settings',settingsBody:'Your projects and threads live only in this browser. Save a backup file now and then so you can restore them here or on another device.',settingsNext:'Export Backup (.json)'};
 const S=()=>window.FF_STR||{},$=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const vis=id=>{const e=$(id);return!!(e&&!e.hidden)};
 const P=()=>window.FlossFoxProjects;
@@ -61,6 +63,19 @@ let lastCond='';function bubbleCond(){const g=last;if(!['project','shop','thread
 function fabricLine(l){const slot=$('ffFabricPip');if(!slot||!l)return;slot.querySelector('.ffpipline').textContent=l.text;slot.dataset.key=l.key}
 /* Find floss results: one Next to save */
 function findNext(){const w=$('findNext'),r=$('results');if(!w||!r)return;w.hidden=r.hidden;const b=$('findNextBtn');const l=(S().next||{}).find;if(b&&l&&b.textContent!==l+' →'){b.textContent=l+' →';b.onclick=()=>{const sb=$('saveBox');if(sb)sb.scrollIntoView({block:'center'});const n=$('newProjName');if(n)n.focus()}}}
+/* Ask Pip card on the index tabs (the Fabric card pattern: bold heading, short explanation, one primary action).
+   Body is Pixel's per-screen help (flow phases 1-2); the primary button runs the tab's main next step. */
+const AT=()=>window.FF_ASKTAB||{};
+function tabKey(){const k=screen();return k==='results'?'convert':k==='readiness'?'project':k==='backup'?'projects':vis('settingsView')?'settings':k}
+function tabNext(k){const A=AT();switch(k){
+ case'convert':return{label:A.findNext,run:()=>{const i=$('inp');if(i){i.scrollIntoView({block:'center'});i.focus()}}};
+ case'projects':return{label:A.projectsNext,run:()=>click('newEmpty')};
+ case'shop':{/* a list is showing: Pixel's existing step (Copy, download or print); otherwise open the latest project's list */const c=document.querySelector('#shopBody #pCopy')||document.querySelector('#shopBody details.shopextra summary');if(c&&vis('shopBody'))return doNext('shop');const last=P()&&P().lastProject();return{label:A.shopNext,run:()=>{if(last){P().open(last.id);click('pShop')}else P().showView('projects')}}}
+ case'settings':return{label:A.settingsNext,run:()=>focus('settingsExport')};
+ default:return doNext(k)}}
+function tabBody(k){const e=k==='settings'?{title:AT().settingsTitle,eli5:AT().settingsBody}:entry(k);if(!e)return'';const nx=tabNext(k);
+ return`<div class="ffhelp" data-ffscreen="${k}"><p class="ffeli5"><b>${esc(e.title||'')}</b><br>${esc(e.eli5||'')}</p>${nx&&nx.label?`<div class="row"><button type="button" class="pri" data-ffnext="${k}" data-fftabnext="${k}">${esc(nx.label)}</button></div>`:''}</div>`}
+function tabBind(root,onDo){root.querySelectorAll('[data-fftabnext]').forEach(b=>b.onclick=()=>{const nx=tabNext(b.dataset.fftabnext);if(onDo)onDo();if(nx)nx.run()})}
 /* "?" term chips */
 let pop=null;
 function closePop(back){if(!pop)return;const o=pop.owner;pop.remove();pop=null;if(o){o.setAttribute('aria-expanded','false');if(back)o.focus()}}
@@ -108,5 +123,5 @@ document.addEventListener('click',e=>{if(pop&&!pop.contains(e.target))closePop(f
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&pop)closePop(true)});
 document.addEventListener('toggle',()=>tick(),true);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tick);else tick();
-window.FFHelp={screen,entry,topics,blockHtml,bindBlock,ACTIONS,doNext,chip,tick,bubbleLine:()=>lastKey,_last:()=>last};
+window.FFHelp={tabKey,tabNext,tabBody,tabBind,screen,entry,topics,blockHtml,bindBlock,ACTIONS,doNext,chip,tick,bubbleLine:()=>lastKey,_last:()=>last};
 })();

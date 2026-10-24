@@ -122,14 +122,14 @@ with sync_playwright() as p:
     f.click('#ffFabricAsk'); ok('i2 Fabric Ask Pip opens its screen help', 'How much fabric to cut' in f.inner_text('#ffFabricPanel'))
     f.click('#ffFabricPanel [data-ffnext]'); ok('i3 its Do this next focuses the pattern size', f.evaluate("document.activeElement.id") == 'fcW')
     # (h) tour: 5 steps, switches tabs
-    g = page(seed([])); g.click('#askPipBtn'); g.click('#askPip [data-a="tour"]'); g.wait_for_timeout(200); views = []; titles = []
+    g = page(seed([])); g.click('#tabHelp'); g.click('#helpTour'); g.wait_for_timeout(200); views = []; titles = []
     for i in range(5):
         titles.append(g.inner_text('#tourH')); views.append([v for v in ('convertView', 'threadsView', 'projectsView', 'shopView') if g.is_visible('#' + v)])
         if i < 4: g.click('#tourCard [data-t="next"]'); g.wait_for_timeout(200)
     ok('h1 tour is 5 steps with Pixel titles', titles == ["Add your pattern's colors", 'Tell me what you own', 'Save it as a project', 'Get your shopping list', "You're all set"], titles)
     ok('h2 tour switches tabs per step (threads, projects, shopping)', views[1] == ['threadsView'] and views[2] == ['projectsView'] and views[3] == ['shopView'], views)
     g.click('#tourCard [data-t="close"]'); ok('h3 tour closes', g.locator('#tourCard').count() == 0)
-    g = page(seed([])); g.click('#askPipBtn'); g.click('#askPip [data-a="tour"]'); g.click('#tourCard [data-t="skip"]'); ok('h4 tour is skippable', g.locator('#tourCard').count() == 0)
+    g = page(seed([])); g.click('#tabHelp'); g.click('#helpTour'); g.click('#tourCard [data-t="skip"]'); ok('h4 tour is skippable', g.locator('#tourCard').count() == 0)
     # photo picked opens paste box
     g = page(seed([])); g.click('#convertView .pat-launch'); fx = 'tests/fixtures/patterns/legend-scan.png'
     if os.path.exists(fx): g.set_input_files('#patFile', fx); g.wait_for_timeout(1500); ok('d3 picking a photo opens the paste box', g.evaluate("document.querySelector('details.pat-manual').open"))
@@ -141,7 +141,7 @@ with sync_playwright() as p:
     # offline Ask Pip answers for inventory and privacy do not suggest online AI can be turned on
     g = page(seed([]))
     for q, want in (('inventory', 'Your collection stays in this browser.'), ('privacy', "Ask Pip's built-in help works on this device and never sends anything over the network. Online AI is off.")):
-        g.click('#askPipBtn'); g.wait_for_timeout(150); g.click('[data-piph-open]'); g.wait_for_timeout(150); g.fill('#piphMessage', q); g.click('#pipHybridDialog button:has-text("Ask offline")'); g.wait_for_timeout(300)
+        g.click('#tabHelp'); g.wait_for_timeout(150); g.click('#helpPip [data-piph-open]'); g.wait_for_timeout(150); g.fill('#piphMessage', q); g.click('#pipHybridDialog button:has-text("Ask offline")'); g.wait_for_timeout(300)
         t = g.inner_text('#pipHybridDialog'); ok(f'd8 Ask Pip {q} answer is Pixel\'s text, no "enable online AI"', want in t and 'enable online AI' not in t and "shared with Pip's online AI" not in t, t[-300:])
         ok(f'd9 online AI stays off ({q})', g.evaluate("!(window.PIP_PATTERN_CONFIG&&window.PIP_PATTERN_CONFIG.enabled===true)") and not g.locator('#pipHybridDialog button:has-text("Ask online AI")').is_visible())
         g.keyboard.press('Escape'); g.wait_for_timeout(150)

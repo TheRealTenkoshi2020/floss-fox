@@ -35,11 +35,12 @@ with sync_playwright() as p:
  g.goto(B);g.wait_for_load_state('networkidle');REQ.clear()
  # Pip: Ask Pip + Chat with Pip 20x, no duplicates
  for i in range(20):
+  g.click('#tabHelp');g.wait_for_timeout(30)
+  if g.locator('#helpPip [data-piph-open]').count():g.click('#helpPip [data-piph-open]');g.wait_for_timeout(30);g.keyboard.press('Escape');g.wait_for_timeout(30)
   g.click('#askPipBtn');g.wait_for_timeout(30)
-  if g.locator('[data-piph-open]').count():g.click('[data-piph-open]');g.wait_for_timeout(30);g.keyboard.press('Escape');g.wait_for_timeout(30)
   if g.is_visible('#askPip'):g.click('#askPipBtn')
  ok('PH-02 Chat with Pip opened/closed 20x: one dialog, one chat button',g.evaluate("document.querySelectorAll('#pipHybridDialog').length")==1 and g.evaluate("document.querySelectorAll('[data-piph-open]').length")<=1,g.evaluate("[document.querySelectorAll('#pipHybridDialog').length,document.querySelectorAll('[data-piph-open]').length]"))
- g.click('#askPipBtn');ok('PH-01 existing Ask Pip topics still present',g.locator('#askPip .atopics button').count()>=4)
+ g.click('#tabHelp');ok('PH-01 existing Ask Pip topics still present (now in Help)',g.locator('#helpPip .atopics button').count()>=4)
  g.click('[data-piph-open]');g.fill('#piphMessage','How much fabric for 140 by 200 stitches on 14 count aida?');g.click('#pipHybridDialog button:has-text("Ask offline")');g.wait_for_timeout(300)
  ans=g.inner_text('#pipHybridDialog');ok('PH-05 offline Aida answer 10 x 14.29 in, design size not cut',('10' in ans and '14.29' in ans),ans[-400:])
  g.fill('#piphMessage','<img src=x onerror=alert(1)> what is the meaning of life');g.click('#pipHybridDialog button:has-text("Ask offline")');g.wait_for_timeout(300)
@@ -140,7 +141,7 @@ with sync_playwright() as p:
  cached=g.evaluate("caches.keys().then(async ks=>{const c=await caches.open(ks.find(k=>k.startsWith('flossfox-dev-')));const k=(await c.keys()).map(r=>r.url);return [ks,k.filter(u=>u.includes('pip-hybrid')).length,k.some(u=>u.includes('pdf.worker.mjs'))]})")
  ok('SW precaches pip-hybrid assets + vendored PDF.js',cached[1]>=19 and cached[2],cached)
  c.set_offline(True);g.reload();g.wait_for_timeout(1200)
- g.click('#askPipBtn');g.click('[data-piph-open]');g.fill('#piphMessage','How do I find a stored thread?');g.click('#pipHybridDialog button:has-text("Ask offline")');g.wait_for_timeout(300)
+ g.click('#tabHelp');g.click('#helpPip [data-piph-open]');g.fill('#piphMessage','How do I find a stored thread?');g.click('#pipHybridDialog button:has-text("Ask offline")');g.wait_for_timeout(300)
  ok('offline (AI off): Pip offline answer works',len(g.inner_text('#pipHybridDialog'))>120)
  g.keyboard.press('Escape');g.click('#askPipBtn') if g.is_visible('#askPip') else None
  g.click('#tabConvert');g.click('#convertView .pat-launch');g.wait_for_timeout(200)

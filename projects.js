@@ -76,7 +76,7 @@ function load(){let raw;
   const r=$('resetStore');if(r)r.onclick=()=>{if(confirm('Start fresh? The unreadable data stays in browser storage under a separate name, but Floss Fox won\'t show it anymore.')){canSave=true;store={schema:SCHEMA,projects:[]};save();storeMsg('');renderList()}};return}
  store=m.data;if(m.skipped)storeMsg(`${plural(m.skipped,'saved project')} ${m.skipped===1?'was':'were'} damaged, so we skipped ${m.skipped===1?'it':'them'}.`)}
 function save(){if(!canSave){pstatus('Not saved: browser storage is unavailable or paused. Download a backup to keep your work.');return false}
- try{localStorage.setItem(KEY,JSON.stringify(store));return true}
+ try{localStorage.setItem(KEY,JSON.stringify(store));window.dispatchEvent(new CustomEvent('ff:data-saved',{detail:{area:'projects'}}));return true}
  catch(e){const full=e&&(e.name==='QuotaExceededError'||e.code===22);pstatus(full?'Not saved: browser storage is full. Download a backup, then delete old projects.':'Not saved: your browser blocked the save. Download a backup to keep your work.');return false}}
 const proj=id=>store.projects.find(p=>p.id===id);
 function touch(p){p.updated=nowISO();save()}
@@ -255,12 +255,12 @@ function autoPlan(p){const T=window.FlossFoxThreadsUI;if(!T||!p.items.length||!T
  const safe=ch.filter(c=>blank(c.from));return{have:r.owned.length,total:p.items.length,safe,all:ch.length,u:safe.filter(c=>c.to.status==='check').length,b:safe.filter(c=>c.to.status==='buy').length}}
 function autoCmp(p){if(window.FF_NO_AUTOCMP)return; /* test-only hook for legacy suites that drive Use my collection by hand */if(autoBan[p.id]&&autoBan[p.id].kind!=='offer')return;const T=window.FlossFoxThreadsUI;if(!T||!p.items.length)return;
  const fresh=String(p.created||'')>=AUTO_SINCE&&!autoOff().includes(p.id);
- if(!T.count({demo:!!p.demo})){if(fresh&&!p.demo&&!autoHid().includes(p.id))autoBan[p.id]={kind:'empty'};return}
+ if(!T.count({demo:!!p.demo})){if(fresh&&!p.demo&&!autoHid().includes(p.id)){autoBan[p.id]={kind:'empty'};setTimeout(()=>window.FlossFoxPip&&FlossFoxPip.react&&FlossFoxPip.react('pipA.cmp.empty',{},'#pAuto',{siteAnnounces:true}),0)}return}
  const a=autoPlan(p);if(!a)return;
- if(!a.safe.length){if(fresh&&!autoHid().includes(p.id))autoBan[p.id]={kind:'nothing'};else delete autoBan[p.id];return}
+ if(!a.safe.length){if(fresh&&!autoHid().includes(p.id)){autoBan[p.id]={kind:'nothing'};setTimeout(()=>window.FlossFoxPip&&FlossFoxPip.react&&FlossFoxPip.react('pipA.cmp.nothing',{},'#pAuto',{id:p.id,siteAnnounces:true}),0)}else delete autoBan[p.id];return}
  if(!fresh){autoBan[p.id]=Object.assign({kind:'offer'},a);return}
  applyAuto(p,a)}
-function applyAuto(p,a){a.safe.forEach(x=>Object.assign(p.decisions[x.code],x.to));undoBy[p.id]=(undoBy[p.id]||[]).concat(a.safe);autoBan[p.id]=Object.assign({kind:'done'},a);touch(p)}
+function applyAuto(p,a){a.safe.forEach(x=>Object.assign(p.decisions[x.code],x.to));undoBy[p.id]=(undoBy[p.id]||[]).concat(a.safe);autoBan[p.id]=Object.assign({kind:'done'},a);touch(p);setTimeout(()=>window.FlossFoxPip&&FlossFoxPip.react&&FlossFoxPip.react('pipA.cmp.done',{have:a.have,total:a.total,u:a.u},'#pAuto',{id:p.id,siteAnnounces:true}),0)}
 function autoHead(b){return b.total===1?FC(b.have?'oneHave':'oneNot'):b.have?FC('many',b):FC('none',b)}
 function renderAuto(p){const el=$('pAuto');if(!el)return;const b=autoBan[p.id];if(!b||b.kind==='hidden'){el.hidden=true;el.innerHTML='';return}el.hidden=false;
  const hide=`<button type="button" class="ghost" id="pAutoHide">${esc(FS('autoDismiss'))}</button>`;
@@ -273,7 +273,7 @@ function renderAuto(p){const el=$('pAuto');if(!el)return;const b=autoBan[p.id];i
  const h=$('pAutoHide');if(h)h.onclick=()=>{if(b.kind==='offer')setAutoOff(p.id);else setAutoHid(p.id);autoBan[p.id]={kind:'hidden'};el.hidden=true;el.innerHTML=''};
  const gt=$('pAutoThreads');if(gt)gt.onclick=()=>showView('threads');
  const ap=$('pAutoApply');if(ap)ap.onclick=()=>{const a=autoPlan(p);if(!a||!a.safe.length){autoBan[p.id]={kind:'nothing'};renderEditor();return}applyAuto(p,a);renderEditor();renderList();const u=$('pAutoUndo');if(u)u.focus();pstatus(autoHead(a))};
- const u=$('pAutoUndo');if(u)u.onclick=()=>{const U=undoBy[p.id]||[];U.forEach(x=>{const d=p.decisions[x.code];if(d)Object.assign(d,x.from)});delete undoBy[p.id];touch(p);setAutoOff(p.id);autoBan[p.id]={kind:'undone',n:U.length};renderEditor();renderList();pstatus(FC('undone',{n:U.length}));const hh=$('pAutoHide');if(hh)hh.focus()}}
+ const u=$('pAutoUndo');if(u)u.onclick=()=>{const U=undoBy[p.id]||[];U.forEach(x=>{const d=p.decisions[x.code];if(d)Object.assign(d,x.from)});delete undoBy[p.id];touch(p);setAutoOff(p.id);autoBan[p.id]={kind:'undone',n:U.length};renderEditor();renderList();pstatus(FC('undone',{n:U.length}));if(window.FlossFoxPip&&FlossFoxPip.react)FlossFoxPip.react('pipA.cmp.undo',{n:U.length},'#pAuto',{siteAnnounces:true});const hh=$('pAutoHide');if(hh)hh.focus()}}
 function bindUndo(p){const b=$('pUndoColl');if(!b)return;b.onclick=()=>{const U=undoBy[p.id];if(!U)return;if(autoBan[p.id]&&autoBan[p.id].kind==='done'){setAutoOff(p.id);autoBan[p.id]={kind:'undone',n:U.length}}
  U.forEach(x=>{const d=p.decisions[x.code];if(d)Object.assign(d,x.from)});delete undoBy[p.id];touch(p);renderEditor();renderList();const u=$('pUseColl');if(u)u.focus();pstatus(FC('undone',{n:U.length})||`Undone: ${s2(U.length)} put back as ${U.length===1?'it was':'they were'}.`)}}
 /* ---- User-facing strings for the project step strip (functional labels; Pixel may replace). See /workspace/ci005/STRINGS_FOR_PIXEL.md ---- */
@@ -320,7 +320,7 @@ function applyFilter(P){const cards=[...document.querySelectorAll('#pCards .tcar
  const nr=$('pNoRes');if(nr){nr.hidden=!!n||!cards.length;nr.innerHTML=n?'':`${q?`No colors match “${esc(query)}”${filt!=='all'?' in this view':''}.`:'Nothing here right now.'} <button type="button" class="sec small" id="pNoResClear">Show all colors</button>`;const b=$('pNoResClear');if(b)b.onclick=()=>{query='';filt='all';renderEditor()}}
  if(!cards.length&&nr){nr.hidden=false;nr.innerHTML='No colors in this project yet. Use <b>Add more colors</b> below.';const ab=$('pAddBox');if(ab)ab.open=true}
  const m=$('pFiltMsg');if(m)m.textContent=`Showing ${s2(n)}.`;const cb=$('pSearchClear');if(cb)cb.hidden=!query}
-function renderPlan(p,P){P=P||plan(p);const cel=!!(window.FlossFoxPip&&FlossFoxPip.projectReady(p.id,P.ready));const s=P.sum,tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),pct=s.total?Math.round(100*s.sufficient/s.total):0;
+function renderPlan(p,P){P=P||plan(p);const cel=!!(window.FlossFoxPip&&FlossFoxPip.projectReady(p.id,P.ready));if(cel&&FlossFoxPip.react)setTimeout(()=>FlossFoxPip.react('pipA.ready',{},()=>[...document.querySelectorAll('p.headline')].find(e=>e.offsetParent),{siteAnnounces:true}),0);const s=P.sum,tb=P.lines.filter(l=>!l.bought),aw=P.lines.filter(l=>l.bought),pct=s.total?Math.round(100*s.sufficient/s.total):0;
  const skeins=P.lines.reduce((a,l)=>a+l.q,0),colorOnly=P.threads.filter(t=>t.kind==='amount'&&t.d.status==='buy').length;
  const isAsm=l=>l.ts.some(t=>!t.estimated&&asmOf(t.it)>0);const li=l=>`<b>${BRAND[P.dest]} ${esc(disp(P.dest,l.to))}</b> × ${l.q}${isAsm(l)?FF_EST.badge:''} <small class="mut">(for DMC ${l.from.map(c=>esc(lab(c))).join(', ')} · ${[...l.prov].map(esc).join('; ')}${l.partial?' · after subtracting what you have':''}${l.recvd?` · ${l.recvd} already received`:''}${l.ts.some(t=>t.estimated)?' · includes Pip estimates':''}${l.ts.some(t=>!t.estimated&&asmOf(t.it)>0)?' · includes an assumed amount':''})</small>`;
  const mw=l=>l.from.length>1?'<div class="hint">Note: several pattern colors use this one thread. Check that\'s what you want.</div>':'';
@@ -353,7 +353,7 @@ function renderPlan(p,P){P=P||plan(p);const cel=!!(window.FlossFoxPip&&FlossFoxP
  el.querySelectorAll('[data-bought]').forEach(cb=>cb.onchange=()=>{if(cb.checked)p.purchased[cb.dataset.bought]=true;else delete p.purchased[cb.dataset.bought];touch(p);re(cb.checked?'Marked as bought. Check it in when you have it.':'Moved back to Need to buy.')});
  el.querySelectorAll('[data-rb]').forEach(b=>b.onclick=()=>{const k=sid(b.dataset.rb);$('rf-'+k).hidden=false;$('rq-'+k).focus()});
  el.querySelectorAll('[data-rx]').forEach(b=>b.onclick=()=>{$('rf-'+b.dataset.rx).hidden=true});
- el.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{const k=sid(b.dataset.rc),v=$('rq-'+k).value.trim();if(!/^\d+$/.test(v)||+v<1){$('pMsg').textContent='Enter how many whole skeins arrived (1 or more). Nothing changed.';$('rq-'+k).focus();return}re(receive(p,b.dataset.rc,+v))});
+ el.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{const k=sid(b.dataset.rc),v=$('rq-'+k).value.trim();if(!/^\d+$/.test(v)||+v<1){$('pMsg').textContent='Enter how many whole skeins arrived (1 or more). Nothing changed.';$('rq-'+k).focus();return}const L0=plan(p).lines.find(x=>x.key===b.dataset.rc),full=!!L0&&+v>=L0.q;re(receive(p,b.dataset.rc,+v));if(window.FlossFoxPip&&FlossFoxPip.react)FlossFoxPip.react('pipA.checkin',{full},'#pMsg',{siteAnnounces:true})});
  renderFlow(p,P);
  if(window.FlossFoxPipReadinessUI&&FlossFoxPipReadinessUI.renderInto)FlossFoxPipReadinessUI.renderInto($('pReady'),p,P);
  bindOut(p,'p')}
@@ -400,7 +400,7 @@ function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;
  E.querySelectorAll('[data-sr]').forEach(b=>b.onclick=()=>{shopPanel={key:b.dataset.sr,step:'amount'};renderShop();$('sq-'+sid(b.dataset.sr)).focus({preventScroll:true})});
  E.querySelectorAll('[data-sd]').forEach(b=>b.onclick=()=>{p.purchased[b.dataset.sd]=true;shopPanel=null;touch(p);re('Marked as bought. Check it in when it arrives.')});
  E.querySelectorAll('[data-su]').forEach(b=>b.onclick=()=>{delete p.purchased[b.dataset.su];touch(p);re('Moved back to your shopping list.')});
- E.querySelectorAll('[data-ss]').forEach(b=>b.onclick=()=>{if(b.disabled)return;const k=sid(b.dataset.ss),v=$('sq-'+k).value.trim();if(!/^\d+$/.test(v)||+v<1){$('shMsg').textContent='Enter how many whole skeins you got (1 or more). Nothing changed.';$('sq-'+k).focus();return}b.disabled=true;shopPanel=null;re(receive(p,b.dataset.ss,+v))});
+ E.querySelectorAll('[data-ss]').forEach(b=>b.onclick=()=>{if(b.disabled)return;const k=sid(b.dataset.ss),v=$('sq-'+k).value.trim();if(!/^\d+$/.test(v)||+v<1){$('shMsg').textContent='Enter how many whole skeins you got (1 or more). Nothing changed.';$('sq-'+k).focus();return}b.disabled=true;shopPanel=null;const L0=plan(p).lines.find(x=>x.key===b.dataset.ss),full=!!L0&&+v>=L0.q;re(receive(p,b.dataset.ss,+v));if(window.FlossFoxPip&&FlossFoxPip.react)FlossFoxPip.react('pipA.checkin',{full},'#shMsg',{siteAnnounces:true})});
  E.querySelectorAll('[data-sx]').forEach(b=>b.onclick=()=>{const c=b.dataset.sx;if(!confirm(`Undo checking in DMC ${lab(c)}? It goes back on your shopping list.`))return;p.decisions[c].recv=null;touch(p);re(`DMC ${lab(c)} is back on your shopping list.`)});
  const ss=$('shSearch');if(ss){const run=()=>{const q=ss.value.trim().toLowerCase();let n=0;E.querySelectorAll('#shList .scard').forEach(c=>{const sh=!q||c.dataset.q.includes(q);c.hidden=!sh;if(sh)n++});const nr=$('shNoRes');nr.hidden=!q||!!n;nr.textContent=`Nothing on your list matches “${ss.value}”.`;$('shSearchClear').hidden=!q};ss.oninput=run;$('shSearchClear').onclick=()=>{ss.value='';run();ss.focus()}}
  bindOut(p,'s');window.scrollTo(0,y);if(focusId){const f=document.getElementById(focusId);if(f)f.focus({preventScroll:true})}}
@@ -449,14 +449,14 @@ function csv(p){const P=plan(p),extra=!!(p.skeinEstimator&&p.skeinEstimator.enab
 // Full backup, version 1: projects (top-level array, so 1.6 can still restore the projects) + thread collection + small prefs.
 // Demo items are never exported. Old project-only backups (no kind) are still accepted.
 const PFX=KEY.replace(/\.v1$/,''),PREKEY=PFX+'.preimport.v1',BK_VERSION=2;
-const PREF_KEYS={pip:PFX+'.pip.v1',hints:PFX+'.hints.v1',tips:PFX+'.tips.v1',fabric:PFX+'.fabric.v1'};
+const PREF_KEYS={pip:PFX+'.pip.v1',hints:PFX+'.hints.v1',tips:PFX+'.tips.v1',fabric:PFX+'.fabric.v1',backup:PFX+'.backup-prefs.v1'};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const TUI=()=>window.FlossFoxThreadsUI;
 function fullBackup(){const T=TUI(),prefs={};for(const k in PREF_KEYS){const v=lsGet(PREF_KEYS[k]);if(v!==null)prefs[k]=v}
  return{app:'floss-fox',kind:'full-backup',version:BK_VERSION,schema:SCHEMA,exported:nowISO(),projects:store.projects.filter(p=>!p.demo),threads:T?T.exportData():{schema:1,threads:{}},prefs}}
 function backup(){const d=fullBackup(),nt=Object.keys(d.threads.threads).length;download(JSON.stringify(d,null,2),'floss-fox-backup-'+nowISO().slice(0,10)+'.json','application/json');
  pstatus(`Backup downloaded with ${plural(d.projects.length,'project')} and ${nt} thread color${nt===1?'':'s'}. Keep the file somewhere safe.`)}
-const PREF_OK={pip:v=>v==='shown'||v==='hidden',hints:v=>v==='on'||v==='off',tips:v=>{try{const a=JSON.parse(v);return Array.isArray(a)&&a.every(x=>typeof x==='string')}catch(e){return false}},fabric:v=>{try{const o=JSON.parse(v);return!!o&&typeof o==='object'&&!Array.isArray(o)}catch(e){return false}}};
+const PREF_OK={backup:v=>!!(window.FlossFoxBackupCore&&FlossFoxBackupCore.validPrefsString(v)),pip:v=>v==='shown'||v==='hidden',hints:v=>v==='on'||v==='off',tips:v=>{try{const a=JSON.parse(v);return Array.isArray(a)&&a.every(x=>typeof x==='string')}catch(e){return false}},fabric:v=>{try{const o=JSON.parse(v);return!!o&&typeof o==='object'&&!Array.isArray(o)}catch(e){return false}}};
 // returns {projects, threads|null, prefs, skipped, full} or {err}
 function checkBackup(d){if(!d||typeof d!=='object'||d.app!=='floss-fox')return{err:'bad'};
  const full=d.kind==='full-backup';if(d.kind!==undefined&&!full)return{err:'bad'};
@@ -495,22 +495,22 @@ function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBo
    let tok=true;
    if(c.full&&T){if(im==='replace'){tok=T.replaceAll({threads:c.threads});ta=nt}else{const merged=Object.assign({},c.threads,mine);ta=Object.keys(c.threads).filter(k=>!mine[k]).length;tok=T.replaceAll({threads:merged})}
     if(im==='replace')for(const k in c.prefs){try{localStorage.setItem(PREF_KEYS[k],c.prefs[k])}catch(e){}}}
-   pendingRestore=null;R.hidden=true;const ok=save()&&tok;renderList();if(openId&&proj(openId))renderEditor();undoImportRow();
+   pendingRestore=null;R.hidden=true;const ok=save()&&tok;renderList();if(openId&&proj(openId))renderEditor();undoImportRow();if(window.FlossFoxBackupUI)FlossFoxBackupUI.refresh();
    pstatus(`Restore ${ok?'done':'applied but NOT saved'} (${im}): ${add} added, ${rep} replaced, ${skip} skipped, ${cp} copied${c.full?`; ${ta} thread color${ta===1?'':'s'} ${im==='replace'?'restored':'added'}`:''}.`);if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('projStatus'))}})
   .catch(()=>{R.hidden=false;R.innerHTML='<b class="warn">Couldn\'t read that file. Nothing was changed.</b>'})}
 
 // ---- Wiring ----
-function showView(v,fromHash){{const pc=$('planCard');if(pc&&!pc.hidden){pc.hidden=true;pc.innerHTML=''}}if(!fromHash&&location.hash!=='#'+v)history.pushState(null,'','#'+v);const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp'],shop:['shopView','tabShop']};
+function showView(v,fromHash){{const pc=$('planCard');if(pc&&!pc.hidden){pc.hidden=true;pc.innerHTML=''}}if(!fromHash&&location.hash!=='#'+v)history.pushState(null,'','#'+v);const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp'],shop:['shopView','tabShop'],settings:['settingsView','tabSettings']};
  const T=window.FlossFoxThreadsUI;if(T&&!$('threadsView').hidden&&v!=='threads')T.leaveView();if(T&&!$('projectsView').hidden&&v!=='projects')T.tipDone('compare');
- for(const k in V){const on=k===v;$(V[k][0]).hidden=!on;const t=$(V[k][1]);t.setAttribute('aria-pressed',String(on));if(on)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')}
+ for(const k in V){if(!$(V[k][0])||!$(V[k][1]))continue;const on=k===v;$(V[k][0]).hidden=!on;const t=$(V[k][1]);t.setAttribute('aria-pressed',String(on));if(on)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')}
  if(v==='threads'&&T)T.render();if(v==='shop')ensureShop();if(v==='projects'){renderList();if(openId&&proj(openId)){renderEditor();$('projEdit').hidden=false;$('projListCard').hidden=true}else{$('projEdit').hidden=true;$('projListCard').hidden=false}}window.scrollTo(0,0)}
-$('tabConvert').onclick=()=>showView('convert');$('tabProjects').onclick=()=>showView('projects');$('tabThreads').onclick=()=>showView('threads');$('tabHelp').onclick=()=>showView('help');addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(['convert','threads','projects','shop','help'].includes(v))showView(v,true)});addEventListener('popstate',()=>{const v=location.hash.slice(1)||'convert';if(['convert','threads','projects','shop','help'].includes(v))showView(v,true)});$('tabShop').onclick=()=>showView('shop');$('shopGoProj').onclick=()=>showView('projects');{const si=$('shopEmptyImport');if(si)si.onclick=()=>window.FFImportOpen&&window.FFImportOpen()}
+$('tabConvert').onclick=()=>showView('convert');$('tabProjects').onclick=()=>showView('projects');$('tabThreads').onclick=()=>showView('threads');$('tabHelp').onclick=()=>showView('help');if($('tabSettings'))$('tabSettings').onclick=()=>showView('settings');addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(['convert','threads','projects','shop','help','settings'].includes(v))showView(v,true)});addEventListener('popstate',()=>{const v=location.hash.slice(1)||'convert';if(['convert','threads','projects','shop','help','settings'].includes(v))showView(v,true)});$('tabShop').onclick=()=>showView('shop');$('shopGoProj').onclick=()=>showView('projects');{const si=$('shopEmptyImport');if(si)si.onclick=()=>window.FFImportOpen&&window.FFImportOpen()}
 {const g=(id,f)=>{const e=$(id);if(e)e.onclick=f};g('shopEmptyPaste',()=>{showView('convert');$('inp').focus()});
  g('shopSeveral',()=>{showView('projects');closeProject();const b=$('planOpen');if(b)b.click()});g('shopBack',()=>{showView('projects')});
  g('thNext',()=>{if(store.projects.length)showView('projects');else{showView('convert');const r=document.querySelector('#convertView .pat-launch');if(r)r.focus()}});
  const tn=()=>{const b=$('thNext');if(b)b.textContent=(store.projects.length?FS('nextThreadsHasProj'):FS('nextThreads'))+' →'};tn();$('tabThreads').addEventListener('click',tn)}
 $('newEmpty').onclick=()=>{if($('newEmpty').disabled)return;$('newEmpty').disabled=true;setTimeout(()=>$('newEmpty').disabled=false,600);const p={id:newId(),name:FS('defaultName')||'My project',notes:'',buyBrand:'dmc',status:'planning',items:[],decisions:{},purchased:{},created:nowISO(),updated:nowISO()};store.projects.push(p);save();renderList();openProject(p.id)};
-$('backupBtn').onclick=backup;undoImportRow();$('restoreFile').onchange=e=>{restoreFile(e.target.files[0]);e.target.value=''};
+$('backupBtn').onclick=backup;undoImportRow();$('restoreFile').onchange=e=>{const f=e.target.files[0];if(f&&$('settingsView')&&!$('settingsView').hidden)showView('projects');restoreFile(f);e.target.value=''};
 let saving=false;
 $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg').textContent='Nothing to save yet. Add your colors first.';return}saving=true;setTimeout(()=>saving=false,800);
  const ex=window.isExample&&window.isExample();
@@ -519,9 +519,9 @@ $('saveProj').onclick=()=>{if(saving)return;if(!state.items.length){$('copymsg')
  $('copymsg').innerHTML=(ok?`<span class="ffsaved">${esc(FX(FS('savedOk'),{name:p.name}))}</span> <span class="ffrename"><label for="savedName">${esc(FS('nameLabel'))}</label> <input type="text" id="savedName" maxlength="100" value="${esc(p.name)}" placeholder="${esc(FS('namePlaceholder'))}" aria-describedby="savedNameHint"><button type="button" class="ghost small" id="savedRename">${esc(FS('rename'))}</button></span><span class="hint" id="savedNameHint">${esc(FS('nameHint'))}</span>`:esc(FS('savedFail')||"Saved for now only: this browser isn't letting Floss Fox store projects, so download a backup from My Projects."))+` <button type="button" class="pri small" id="openSaved">${esc(FS('next').review)} →</button>`;
  {const rn=$('savedRename');if(rn)rn.onclick=()=>{const v=$('savedName').value.trim().slice(0,100);if(!v)return;p.name=v;touch(p);renderList();const b=$('copymsg').querySelector('.ffsaved');if(b)b.textContent=FX(FS('savedOk'),{name:v})}}
  $('newProjName').value='';renderList();
- $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('copymsg'))};
+ $('openSaved').onclick=()=>{showView('projects');openProject(p.id)};if(ok&&window.FlossFoxPip){/* Pip A: the save bubble replaces the small saved wink; the wink still runs when the bubble doesn't show */if(!(FlossFoxPip.react&&FlossFoxPip.react('pipA.save.ok',{},$('copymsg'),{siteAnnounces:true})))FlossFoxPip.saved($('copymsg'))}};
 load();renderList();
-window.FlossFoxProjects={openId:()=>openId,lastProject:()=>store.projects.slice().sort((a,b)=>b.updated.localeCompare(a.updated))[0]||null,openProject:id=>openProject(id),estimateInput,plan,planText,csv,migrate,backup,restoreFile,checkBackup,PREKEY,_store:()=>store,KEY,canSave:()=>canSave,
+window.FlossFoxProjects={openId:()=>openId,lastProject:()=>store.projects.slice().sort((a,b)=>b.updated.localeCompare(a.updated))[0]||null,openProject:id=>openProject(id),estimateInput,plan,planText,csv,migrate,backup,fullBackup,downloadBackupText:download,restoreFile,checkBackup,PREKEY,_store:()=>store,KEY,canSave:()=>canSave,
  replaceAll:data=>{store={schema:SCHEMA,projects:data.projects};canSave=true;storeMsg('');openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false;const ok=save();renderList();return ok},
  removeDemo:()=>{const n=store.projects.filter(x=>x.demo).length;store.projects=store.projects.filter(x=>!x.demo);if(openId&&!proj(openId)){openId=null;$('projEdit').hidden=true;$('projListCard').hidden=false}save();renderList();return n},showView,open:id=>{showView('projects');openProject(id)},add:p=>{const m=normProject(p);if(!m)return null;store.projects.push(m);save();renderList();return m.id}}; // for tests and debugging
 })();

@@ -29,7 +29,7 @@ with sync_playwright() as p:
         g.click('#pReady summary'); g.click('#pReady summary'); g.click('[data-flow=ready]'); g.wait_for_timeout(100)
         ok(f'[{w}] viewing readiness never writes project or thread data', g.evaluate(f"[localStorage.getItem('{KEY}'),localStorage.getItem('{PFX}.threads.v1')]") == before)
         # Ask Pip routes to the project readiness view
-        g.click('#pClose'); g.wait_for_timeout(100); g.click('#askPipBtn'); g.click('[data-piph-open]'); g.wait_for_timeout(100)
+        g.click('#pClose'); g.wait_for_timeout(100); g.click('#tabHelp'); g.click('#helpPip [data-piph-open]'); g.wait_for_timeout(100)
         g.click('#pipHybridDialog button:has-text("Check my project readiness")'); g.wait_for_timeout(100)
         g.click('#pipHybridDialog .piph-choices button:has-text("Readiness demo")'); g.wait_for_timeout(300)
         ok(f'[{w}] Ask Pip opens the project and its readiness view (no separate answer panel)', g.locator('#projEdit').is_visible() and g.locator('#pReady details[open]').count() == 1 and not g.evaluate("(document.getElementById('pipHybridDialog')||{}).open"))

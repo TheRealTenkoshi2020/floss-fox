@@ -8,6 +8,8 @@ nav.tabs,.fcnav{display:flex;flex-wrap:wrap;gap:8px}
 @media(max-width:560px){nav.tabs,.fcnav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
  nav.tabs>*,.fcnav a{grid-column:auto!important;padding:2px 6px!important;font-size:.88rem!important;line-height:1.15;text-align:center;white-space:normal!important;overflow-wrap:anywhere}}
 @media print{.fcnav,nav.tabs{display:none!important}}
+/* Settings stays out of the phone tab rows (layout unchanged); reached from Help and the footer. */
+@media(max-width:560px){nav.tabs #tabSettings,.fcnav a[href="index.html#settings"]{display:none!important}}
 nav.tabs>a.tablink{border:1.5px solid #e6dccb!important;background:#fffaf2!important;color:#3b2f28!important}
 
 /* Shopping tab: keep label + count on one line; count is a small badge */
