@@ -7,9 +7,9 @@ items=[it('310',2),it('321',1),it('666',1),it('3865',1),it('415',1),it('48',1)]
 dec={'310':{'status':'buy'},'321':{'status':'buy'},'666':{'status':'buy'},'3865':{'status':'check'},'415':{'status':'have','owned':2},'48':{'status':'buy'}}
 PROJ={'schema':2,'projects':[{'id':'t20a','name':'Inline test','notes':'','buyBrand':'dmc','status':'planning','items':items,'decisions':dec,'purchased':{},'created':'2026-10-01T00:00:00Z','updated':'2026-10-01T00:00:00Z'}]}
 TH={'schema':1,'threads':{'415':{'n':2,'partial':False,'restock':False,'confirmed':True,'updated':'2026-10-14T00:00:00Z'},'3865':{'n':2,'partial':False,'restock':False,'updated':'2026-10-14T00:00:00Z'}}}
-EXP={'310':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/310-black--dmc-mouline-grays-embroidery-floss/p/106215','https://www.everythingcrossstitch.com/dmc-cotton-cross-stitch-floss-mrl-c274.aspx'],
- '321':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/c/5-127-1109','https://www.everythingcrossstitch.com/floss-embroidery-dmc-xmas-red-mrp-p559.aspx'],
- '666':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/c/5-127-1109','https://www.everythingcrossstitch.com/dmc-cotton-cross-stitch-floss-mrl-c274.aspx']}
+EXP={'310':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/310-black--dmc-mouline-grays-embroidery-floss/p/106215','https://www.everythingcrossstitch.com/floss-embroidery-dmc-black-mrp-p550.aspx'],
+ '321':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/321-red---dmc-mouline-reds-embroidery-floss/p/106224','https://www.everythingcrossstitch.com/floss-embroidery-dmc-xmas-red-mrp-p559.aspx'],
+ '666':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/666-bright-red---dmc-mouline-reds-embroidery-floss/p/106317','https://www.everythingcrossstitch.com/floss-embroidery-dmc-xmas-red--mrp-p653.aspx']}
 R=[0,0]
 def ok(n,c,i=''):R[0 if c else 1]+=1;print(('PASS ' if c else 'FAIL ')+n+('' if c else ' -> '+str(i)[:300]))
 INIT="if(!sessionStorage.getItem('s')){sessionStorage.setItem('s',1);localStorage.setItem('%s.tour.v1','{\"status\":\"dismissed\"}');localStorage.setItem('%s',%s);localStorage.setItem('%s',%s)}"%(PFX,KEY,json.dumps(json.dumps(PROJ)),TKEY,json.dumps(json.dumps(TH)))

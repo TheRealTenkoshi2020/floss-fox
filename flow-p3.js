@@ -8,7 +8,7 @@ const $=id=>document.getElementById(id);
 const vis=e=>!!(e&&(e.offsetParent||e.getClientRects().length));
 const T={ /* minimal plain wording, listed for Pixel in /workspace/flow-p3/STRINGS_FOR_PIXEL.md */
  thEmpty:'No threads here yet. Type the DMC numbers you own in the box above, then tap Add to my collection.',
- shopPick:'Pick a project above to see its shopping list.',
+ shopPick:'Pick a project above to see what goes in its basket.',
  undoWhy:'Nothing to undo yet.',
  clearWhy:'No location saved yet.',
  overWhy:'On Aida, you always stitch over 1 square.',

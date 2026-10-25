@@ -23,11 +23,7 @@
   if(ext!=='pdf')throw new Error('That file type isn\'t supported. Choose a PDF file.');
   const header=new Uint8Array(await file.slice(0,16).arrayBuffer());
   const pdf=header[0]===37&&header[1]===80&&header[2]===68&&header[3]===70&&header[4]===45;
-  const png=header[0]===137&&header[1]===80&&header[2]===78&&header[3]===71&&header[4]===13&&header[5]===10&&header[6]===26&&header[7]===10;
-  const jpg=header[0]===255&&header[1]===216&&header[2]===255;
-  const webp=String.fromCharCode(...header.slice(0,4))==='RIFF'&&String.fromCharCode(...header.slice(8,12))==='WEBP';
-  if(!((ext==='pdf'&&pdf)||(ext==='png'&&png)||(['jpg','jpeg'].includes(ext)&&jpg)||(ext==='webp'&&webp)))throw new Error('The file name and its contents don\'t match, so it may be damaged or mislabeled.');
-  if(!pdf)return {kind:'image',name:file.name,pages:[],warnings:[((typeof window!=='undefined'&&window.FF_STR&&FF_STR.left&&FF_STR.left.imageWarning)||'Only PDFs work right now.')],requiresReview:true};
+  if(!pdf)throw new Error('The file name and its contents don\'t match, so it may be damaged or mislabeled.');
   if(!pdfjs||typeof pdfjs.getDocument!=='function')return {kind:'pdf',name:file.name,pages:[],warnings:['The PDF reader isn\'t available here, so PDF text can\'t be read. You can still type the legend in below.'],requiresReview:true};
   const bytes=new Uint8Array(await file.arrayBuffer());const loading=pdfjs.getDocument({data:bytes});let document;
   try{document=await loading.promise;const pages=[];const limit=Math.min(document.numPages,MAX_PAGES);

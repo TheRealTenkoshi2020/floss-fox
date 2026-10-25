@@ -17,7 +17,7 @@ with sync_playwright() as p:
   reqs=[];ctx.on('request',lambda r:reqs.append(r.url))
   pg=ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
   pg.goto(BASE+'fabric.html');pg.wait_for_timeout(300)
-  ok('page title + meta description + intro',"Fabric Calculator" in pg.title() and len(pg.get_attribute('meta[name=description]','content'))>60 and pg.inner_text('main h1')=="Pip's Fabric Calculator" and "Let's find the perfect fabric size for your project!" in pg.inner_text('.intro'))
+  ok('page title + meta description + intro',"Fabric Calculator" in pg.title() and len(pg.get_attribute('meta[name=description]','content'))>60 and pg.inner_text('main h1')=="Pip's Fabric Calculator" and "Let's measure out your canvas" in pg.inner_text('.intro'))
   ok('A default 140x100, 14 Aida, 3" -> cut 16 x 13¼, design 10 x 7.14',cut(pg)=='16″ × 13¼″' and des(pg)=='10″ × 7.14″',cut(pg)+des(pg))
   ok('A cm from rounded-up inches (40.7 x 33.7 cm)','40.7 cm × 33.7 cm' in pg.inner_text('#fcCutSub'),pg.inner_text('#fcCutSub'))
   ok('required note present, no frame/hoop promise',"This size includes extra fabric around your stitching, so you'll have room to finish your project." in pg.inner_text('#fcCut') and not re.search(r'fits? (your|a|the) (frame|hoop|package)|guarantee',pg.inner_text('#fc').replace('not guarantees','')),'')

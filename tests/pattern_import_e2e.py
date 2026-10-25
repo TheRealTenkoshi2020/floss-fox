@@ -21,7 +21,7 @@ with sync_playwright() as p:
     # 1 text PDF + save + land on project strip
     g = page()
     info, codes = load(g, 'native-legend.pdf')
-    ok('I1 text PDF: colors found locally, nothing sent online', codes == ['DMC 310', 'DMC 321', 'DMC 666', 'DMC 3865'] and 'Nothing was sent online' in info, (codes, info))
+    ok('I1 text PDF: colors found locally, nothing sent online', codes == ['DMC 310', 'DMC 321', 'DMC 666', 'DMC 3865'] and 'Read 1 page on your device. ' in info and 'Nothing was sent online' in info, (codes, info))
     ok('I1b AI page picker and AI button hidden while AI is off', g.locator('#patPageBox').is_hidden() and g.locator('text=Preview page for AI').count() in (0,) or g.locator('text=Preview page for AI').is_hidden())
     ok('I1c Create stays disabled until the one confirmation, and says why next to the button', g.locator('#patImport').is_disabled() and 'Tick the box above to create your project.' in g.inner_text('#patWhy') and g.locator('#patWhy a[href="#patAll"]').count() == 1, g.inner_text('#patWhy'))
     ok('I1c2 no per-color checkboxes (only the one confirmation)', g.locator('#patRows .pat-row input[type=checkbox]').count() == 0 and g.locator('#patAll').count() == 1)
@@ -85,7 +85,7 @@ with sync_playwright() as p:
         info, codes = load(s, bad)
         ok(f'I10 {bad}: refused with a message, nothing imported', codes == [] and projects(s) == [], info); s.click('#ffPatternDialog .pat-header button')
     info, codes = load(s, 'large-35pages.pdf', 6000)
-    ok('I11 35-page PDF processed locally without hanging', 'Processed' in info or 'pages' in info, info); s.click('#ffPatternDialog .pat-header button')
+    ok('I11 35-page PDF processed locally without hanging', 'Read 30 pages on your device.' in info, info); s.click('#ffPatternDialog .pat-header button')
     # 6 manual paste path
     s.click('.pat-launch'); s.click('#ffPatternDialog details.pat-manual summary'); s.fill('#patPaste', 'X 310 Black 2400 2\nDMC 321 Red 2 skeins'); s.click('#ffPatternDialog button:text-is("Find colors")'); s.wait_for_timeout(200)
     ok('I12 manual legend paste uses the same rules', s.evaluate("[...document.querySelectorAll('#patRows .pat-row b')].map(b=>b.textContent)") == ['DMC 310', 'DMC 321'])
@@ -157,4 +157,13 @@ with sync_playwright() as p:
     chk('\u2014' not in p.inner_text('#ffPatternDialog'), 'P7 no em dashes in the dialog')
     errs = g.errs + h.errs + k.errs + s.errs + z.errs + t.errs
     ok('I13 no page errors', not errs, errs)
+    # 10 AI off: the import dialog never shows AI, image, PNG or JPG wording (PDF, PNG and scanned-PDF paths)
+    import re as _re
+    BAD = _re.compile(r'\bAI\b|image|\bPNG\b|\bJPE?G\b', _re.I)
+    for name in ('native-legend.pdf', 'legend-scan.png', 'scanned-image-only.pdf', 'fake.pdf'):
+        a = page(); load(a, name)
+        for d in a.locator('#ffPatternDialog details').all(): d.evaluate('e=>e.open=true')
+        vis = a.inner_text('#ffPatternDialog').replace(name, ''); hits = sorted(set(m.group(0) for m in BAD.finditer(vis)))
+        ok(f'X1 AI off, {name}: dialog shows no AI/image/PNG/JPG wording', not hits and not a.errs, (hits, a.errs))
+        a.context.close()
 print(f'{sum(R)} passed, {len(R)-sum(R)} failed'); sys.exit(0 if all(R) else 1)

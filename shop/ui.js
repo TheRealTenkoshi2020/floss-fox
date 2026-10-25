@@ -41,7 +41,7 @@ function pipLine(box,s,h3){
  if(document.body.classList.contains('pip-hidden-all'))return;
  const other=[...document.querySelectorAll('.wtbpip')].some(p=>!box.contains(p));if(other)return;
  const d=el('div',{class:'wtbpip'});d.appendChild(el('img',{src:'assets/pip/pip-face-icon-64.png',width:'32',height:'32',alt:''}));
- d.appendChild(el('span',null,'Need to pick up supplies? Here are some places that carry them. Your list works anywhere.'));
+ d.appendChild(el('span',null,'When you\'re ready to fill your basket, here are some places that carry these threads. Your list works anywhere.'));
  const x=el('button',{type:'button',class:'wtbpipx','aria-label':'Hide this tip'},'×');
  x.onclick=()=>{try{localStorage.setItem(PIPX(),'dismissed')}catch(e){}d.remove();h3.setAttribute('tabindex','-1');h3.focus()};d.appendChild(x);s.appendChild(d)}
 const COPY={converter:'copy',project:'pCopy',shop:'sCopy'};
@@ -57,7 +57,7 @@ function render(box,src,opts){
  if(!r.layer)return r; // 2.0A: skein links render inline on Need to buy rows (FlossFoxSkeinPreviewUI.inline)
  const offline=typeof navigator!=='undefined'&&navigator.onLine===false;
  box.hidden=false;const s=el('section',{class:'wtb noprint','aria-labelledby':box.id+'-h','data-links':String(offline?0:r.linkCount)});
- s.appendChild(el('p',{class:'wtbeyebrow'},'Optional'));const h3=el('h3',{id:box.id+'-h'},'Where to buy your missing supplies');s.appendChild(h3);
+ s.appendChild(el('p',{class:'wtbeyebrow'},'Optional'));const h3=el('h3',{id:box.id+'-h'},'Places to find what\'s still missing');s.appendChild(h3);
  if(src.nothing){s.appendChild(el('p',{class:'hint'},'Nothing on your list to buy yet.'));altRow(s,opts.context);box.appendChild(s);return r}
  pipLine(box,s,h3);
  if(r.merchants.some(m=>m.mock))s.appendChild(el('p',{class:'wtbmock'},'Preview only: sample shops with made-up .example addresses. Nothing is tracked and nothing earns a commission.'));

@@ -21,3 +21,8 @@ nav.tabs>a.tablink{border:1.5px solid #e6dccb!important;background:#fffaf2!impor
 @media(min-width:340px) and (max-width:560px){nav.tabs>*{overflow-wrap:normal!important;word-break:normal!important}}
 @media(max-width:380px){nav.tabs>*{font-size:.8rem!important;padding:2px 3px!important}}
 @media(max-width:560px){nav.tabs>button{flex-wrap:wrap;justify-content:center;column-gap:3px}}
+
+/* Poetic subtitles under tab/screen headings: small secondary text. */
+.ffsub{margin:2px 0 10px;min-height:0;font-size:.85rem;font-weight:400;color:var(--mut,#6f6257)}
+/* Find floss subtitle: hidden at 360px and below so the main Add my colors button stays on the first screen (regression Q4). */
+@media (max-width:360px){#heroH+.ffsub{display:none}}

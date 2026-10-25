@@ -53,7 +53,7 @@ with sync_playwright() as p:
     ok('a11 empty collection: says so with Go to My threads, changes nothing', 'Your thread collection is empty' in g.inner_text('#pAuto') and g.is_visible('#pAutoThreads') and store(g)[0]['decisions']['310']['status'] is None, g.inner_text('#pAuto'))
     # (b) one shopping view
     g = page(seed([], threads=False)); g.click('#tabShop'); g.wait_for_timeout(200); t = g.inner_text('#shopCard')
-    ok('b1 empty Shopping guides you to import or add colors (not a dead end)', 'Nothing to shop for yet' in t and g.is_visible('#shopEmptyImport') and g.is_visible('#shopEmptyPaste'), t)
+    ok('b1 empty Shopping guides you to import or add colors (not a dead end)', 'Nothing in the basket yet' in t and g.is_visible('#shopEmptyImport') and g.is_visible('#shopEmptyPaste'), t)
     ok('b2 Plan shopping for several projects is hidden with 0 projects', not g.is_visible('#shopSeveral'))
     g.click('#shopEmptyImport'); ok('b3 Import from empty Shopping opens the importer', g.is_visible('#ffPatternDialog')); g.click('#ffPatternDialog .pat-header button')
     paste_save(g, '310 x1\n321 x2', 'Alpha'); paste_save(g, '815 x1', 'Beta')
@@ -84,7 +84,7 @@ with sync_playwright() as p:
     ok('d2 old label gone', 'Import a full pattern' not in g.inner_text('body'))
     # (e) save feedback + name prompt
     g = page(seed([])); paste_save(g, '310 x1'); m = g.inner_text('#copymsg')
-    ok('e1 Find floss save: one clear saved line, default name My project, name field offered', '✓ Saved “My project” in this browser on this device.' in m and g.input_value('#savedName') == 'My project', m)
+    ok('e1 Find floss save: one clear saved line, default name My project, name field offered', '✓ “My project” is safely tucked away in this browser on this device.' in m and g.input_value('#savedName') == 'My project', m)
     g.fill('#savedName', 'Fox sampler'); g.click('#savedRename'); g.wait_for_timeout(200); ok('e2 renaming from the prompt saves the name', store(g)[0]['name'] == 'Fox sampler')
     g.click('#openSaved'); g.wait_for_timeout(300); ok('e3 project shows the saved badge in the same wording', g.inner_text('#pSaved').startswith('Saved in this browser · '), g.inner_text('#pSaved'))
     g.click('#tabConvert'); g.click('#convertView .pat-launch'); g.set_input_files('#patFile', 'tests/fixtures/patterns/native-legend.pdf'); g.wait_for_timeout(2500)
@@ -151,17 +151,18 @@ with sync_playwright() as p:
     small = g.evaluate("[...document.querySelectorAll('.ffnext button,.ffbanner button,.ffterm,#shopPick,.pat-launch')].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.height<44).length")
     ok('w2 new controls are at least 44px tall', small == 0, small)
     txt = g.evaluate("JSON.stringify(window.FF_P12)+JSON.stringify(FF_STR)"); ok('w3 no em dashes in the new strings', '\u2014' not in txt)
-    # Pip strip: visible on every tab with that tab's line, no layout push, not clipped, reduced motion respected
+    # Pip line: on every tab the single companion carries that tab's line (strip art retired in the one-Pip build), no layout push, not clipped, reduced motion respected
     for w in (344, 390):
         g = page(seed([], threads=False), w); hconv = g.evaluate("document.querySelector('header').getBoundingClientRect().height")
         ok(f'j0 {w}px Find floss keeps the full Pip (strip hidden there)', g.locator('#pipStrip').count() == 0 or g.locator('#pipStrip').is_hidden())
         for tab, k in (('#tabThreads', 'threads'), ('#tabProjects', 'projects'), ('#tabShop', 'shop'), ('#tabHelp', 'help')):
             g.click(tab); g.wait_for_timeout(250)
-            r = g.evaluate("(()=>{const s=document.getElementById('pipStrip'),m=s.querySelector('.pipstripmsg'),h=document.querySelector('header').getBoundingClientRect();return{vis:!s.hidden&&s.getBoundingClientRect().height>0,txt:m.textContent,clip:m.scrollHeight>m.clientHeight+1,hh:h.height,key:FFHelp.bubbleLine(),img:s.querySelector('img').getBoundingClientRect().width}})()")
+            # one-Pip build: the strip art is gone; the tab's approved line now shows in the single companion Pip (bottom bar)
+            r = g.evaluate("(()=>{const s=document.getElementById('pipStrip'),c=document.querySelector('.pipc'),m=document.getElementById('pipMsg'),h=document.querySelector('header').getBoundingClientRect();return{strip:!!s&&!s.hidden&&s.getBoundingClientRect().height>0,vis:!!c&&c.getBoundingClientRect().height>0,txt:m.textContent.trim(),clip:m.scrollHeight>m.clientHeight+1,hh:h.height,key:FFHelp.bubbleLine(),img:document.getElementById('pipImg').getBoundingClientRect().width}})()")
             want = g.evaluate("k=>{const t=FF_P12[k];return typeof t==='function'?null:t}", r['key']) if r['key'] else None
-            ok(f'j1 {w}px {k}: Pip strip visible with this tab\'s line', r['vis'] and r['key'] and r['key'].startswith(f'p12.bubble.{k}') and (want is None or r['txt'] == want) and r['txt'] == g.inner_text('#pipMsg').strip(), r)
+            ok(f'j1 {w}px {k}: the one Pip shows this tab\'s line (no separate strip)', not r['strip'] and r['vis'] and r['key'] and r['key'].startswith(f'p12.bubble.{k}') and (want is None or r['txt'] == want), r)
             ok(f'j2 {w}px {k}: full line shown (not clipped), header no taller than on Find floss', not r['clip'] and r['hh'] <= hconv + 1 and r['img'] >= 40, (r, hconv))
-        g.click('#tabConvert'); g.click('#pipToggle'); g.click('#tabThreads'); g.wait_for_timeout(200)
+        g.click('#tabConvert'); g.evaluate("document.getElementById('pipToggle').click()"); g.click('#tabThreads'); g.wait_for_timeout(200)
         ok(f'j3 {w}px Hide Pip also hides the strip', g.locator('#pipStrip').is_hidden())
     c = b.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, reduced_motion='reduce'); c.add_init_script(INIT % ''); g = c.new_page(); g.goto(B + '?nosw'); g.wait_for_timeout(300); g.click('#tabHelp'); g.wait_for_timeout(200)
     ok('j4 reduced motion: strip has no animation', g.evaluate("getComputedStyle(document.getElementById('pipStrip')).animationName") == 'none')

@@ -1,5 +1,5 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v3.5-1';
+const CACHE = 'flossfox-v3.6-1';
 const CORE = [
   "backup-core.js",
   "backup-ui.js",
@@ -10,6 +10,8 @@ const CORE = [
   "pip-hybrid/pattern-ui.css",
   "pip-hybrid/pattern-check.js",
   "pip-hybrid/pattern-chart.js",
+  "pip-hybrid/pattern-trust.js",
+  "pip-hybrid/pattern-trust-ui.js",
   "analytics.js",
   "pip-hybrid/pattern-ui.js",
   "pip-hybrid/pattern-pdf.js",
@@ -168,6 +170,25 @@ const CORE = [
   "assets/pip/pip-worried-160.webp",
   "assets/pip/pip-surprised-160.png",
   "assets/pip/pip-surprised-160.webp",
+  "assets/pip/pip-pattern-reader-160.png",
+  "assets/pip/pip-pattern-reader-160.webp",
+  "assets/pip/pip-checklist-160.png",
+  "assets/pip/pip-checklist-160.webp",
+  "assets/pip/pip-encouraging-coach-160.png",
+  "assets/pip/pip-encouraging-coach-160.webp",
+  "assets/pip/pip-measuring-fabric-160.png",
+  "assets/pip/pip-measuring-fabric-160.webp",
+  "assets/pip/pip-whispering-tip-160.png",
+  "assets/pip/pip-whispering-tip-160.webp",
+  "assets/pip/pip-cozy-companion-160.png",
+  "assets/pip/pip-cozy-companion-160.webp",
+  "assets/pip/pip-rainy-day-160.png",
+  "assets/pip/pip-rainy-day-160.webp",
+  "assets/pip/pip-postmaster-160.png",
+  "assets/pip/pip-postmaster-160.webp",
+  "pip-b2.js",
+  "pip-follow.js",
+  "pip-follow.css",
   "offline.html",
   'manifest.webmanifest'
 ];

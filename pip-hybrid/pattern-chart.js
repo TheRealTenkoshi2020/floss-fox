@@ -29,7 +29,7 @@ function labelProblems(labels){if(labels.length<5)return{repeat:[],missing:[]};c
 // Key entries: symbol, optional "=", optional "DMC", code, then name words, then (if the page has a Stitches column) a count.
 function keyEntries(rows,validCodes){const out=[];const countCol=rows.some(r=>r.toks.some(t=>/^(stitches|count)$/i.test(t.t)));
  for(const r of rows){const T=r.toks;for(let i=0;i<T.length;i++){let j=i;const sym=T[j].t;if(sym.length>2||/^\d+$/.test(sym)||/^dmc$/i.test(sym))continue;if(/^[x×]$/i.test(sym)&&i>0&&/\d$/.test(T[i-1].t))continue;/* "24 x 18" is a size */j++;
-  if(T[j]&&T[j].t==='='&&sym!=='=')j++;if(T[j]&&/^dmc$/i.test(T[j].t))j++;if(!T[j]||!CODE.test(T[j].t))continue;const code=T[j].t.toUpperCase();
+  if(T[j]&&T[j].t==='='&&sym!=='=')j++;if(T[j]&&/^dmc$/i.test(T[j].t))j++;if(!T[j]||!CODE.test(T[j].t))continue;let code=T[j].t.toUpperCase();/* '1 White' means DMC 01: single digits are 01-09, same as the paste parser */if(/^\d$/.test(code)&&validCodes&&validCodes['0'+code])code='0'+code;
   const valid=!validCodes||!!validCodes[code];if(!valid&&!/^\d{3,4}$/.test(code))continue;if(T[j+1]&&/^(stitch|stitches|ct)\b/i.test(T[j+1].t))continue;let k=j+1;const name=[];let count=null;
   while(k<T.length){const t=T[k].t;if(t.length<=2&&!/^\d+$/.test(t)&&T[k+1]&&(CODE.test(T[k+1].t)||T[k+1].t==='='||/^dmc$/i.test(T[k+1].t)))break;if(/^\d+$/.test(t)){if(countCol&&count===null)count=+t;k++;break}name.push(t);k++}
   for(let q=i;q<k;q++)T[q].used=true;out.push({sym,code,valid,name:name.join(' '),count});i=k-1}}

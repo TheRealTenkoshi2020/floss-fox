@@ -84,7 +84,7 @@ let invite=null;
 function removeInvite(){if(invite)invite.remove();invite=null;$('pip').classList.remove('inviting')}
 function showInvite(resume){const c=document.createElement('section');c.className='tourcard noprint';c.id='tourInvite';c.setAttribute('aria-labelledby','inviteH');
  c.innerHTML=`${pipImg('greeting','tpip')}<div><h2 id="inviteH" class="sr" tabindex="-1">${resume?'Pick up the tour?':'Meet Pip'}</h2><p class="tmsg">${resume?"Looks like we didn't finish the tour last time. I don't keep your list for the tour, so let's start again from the beginning.":((window.FF_STR||{}).tourInvite||"Hi, I'm Pip! Want me to show you around? It only takes five quick steps.")}</p></div><div class="row"><button type="button" class="pri" id="tourYes">${resume?'Restart the tour':'Show me around'}</button><button type="button" class="ghost" id="tourNo">${resume?'No thanks':"I'll explore on my own"}</button></div>`;
- c.classList.add('invite');if(matchMedia('(max-width:879px)').matches){$('pip').before(c);$('pip').classList.add('inviting')}else document.querySelector('.hero .steps').insertAdjacentElement('afterend',c);invite=c;
+ c.classList.add('invite');document.querySelector('.hero .steps').insertAdjacentElement('afterend',c); /* one-Pip: the companion stays; the invite sits in the hero on every width */invite=c;
  $('tourYes').onclick=start;$('tourNo').onclick=()=>{removeInvite();setTourPref({status:'dismissed'});$('inp').focus()}}
 const pref=tourPref();
 if(!pref)showInvite(false);else if(pref.status==='active')showInvite(true);

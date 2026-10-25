@@ -1,0 +1,66 @@
+/* One Pip per page (dev). See pip-follow.js. Visual design otherwise unchanged. */
+.pipc{position:fixed;z-index:30;left:0;right:0;bottom:0;margin:0;box-sizing:border-box;background:var(--surface,#FFFDF8);border-top:1px solid var(--line,#DDD4C4);
+ padding:6px 10px calc(6px + env(safe-area-inset-bottom));display:grid!important;grid-template-columns:minmax(0,1fr) 56px 44px;grid-template-areas:"msg fig min";grid-template-rows:auto;column-gap:8px;align-items:center;box-shadow:0 -2px 10px rgba(40,50,40,.08)}
+.pipc .pipfig{grid-area:fig;width:56px;height:64px}
+.pipc .pipbubble,.pipc .ffpipline{grid-area:msg;font-size:.88rem;line-height:1.35;padding:7px 11px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pipc .pipbubble::before{left:auto;right:-7px;transform:translateY(-50%) rotate(-135deg)}
+.pipc .piptog{grid-area:tog;min-height:44px;font-size:.75rem;padding:0 4px;align-self:start}
+.pipc .pipmin{grid-area:min;min-width:44px;min-height:44px;border:0;background:none;color:var(--ink-2,#535B58);font:inherit;font-size:1.2rem;cursor:pointer;border-radius:10px}
+.pipc .pipmin:hover{background:var(--sage-50,#EEF3EE)}
+.pipc .pipface{display:none;min-width:44px;min-height:44px;padding:0;border:1px solid var(--line,#DDD4C4);border-radius:50%;background:#fff;cursor:pointer}
+.pipc .pipface img{width:44px;height:44px;display:block;border-radius:50%}
+.pipc .pipA-bubble{grid-area:msg;margin:0;max-width:none}
+.pipc .pipA-bubble picture,.pipc .pipA-bubble>picture img{display:none}.pipc .pipA-bubble{grid-template-columns:1fr}.pipc .pipA-set{grid-column:1}
+.pipc:has(.pipA-bubble) .pipbubble{display:none}
+/* off: just the Show Pip control, no bar, no art */
+.pipc.pipoff{left:auto;background:none;border:0;box-shadow:none;grid-template-columns:auto;grid-template-areas:"tog";padding:0 10px calc(6px + env(safe-area-inset-bottom))}
+.pipc.pipoff .pipmin,.pipc.pipoff .pipface{display:none}
+.pipc.pipoff .piptog{min-height:44px;background:var(--surface,#FFFDF8);border:1px solid var(--line,#DDD4C4);border-radius:22px;font-size:.82rem;padding:0 12px}
+/* minimized: one 44px face icon */
+.pipc.pipminned{left:auto;background:none;border:0;box-shadow:none;grid-template-columns:44px;grid-template-areas:"min";padding:0 10px calc(10px + env(safe-area-inset-bottom))}
+.pipc.pipminned>*:not(.pipface){display:none!important}.pipc.pipminned .pipface{display:block;grid-area:min}
+/* fabric companion */
+#pipFollow .ffpipslot{display:contents}#pipFollow .ffpipslot .pipfig img{width:100%;height:100%;object-fit:contain}
+@media(max-width:879px){#pipFollow{grid-template-areas:"msg fig min"}}
+/* phones: page padding matches the bar; away while typing or a dialog is open */
+@media(max-width:879px){body.pipone{padding-bottom:calc(var(--pipc-h,0px) + 12px)}body.pipc-away .pipc{display:none!important}}
+/* wide: side column beside the active section, content makes room */
+@media(min-width:880px){
+ body.pipone .wrap>div[id$="View"],body.pipone .wrap>main,body.pipone .wrap>.ffaskrow,body.pipone .wrap>#ffFabricPanel{margin-right:200px}
+ .pipc,#pipFollow.pipc{grid-template-areas:"fig min" "msg msg" "tog tog"}
+ .pipc{left:auto;bottom:auto;top:120px;right:max(16px,calc((100vw - 980px)/2 + 16px));width:176px;background:none;border:0;box-shadow:none;padding:0;
+  grid-template-columns:132px 44px;grid-template-areas:"fig min" "msg msg" "tog tog";row-gap:8px;top:0;will-change:transform;transition:transform .6s cubic-bezier(.22,.8,.3,1)}
+ .pipc .pipfig{width:132px;height:180px;justify-self:center}
+ .pipc .pipbubble::before{left:50%;right:auto;top:-7px;transform:translateX(-50%) rotate(135deg)}
+ .pipc .piptog{justify-self:center;min-height:44px}
+ .herogrid.pipmoved{grid-template-columns:minmax(0,1fr)!important}
+}
+.herogrid.pipmoved{grid-template-columns:minmax(0,1fr)!important}
+@media (prefers-reduced-motion:no-preference){
+ .pipc .pipfig img.pf-in{animation:pfin .45s cubic-bezier(.22,.8,.3,1)}
+ @keyframes pfin{from{opacity:.25}to{opacity:1}}
+ .pipc .pf-bub,.pipc .pipA-bubble{animation:pfbub .4s cubic-bezier(.22,.8,.3,1)}
+ @keyframes pfbub{from{opacity:0}to{opacity:1}}
+ .pipc{animation:pfrise .5s cubic-bezier(.22,.8,.3,1)}@keyframes pfrise{from{opacity:0}to{opacity:1}}
+}
+@media (prefers-reduced-motion:reduce){.pipc,.pipc *{transition:none!important;animation:none!important}}
+@media print{.pipc{display:none!important}}
+/* only one Pip: other placements keep their text and controls, lose their art */
+body.pipone #pipStrip,body.pipone .orgpip,body.pipone .rpip,body.pipone:not(.pipc-tour) .tpip,body.pipone .askpip .ahead>picture,body.pipone .askpip .ahead>img,body.pipone .askpip .apeek,
+body.pipone .piptip img,body.pipone .piptip picture,body.pipone .helphead picture,body.pipone .savedtoast picture,body.pipone #pCel,body.pipone .pcel,
+body.pipone .pipb2 picture,body.pipone .pipb2-level,body.pipone .pipb2-fabric,body.pipone .pipb2-backup,body.pipone .pat-pipknot picture,
+body.pipone .skein-panel picture,body.pipone .tip>img,body.pipone #fcTips img[src*="assets/pip/"],body.pipone .pipA-bubble:not(.pipc .pipA-bubble) picture{display:none!important}
+body.pipone .askpip{padding-right:var(--s3,12px)}
+
+#pipFollow[hidden]{display:none!important}
+/* Pixel guardrails: calm crossfades only (no bob), safe-area aware bar, Off (Settings level) hides Pip completely */
+body.piplevel-off .pipc{display:none!important}
+/* Quiet: pose only, no line (events still reach screen readers through the existing live region) */
+body.piplevel-quiet .pipc #pipMsg,body.piplevel-quiet .pipc .pipbubble,body.piplevel-quiet .pipc .ffpipline,body.piplevel-quiet .pipc .pipA-bubble{display:none!important}
+@media(max-width:879px){body.piplevel-quiet .pipc{grid-template-columns:minmax(0,1fr) 56px 44px}}
+
+/* controls: the bar keeps only Minimize; full hiding lives in the Pip level setting. The Show Pip pill (pipoff) is unchanged */
+.pipc:not(.pipoff) .piptog{display:none!important}
+@media(min-width:880px){.pipc,#pipFollow.pipc{grid-template-areas:"fig min" "msg msg"}}
+.pipc .pipmin,.pipc .pipface{min-width:44px;min-height:44px}
+.pipc.pipminned{grid-template-columns:auto!important}.pipc.pipminned .pipface{justify-self:end;width:auto;min-width:44px}

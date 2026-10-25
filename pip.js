@@ -44,7 +44,8 @@ const STATES={
  goodbye:    {pose:'goodbye',    pri:9,  anim:'fade',  msg:()=>"Happy stitching! Tap Ask Pip anytime."},
  error:      {pose:errPose,      pri:50, anim:'tilt',  msg:errMsg},
  tangled:    {pose:'tangled',    pri:8,  anim:'wiggle',msg:()=>TANGLE[tn%2]},
- screen:     {pose:()=>screenPose||'reassuring', pri:20, anim:'fade',  msg:()=>screenT}, // per-screen line from pip-help.js (off Find floss)
+ screen:     {pose:()=>secPose||screenPose||'reassuring', pri:20, anim:'fade',  msg:()=>secText||screenT},
+ event:      {pose:()=>evPose||'neutral', pri:45, anim:'pop', msg:()=>evText}, // one-Pip: event reactions (save, verdicts, celebrations) shown by the single companion // per-screen line from pip-help.js (off Find floss)
  sleepy:     {pose:'sleepy',     pri:5,  anim:'doze',  msg:()=>''},
  // Contextual tips (overlays, at most once per session each, only over a calm state; see tour.js)
  hintStart:  {pose:()=>'peeking',    pri:22, anim:'tilt',  msg:()=>'Not sure where to start? Try typing a DMC number, like 310!'},
@@ -63,7 +64,7 @@ const img=$('pipImg'),src=$('pipSrc'),msg=$('pipMsg'),fig=$('pipFig'),tog=$('pip
 let greeted=false,touring=false,cur=null,base='welcome',lastR={items:[],errs:[]},over=null,overT=0,celebrated=false;
 const T={toast:3500,celebrate:4000,tangle:2600,tangleGap:60000,idle:90000,minSleep:4000,throttle:1000};
 const set=(a,ext)=>SIZES.map(w=>`assets/pip/pip-${a}-${w}.${ext} ${w}w`).join(', ');
-let screenK=null,screenT='',screenPose=null;
+let screenK=null,screenT='',screenPose=null,secPose=null,secText='',evPose=null,evText='';
 function show(name,r,anim=true){if(screenK&&name===base)name='screen';const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);const pz=typeof S.pose==='function'?S.pose(lastR):S.pose;
  if(cur===name&&msg.textContent===text&&el.dataset.pose===poseArt(pz))return; // nothing meaningful changed
  const a=poseArt(pz);cur=name;el.dataset.state=name;el.dataset.pose=a;
@@ -114,11 +115,14 @@ const api={result,show,stateFor,STATES,ART,FUTURE,current:()=>cur,base:()=>base,
  setTour:on=>{touring=!!on;if(touring&&(over==='sleepy'||over==='tangled'||(over&&over.startsWith('hint')))){clearOver();show(base,null,false)}arm()},touring:()=>touring,
  hint:n=>{const S=STATES[n];if(!S||touring||over||quiet()||STATES[base].pri>CALM||!S.msg(lastR))return false;overlay(n,9000);arm();return true},
  errPose,
- screen:(k,t,pose)=>{if(!k){if(!screenK)return;screenK=null;if(cur==='screen')show(base,null,false);return}screenK=k;screenT=String(t||'');screenPose=pose||null;clearOver();show('screen')},screenKey:()=>screenK,
+ screen:(k,t,pose)=>{if(!k){if(!screenK)return;screenK=null;if(cur==='screen')show(base,null,false);return}if(k!==screenK){secPose=null;secText=''}screenK=k;screenT=String(t||'');screenPose=pose||null;if(over!=='event')clearOver();if(over!=='event')show('screen')},screenKey:()=>screenK,
  isHidden:()=>fig.hidden,
+ // one-Pip (pip-follow.js): the active section sets pose (and optionally a line) on the single companion; events briefly take over.
+ section:(pose,text)=>{secPose=pose||null;secText=String(text||'');if(!over&&(cur==='screen'||screenK))show(screenK?'screen':base,null,false);else if(!over&&!screenK&&pose){/* Find floss keeps its own state machine */}},
+ event:(pose,ms,text)=>{if(fig.hidden||!pose)return false;if(STATES[base].pri>STATES.event.pri)return false;evPose=pose;evText=String(text||'');overlay('event',ms||4000);return true},
  // Brief decorative confirmation (wink + thumbs-up) next to the app's own status line, which is the one polite announcement.
  saved:(slot,text)=>{if(!slot||fig.hidden)return false;slot.querySelectorAll('.savedtoast').forEach(x=>x.remove());const t=document.createElement('span');t.className='savedtoast';t.setAttribute('aria-hidden','true');
-  t.innerHTML=`<picture><source type="image/webp" srcset="assets/pip/pip-saved-160.webp"><img src="assets/pip/pip-saved-160.png" width="160" height="237" alt=""></picture>${text?`<span>${String(text).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`:''}`;slot.prepend(t);setTimeout(()=>t.remove(),T.toast);return true},
+  t.innerHTML=`<picture><source type="image/webp" srcset="assets/pip/pip-saved-160.webp"><img src="assets/pip/pip-saved-160.png" width="160" height="237" alt=""></picture>${text?`<span>${String(text).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`:''}`;slot.prepend(t);setTimeout(()=>t.remove(),T.toast);if(!bub&&!over)api.event('saved',T.toast);return true},
  // Tour finished: GOODBYE (walking off with a wave), a short calm overlay. Never over errors or busy states.
  bye:()=>{if(fig.hidden||STATES[base].pri>CALM)return false;overlay('goodbye',3000);arm();return true},
  needlePose,
@@ -151,6 +155,7 @@ const AS={ // GENERATED from /workspace/pip-art/m-involved/a-strings.csv (Pixel)
  'pipA.cmp.undo.one':v=>`Done. That color is undecided again, and I won't fill it in on my own.`,
  'pipA.pcheck.fake':v=>`${v.n} numbers aren't DMC colors I know. See Pattern check. I haven't changed anything.`,
  'pipA.pcheck.fake.one':v=>`1 number isn't a DMC color I know. See Pattern check. I haven't changed anything.`,
+ 'pipA.pcheck.red':v=>`A few things need a look before you stitch. See Pattern check. I haven't changed anything.`,
  'pipA.pcheck.other':v=>`A few things are worth a second look. See Pattern check. I haven't changed anything.`,
  'pipA.checkin.full':v=>`Checked in. That thread now counts as yours for this project.`,
  'pipA.checkin.part':v=>`Got part of it. I've kept the rest on your shopping list.`,
@@ -161,8 +166,8 @@ const EV={save:{pose:'saved',lv:['chatty'],cap:'session'},cmp:{lv:['chatty','imp
  nothing:{pose:'dropped-bobbin',lv:['chatty'],cap:'project'},undo:{pose:'phew',lv:['chatty','important'],cap:'none',gapFree:true},
  pcheck:{lv:['chatty','important'],cap:'file'},checkin:{pose:'floss-box',lv:['chatty'],cap:'checkin'},ready:{pose:'proud-finish',lv:['chatty','important'],cap:'none',gapFree:true},
  first:{pose:'shy-heart',lv:['chatty','important'],cap:'none',gapFree:true}}; // first: one-time first-project moment (see firstProject)
-const POSE={'pipA.cmp.done.many':'presenting','pipA.cmp.done.one':'presenting','pipA.cmp.done.none':'thinking','pipA.cmp.unsure':'magnifier','pipA.cmp.unsure.one':'magnifier','pipA.pcheck.fake':'puzzled','pipA.pcheck.fake.one':'puzzled','pipA.pcheck.other':'magnifier'};
-const EVOF={'pipA.save.ok':'save','pipA.cmp.done':'cmp','pipA.cmp.empty':'empty','pipA.cmp.nothing':'nothing','pipA.cmp.undo':'undo','pipA.pcheck.fake':'pcheck','pipA.pcheck.other':'pcheck','pipA.checkin':'checkin','pipA.ready':'ready','pipA.save.first':'first'};
+const POSE={'pipA.cmp.done.many':'presenting','pipA.cmp.done.one':'presenting','pipA.cmp.done.none':'thinking','pipA.cmp.unsure':'magnifier','pipA.cmp.unsure.one':'magnifier','pipA.pcheck.fake':'puzzled','pipA.pcheck.fake.one':'puzzled','pipA.pcheck.other':'magnifier','pipA.pcheck.red':'magnifier'};
+const EVOF={'pipA.save.ok':'save','pipA.cmp.done':'cmp','pipA.cmp.empty':'empty','pipA.cmp.nothing':'nothing','pipA.cmp.undo':'undo','pipA.pcheck.fake':'pcheck','pipA.pcheck.other':'pcheck','pipA.pcheck.red':'pcheck','pipA.checkin':'checkin','pipA.ready':'ready','pipA.save.first':'first'};
 /* Approved by Pixel (review of 6377560; not in a-strings.csv yet): first project saved, shown once per device. */
 AS['pipA.save.first']=v=>`Your first project is saved! Next, let's check it against your threads.`;
 // One-time flag: a UI preference key only (same prefix as pipLevel), never part of the saved data or backups.
@@ -183,7 +188,7 @@ function level(){if(fig.hidden)return'off';let s=null;try{s=localStorage.getItem
 function setLevel(l){if(!LEVELS.includes(l))return false;try{localStorage.setItem(LEVEL_KEY,l)}catch(e){}vis(l!=='off',true);if(l==='off')closeBubble();return true}
 const capS=new Set(),capT={gap:-1e9,checkin:-1e9,checkinN:0};let bub=null,bubT=null;
 const live=(()=>{let r=document.getElementById('pipALive');if(!r){r=document.createElement('div');r.id='pipALive';r.className='sr';r.setAttribute('aria-live','polite');document.body.appendChild(r)}return r})();
-function closeBubble(){clearTimeout(bubT);if(bub){bub.remove();bub=null}}
+function closeBubble(){clearTimeout(bubT);if(bub){bub.remove();bub=null;if(over==='event'){clearOver();show(screenK?'screen':base,null,false)}}}
 const BUB_MS=8000; // fade after 8 s; paused while hovered or focused. Separate from T.toast (3.5 s) which only times the small saved wink.
 function armFade(){clearTimeout(bubT);if(bub&&!bub.matches(':hover')&&!bub.contains(document.activeElement))bubT=setTimeout(closeBubble,BUB_MS)}
 function react(key,vars,anchor,opts){opts=opts||{};vars=vars||{};if(key==='pipA.cmp.done'&&vars.u>=1)vars={...vars,n:vars.u};const k=variant(key,vars),ev=EV[EVOF[key]||EVOF[k]];if(!ev||!AS[k])return false;
@@ -200,7 +205,7 @@ function react(key,vars,anchor,opts){opts=opts||{};vars=vars||{};if(key==='pipA.
  b.querySelector('.pipA-text').textContent=text;b.querySelector('.pipA-x').onclick=closeBubble;
  b.querySelector('.pipA-set').onclick=e=>{e.preventDefault();closeBubble();const t=document.getElementById('tabHelp');if(t)t.click();setTimeout(()=>{const s=document.getElementById('pipSettings');if(s)s.scrollIntoView({block:'start'})},50)};
  b.addEventListener('keydown',e=>{if(e.key==='Escape')closeBubble()});['mouseenter','focusin'].forEach(x=>b.addEventListener(x,()=>clearTimeout(bubT)));['mouseleave','focusout'].forEach(x=>b.addEventListener(x,()=>setTimeout(armFade,0)));
- a.insertAdjacentElement('afterend',b);bub=b;armFade();
+ el.appendChild(b);bub=b;armFade();evPose=pose;evText='';clearOver();over='event';show('event');// one-Pip: the bubble lives in the single companion, which takes the event pose
  // One polite announcement: if the site already announces this event (opts.siteAnnounces), Pip's line is visual only.
  if(!opts.siteAnnounces){live.textContent='';setTimeout(()=>{live.textContent=text},30)}
  return true}

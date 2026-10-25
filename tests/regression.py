@@ -135,7 +135,7 @@ with sync_playwright() as p:
 
     # ---------- Projects ----------
     conv(pg, REAL, 'dmc'); pg.fill('#newProjName', 'Real pattern'); pg.click('#saveProj')
-    ok('save as project', 'Saved “Real pattern” in this browser on this device.' in pg.inner_text('#copymsg'), pg.inner_text('#copymsg'))
+    ok('save as project', '“Real pattern” is safely tucked away in this browser on this device.' in pg.inner_text('#copymsg'), pg.inner_text('#copymsg'))
     pg.click('#tabProjects'); ok('project listed', 'Real pattern' in pg.inner_text('#projList') and '10 colors' in pg.inner_text('#projList'), pg.inner_text('#projList'))
     pg.click('[data-open]'); pg.wait_for_timeout(100)
     expand(pg, '310'); expand(pg, 'WHITE')
@@ -283,10 +283,10 @@ with sync_playwright() as p:
     # ---------- Milestone 1.2: welcome, example mode, search/filter, shopping mode, a11y ----------
     CJS = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'contrast.js'), encoding='utf-8').read()
     h = page(412, True); h.goto(B)
-    ok('N1 welcome headline, label, 3 steps, actions', 'Your thread list, made simple.' in h.inner_text('h1') and h.inner_text('label[for=inp]') == 'Paste your DMC color list' and h.locator('.hero .steps li').count() == 3 and h.inner_text('#go') == 'Add my colors' and h.inner_text('#sample') == 'Try an example')
+    ok('N1 welcome headline, label, 3 steps, actions', 'Watch your colors come to light.' in h.inner_text('h1') and h.inner_text('label[for=inp]') == 'Paste your DMC color list' and h.locator('.hero .steps li').count() == 3 and h.inner_text('#go') == 'Add my colors' and h.inner_text('#sample') == 'Try an example')
     ok('N1b nav current state (aria-pressed + aria-current)', h.get_attribute('#tabConvert', 'aria-current') == 'page' and h.get_attribute('#tabProjects', 'aria-pressed') == 'false')
     h.click('#tabHelp'); ok('N1c help view opens, others hidden', h.locator('#helpView').is_visible() and h.locator('#convertView').is_hidden() and h.get_attribute('#tabHelp', 'aria-current') == 'page')
-    h.click('#tabConvert'); h.click('#openProj'); ok('N1d Open my projects + welcoming empty state', h.locator('#projectsView').is_visible() and 'No projects yet' in h.inner_text('#projList') and h.locator('#emptyAdd').is_visible())
+    h.click('#tabConvert'); h.click('#openProj'); ok('N1d Open my projects + welcoming empty state', h.locator('#projectsView').is_visible() and 'Every masterpiece begins with a single stitch' in h.inner_text('#projList') and h.locator('#emptyAdd').is_visible())
     h.click('#emptyAdd'); ok('N1e empty-state action returns to paste box', h.locator('#convertView').is_visible() and h.evaluate('document.activeElement.id') == 'inp')
     h.fill('#inp', '699 x3'); h.click('#sample')
     ok('N2 example shows banner and keeps draft safe', h.locator('#exampleBanner').is_visible() and 'DMC 310 Black x2' in h.input_value('#inp') and h.inner_text('#exitExample') == 'Back to my list')
@@ -428,17 +428,17 @@ with sync_playwright() as p:
     ok('P11b no layout shift on desktop side panel (1280px)', all(x == t2[0] for x in t2), t2)
     ok('P11c desktop: Pip in a side panel, not over the input or buttons', pd.evaluate("(()=>{const p=document.getElementById('pip').getBoundingClientRect(),i=document.getElementById('inp').getBoundingClientRect(),g=document.querySelector('.hero .row').getBoundingClientRect();const f=document.getElementById('pipFig').getBoundingClientRect();return f.left>=i.right&&f.left>=g.right})()"))
     # hide / show
-    h2 = page(412, True); h2.goto(B); h2.click('#pipToggle')
+    h2 = page(412, True); h2.goto(B); h2.evaluate("document.getElementById('pipToggle').click()")
     ok('P6 Hide Pip hides it, button says Show Pip, preference stored', h2.locator('#pipFig').is_hidden() and h2.locator('#pipMsg').is_hidden() and h2.inner_text('#pipToggle') == 'Show Pip' and h2.get_attribute('#pipToggle', 'aria-expanded') == 'false' and h2.evaluate(f"localStorage.getItem('{PK}')") == 'hidden')
     h2.reload(); ok('P6b hidden preference survives reload', h2.locator('#pipFig').is_hidden() and h2.inner_text('#pipToggle') == 'Show Pip')
     h2.fill('#inp', '310 x2\n9999'); h2.click('#go')
     ok('P6c app fully works with Pip hidden (results + errors in normal UI)', 'DMC 310' in h2.inner_text('#results') and '9999' in h2.inner_text('#errs'))
     ok('P6d Pip preference never touches project storage', h2.evaluate(f"localStorage.getItem('{KEY}')") is None)
     h2.locator('#pipToggle').focus(); h2.keyboard.press('Enter'); ok('P9 keyboard toggles Pip back on; state is current', h2.locator('#pipFig').is_visible() and h2.evaluate(f"localStorage.getItem('{PK}')") == 'shown' and pst(h2)[0] == 'error', pst(h2))
-    ok('P9b only the Hide/Show toggle is focusable inside Pip (no focus trap)', h2.evaluate("[...document.querySelectorAll('#pip a,#pip button,#pip input,#pip [tabindex]')].map(e=>e.id)") == ['pipHi', 'pipToggle'] and h2.get_attribute('#pipHi', 'aria-label') == 'Say hi to Pip')
+    ok('P9b only plain buttons are focusable inside Pip: hi, Hide/Show, Minimize, face restore (no focus trap)', h2.evaluate("[...document.querySelectorAll('#pip a,#pip button,#pip input,#pip [tabindex]')].map(e=>e.id)") == ['pipHi', 'pipToggle', 'pipMinBtn', 'pipFaceBtn'] and h2.get_attribute('#pipHi', 'aria-label') == 'Say hi to Pip')
     rmp = br.new_context(viewport={'width': 412, 'height': 900}, reduced_motion='reduce').new_page(); rmp.goto(B); rmp.fill('#inp', '9999'); rmp.click('#go')
     ok('P8 reduced motion: no Pip animation', rmp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
-    ok('P8b with motion: gentle whole-image animation only', pp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") in ('pippop', 'piptilt', 'pipfade', 'none'))
+    ok('P8b with motion: gentle whole-image animation only', pp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") in ('pippop', 'piptilt', 'pipfade', 'pfin', 'none'))  # pfin = one-Pip soft pose crossfade (opacity/transform only)
     # ---------- Pip phase 2 ----------
     def fresh(w=412, rm=False):
         c = br.new_context(viewport={'width': w, 'height': 900}, reduced_motion='reduce' if rm else 'no-preference'); g = c.new_page(); rq = []
@@ -470,7 +470,7 @@ with sync_playwright() as p:
     c0 = pr.locator('#pCel').count()
     pr.evaluate("()=>{for(let k=0;k<20;k++){const c=[...document.querySelectorAll('.cards [data-st][value=have]')].find(r=>!r.checked);if(!c)break;c.click()}}")
     pr.wait_for_timeout(100); rdy = pr.evaluate("document.getElementById('pSummary').dataset.ready")
-    ok('Q5 project turning ready shows one celebrating Pip', c0 == 0 and rdy == 'true' and pr.locator('#pCel img').count() == 1 and "You're ready to stitch!" in pr.inner_text('#pSummary'), (c0, rdy, pr.locator('#pCel').count()))
+    ok('Q5 project turning ready shows one celebrating Pip', c0 == 0 and rdy == 'true' and pr.locator('#pCel img').count() == 1 and 'Your hoop is ready!' in pr.inner_text('#pSummary'), (c0, rdy, pr.locator('#pCel').count()))
     pr.wait_for_timeout(4300); ok('Q5b celebration settles (animation class removed, no loop)', pr.locator('#pCel.pip-cheer').count() == 0 and pr.locator('#pCel').count() == 1)
     pr.evaluate("document.querySelector('.cards [data-st][value=have]').click()"); pr.wait_for_timeout(100)
     ok('Q5c re-render while still ready: no repeat celebration', pr.locator('#pCel.pip-cheer').count() == 0)
@@ -493,7 +493,7 @@ with sync_playwright() as p:
     zz, _ = fresh(); zz.evaluate("FlossFoxPip._timing({idle:1500})")
     for i in range(30): zz.mouse.move(10 + i * 10, 100); zz.wait_for_timeout(100)
     ok('Q6j steady activity keeps Pip awake', pst(zz)[0] != 'sleepy', pst(zz))
-    zz.click('#pipToggle'); zz.wait_for_timeout(1800); ok('Q6k hidden Pip never sleeps', zz.evaluate("FlossFoxPip.overlay()") is None)
+    zz.evaluate("document.getElementById('pipToggle').click()"); zz.wait_for_timeout(1800); ok('Q6k hidden Pip never sleeps', zz.evaluate("FlossFoxPip.overlay()") is None)
     # rapid interactions
     rp, _ = fresh(); rp.evaluate("FlossFoxPip._timing({tangleGap:0})")
     rp.evaluate("""()=>{const i=document.getElementById('inp'),g=document.getElementById('go'),h=document.getElementById('pipHi');for(const t of ['310','9999','310\\n310','310, 321']){i.value=t;g.click();h.click()}}""")
@@ -516,7 +516,7 @@ with sync_playwright() as p:
     for w in [320, 360, 412, 600, 768, 880, 1024, 1280]:
         for hid in [False, True]:
             g = page(w, w < 700); g.goto(B)
-            if hid: g.click('#pipToggle')
+            if hid: g.evaluate("document.getElementById('pipToggle').click()")
             g.fill('#inp', '310\n310\n9999'); g.click('#go')
             sw = g.evaluate('document.documentElement.scrollWidth')
             if sw > w: badp.append((w, hid, sw))
@@ -556,10 +556,10 @@ with sync_playwright() as p:
     # toggle placement + compact intro
     for w in [320, 360, 412]:
         g = page(w, True); g.set_viewport_size({'width': w, 'height': 740 if w < 400 else 860}); g.goto(B)
-        r = g.evaluate("""(()=>{const b=k=>document.querySelector(k).getBoundingClientRect(),t=b('#pipToggle'),f=b('#pipFig'),m=b('#pipMsg'),i=b('#inp'),go=b('#go');
+        r = g.evaluate("""(()=>{const b=k=>document.querySelector(k).getBoundingClientRect(),t=b('#pipMinBtn'),f=b('#pipFig'),m=b('#pipMsg'),i=b('#inp'),go=b('#go');
           const ov=(a,c)=>!(a.right<=c.left||c.right<=a.left||a.bottom<=c.top||c.bottom<=a.top);
-          return {tw:t.width,th:t.height,near:Math.abs(t.top-f.bottom)<60,over:[ov(t,i),ov(t,go),ov(f,i),ov(m,i),ov(t,m),ov(t,f)].some(Boolean),goBottom:go.bottom,vh:innerHeight,banner:(document.querySelector('.devbanner')||{offsetHeight:0}).offsetHeight,inpTop:i.top}})()""")
-        ok(f'Q4 {w}px: toggle next to Pip, ≥44px, nothing overlaps; main button on first screen', r['tw'] >= 44 and r['th'] >= 44 and r['near'] and not r['over'] and r['goBottom'] - r['banner'] <= r['vh'], r)  # dev preview only: its intentional banner is excluded; production has no banner (banner == 0)
+          return {tw:t.width,th:t.height,near:Math.abs((t.top+t.bottom)/2-(f.top+f.bottom)/2)<60,over:[ov(t,i),ov(t,go),ov(f,i),ov(m,i),ov(t,m),ov(t,f)].some(Boolean),goBottom:go.bottom,vh:innerHeight,banner:(document.querySelector('.devbanner')||{offsetHeight:0}).offsetHeight,inpTop:i.top}})()""")
+        ok(f'Q4 {w}px: Minimize control next to Pip, ≥44px, nothing overlaps; main button on first screen', r['tw'] >= 44 and r['th'] >= 44 and r['near'] and not r['over'] and r['goBottom'] - r['banner'] <= r['vh'], r)  # dev preview only: its intentional banner is excluded; production has no banner (banner == 0)
         g.context.close()
     # ---------- 1.5A shopping layer: "Where to buy your missing supplies" ----------
     REALFX = """window.FLOSS_FOX_SHOP.merchants.push({merchantId:'fx-real',displayName:'Fixture Floss Store',affiliateNetwork:'Awin',programId:'0',approvalState:'approved',approvedForProduction:true,approvedForPreview:true,
@@ -604,7 +604,7 @@ with sync_playwright() as p:
     if PREVIEW:
         a.evaluate("FLOSS_FOX_SHOP.mockMerchants=[]"); a.click('#go'); a.wait_for_timeout(100)
     sec = a.locator('#wtb .wtb')
-    ok('S5 approved merchant: section appears after the list, heading exact', sec.count() == 1 and a.inner_text('#wtb h3') == 'Where to buy your missing supplies' and a.evaluate("document.getElementById('shop').compareDocumentPosition(document.getElementById('wtb'))&4") > 0)
+    ok('S5 approved merchant: section appears after the list, heading exact', sec.count() == 1 and a.inner_text('#wtb h3') == "Places to find what's still missing" and a.evaluate("document.getElementById('shop').compareDocumentPosition(document.getElementById('wtb'))&4") > 0)
     ok('S5b disclosure exact, visible, before the first link', 'Floss Fox may earn a commission if you buy through these links, at no extra cost to you.' in a.inner_text('#wtb .wtbdisc') and a.evaluate("(()=>{const d=document.querySelector('#wtb .wtbdisc'),l=document.querySelector('#wtb a.wtblink');return !!(d.compareDocumentPosition(l)&4)&&d.offsetHeight>0})()"))
     ex = a.locator('#wtb a[data-level=A]')
     ok('S6 exact product link: "View DMC 310 6-strand cotton at …", only for 310', ex.count() == 1 and ex.first.inner_text().startswith('View DMC 310 6-strand cotton at Fixture Floss Store'), [ex.nth(k).inner_text() for k in range(ex.count())])
@@ -684,7 +684,7 @@ with sync_playwright() as p:
     cl = spage(REALFX); cl.goto(B); cl.fill('#inp', LIST); cl.click('#go'); cl.wait_for_timeout(100); cr2 = cl.evaluate(CJS); ok('S31 contrast with the shopping section', not cr2['fails'], cr2['fails'])
     rm = spage(REALFX); rm.emulate_media(reduced_motion='reduce'); rm.goto(B); rm.fill('#inp', LIST); rm.click('#go'); rm.wait_for_timeout(100)
     ok('S32 reduced motion: shop section has no animation or transition', rm.evaluate("[...document.querySelectorAll('#wtb *')].every(e=>{const c=getComputedStyle(e);return c.animationName==='none'})"))
-    hp = spage(REALFX); hp.goto(B); hp.click('#pipToggle'); hp.fill('#inp', LIST); hp.click('#go'); hp.wait_for_timeout(100)
+    hp = spage(REALFX); hp.goto(B); hp.evaluate("document.getElementById('pipToggle').click()"); hp.fill('#inp', LIST); hp.click('#go'); hp.wait_for_timeout(100)
     ok('S33 Pip hidden: shopping section unaffected', hp.locator('#wtb .wtb').count() == 1)
     hp_t = hp.locator('#wtb .wtbpip').count(); ok('S33b Pip hidden: no Pip line in the section', hp_t == 0 or not hp.locator('#wtb .wtbpip').is_visible())
     # ---------- 2.0A Concept 2: grouped by retailer ----------
@@ -782,7 +782,9 @@ with sync_playwright() as p:
     addlist(v, '310\n310 x2'); ok('T8c duplicates during the tour: combined, card still true', v.evaluate("state.items[0].qty") == 3 and 'added 1 color' in v.inner_text('#tourCard'), v.inner_text('#tourCard'))
     v.evaluate("FlossFoxPip._timing({idle:300,tangleGap:0})"); addlist(v, '310, 321'); v.wait_for_timeout(5000)
     ok('T17 sleepy never interrupts a tour step', v.evaluate("FlossFoxPip.overlay()") != 'sleepy' and step(v) == 0, v.evaluate("FlossFoxPip.overlay()"))
-    v.click('#pipHi'); ok('T17b tangled never interrupts a tour step', v.evaluate("FlossFoxPip.current()") != 'tangled')
+    # one-Pip build: on phones the companion bar steps aside during the tour (the tour card speaks for Pip), so it cannot be tapped
+    if v.locator('#pipHi').is_visible(): v.click('#pipHi')
+    ok('T17b tangled never interrupts a tour step', v.evaluate("FlossFoxPip.current()") != 'tangled')
     # switching views mid-tour
     v.click('#tabProjects'); ok('T18 switching views mid-tour: card stays with Add colors, page fine', v.locator('#tourCard').is_hidden() and step(v) == 0)
     v.click('#askPipBtn'); ok('T18b Ask Pip offers Back to the tour', v.locator('#askPip [data-a=resume]').count() == 1 and 'step 1 of 5' in v.inner_text('#askPip'))
@@ -863,9 +865,9 @@ with sync_playwright() as p:
     ok('M1 all 138 Pip images (23 poses) load, have an alpha channel and transparent corners', not noalpha, noalpha)
     ok('M1b no JPG Pip assets referenced anywhere', pp.request.get(B + 'assets/pip/pip-greeting-320.jpg').status == 404 and '.jpg' not in pp.evaluate("document.getElementById('pipImg').srcset+document.getElementById('pipImg').src"))
     tile = pp.evaluate("(()=>{const f=getComputedStyle(document.getElementById('pipFig'));const r=document.getElementById('pipFig').getBoundingClientRect();return [f.backgroundColor,f.borderTopColor,Math.round(r.width),Math.round(r.height)]})()")
-    ok('M2 no white tile: frame transparent, same 84x118 frame on phones', tile[0] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[1] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[2:] == [84, 118], tile)
+    ok('M2 no white tile: frame transparent; one-Pip phone bar frame 56x64', tile[0] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[1] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[2:] == [56, 64], tile)  # one-Pip build: hero frame moved into the bottom bar
     pdm = page(1280); pdm.goto(B); fr = pdm.evaluate("(()=>{const r=document.getElementById('pipFig').getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)]})()")
-    ok('M2b same 140x196 frame on desktop', fr == [140, 196], fr)
+    ok('M2b one-Pip side column frame 132x180 on desktop', fr == [132, 180], fr)
     fv = tp(1280); ok('M3 first visit keeps the original greeting', fv.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose]") == ['welcome', 'greeting'])
     rv = tp(412, fresh=False); ok('M4 returning visitor (tour done/dismissed): welcome back with greeting-alt', rv.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose]") == ['welcomeBack', 'greeting-alt'])
     rv.click('#inp'); f1 = rv.evaluate("FlossFoxPip.current()"); rv.click('#heroH'); f2 = rv.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose]")
@@ -873,7 +875,7 @@ with sync_playwright() as p:
     rv.fill('#inp', '310'); rv.click('#go'); ok('M5b a real list still wins over idle', rv.evaluate("FlossFoxPip.current()") in ('listReady', 'celebrating'))
     rv.click('#tabHelp'); rv.wait_for_timeout(400); pk = rv.evaluate("""(()=>{const p=document.getElementById('helpPip').getBoundingClientRect(),i=document.querySelector('#helpPip .apeek img');if(!i||!i.offsetParent)return null;const r=i.getBoundingClientRect();
       const hit=[...document.querySelectorAll('#helpPip button,#helpPip input,#helpPip label')].filter(b=>{const q=b.getBoundingClientRect();return !(q.right<=r.left||q.left>=r.right||q.bottom<=r.top||q.top>=r.bottom)}).length;return [Math.round(p.right-r.right),hit,/pip-peeking-160/.test(i.currentSrc||i.src)]})()""")
-    ok('M6 phone Ask Pip: peeking Pip pinned flush right, covers no control', pk is not None and 0 <= pk[0] <= 1 and pk[1] == 0 and pk[2], pk)
+    ok('M6 phone Ask Pip (one-Pip build): card keeps its text, no second peeking Pip; the companion is the only Pip', pk is None and rv.locator('#pipFig').is_visible())
     ok('M6b Ask Pip button avatar is the face icon', 'pip-face-icon-' in rv.evaluate("document.querySelector('#askPipBtn img').currentSrc"))
     rv.click('#helpPip [data-a=alts]'); rv.wait_for_timeout(400); th = rv.evaluate("[document.querySelector('#helpPip .ahead').dataset.pose,/pip-thinking-160/.test(document.querySelector('#helpPip .ahead img').currentSrc||document.querySelector('#helpPip .ahead img').src),!!document.querySelector('#helpPip .apeek')]")
     ok('M7 Ask Pip answer -> thinking (a real "let me check" moment), no double Pip', th == ['thinking', True, False], th)
@@ -899,7 +901,7 @@ with sync_playwright() as p:
         g2.context.close()
     ok('M10 new poses: no layout shift or overflow 320-1280', not lay2, lay2)
     rmn = tp(412, fresh=False, rm=True); rmn.evaluate("FlossFoxPip.show('idle')"); ok('M11 reduced motion on new poses', rmn.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
-    hdn = tp(412, fresh=False, init=f"localStorage.setItem('{PFX}.pip.v1','hidden')"); hdn.click('#tabHelp'); ok('M12 Pip hidden: Help Pip section still shows its peeking Pip', hdn.locator('#helpPip .apeek img').is_visible() and hdn.locator('#pipFig').is_hidden())
+    hdn = tp(412, fresh=False, init=f"localStorage.setItem('{PFX}.pip.v1','hidden')"); hdn.click('#tabHelp'); ok('M12 Pip hidden (one-Pip build): no peeking Pip on Help either, companion art hidden', hdn.locator('#helpPip .apeek img').is_hidden() and hdn.locator('#pipFig').is_hidden())
     # ---------- Milestone 1.4 batch 2: reassuring / puzzled / presenting / discovery / saved / face icon ----------
     b2 = tp(412, fresh=False)
     def b2s(t): b2.fill('#inp', t); b2.click('#go'); b2.wait_for_timeout(60); return b2.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose,document.getElementById('pipMsg').textContent]")
@@ -922,14 +924,14 @@ with sync_playwright() as p:
     ov = sv.evaluate("(()=>{const t=document.querySelector('#copymsg .savedtoast').getBoundingClientRect();return [...document.querySelectorAll('button,input,select,textarea,a')].filter(e=>e.offsetParent).filter(e=>{const r=e.getBoundingClientRect();return !(r.right<=t.left||r.left>=t.right||r.bottom<=t.top||r.top>=t.bottom)}).map(e=>e.id||e.tagName)})()")
     ok('B5b toast never covers controls (inline in the status line)', not ov, ov)
     sv.wait_for_timeout(3800); ok('B5c toast auto-dismisses; status text stays', toast('#copymsg') is None and 'Copied' in sv.inner_text('#copymsg'))
-    sv.fill('#newProjName', 'Toast'); sv.click('#saveProj'); sv.wait_for_timeout(150); ok('B5d project saved -> saved toast', toast('#copymsg') is not None and 'Saved' in sv.inner_text('#copymsg'))
+    sv.fill('#newProjName', 'Toast'); sv.click('#saveProj'); sv.wait_for_timeout(150); ok('B5d project saved -> saved toast', toast('#copymsg') is not None and 'safely tucked away' in sv.inner_text('#copymsg'))
     sv.click('#openSaved'); sv.wait_for_timeout(150); sv.click('#pCopy'); sv.wait_for_timeout(200); ok('B5e project copied -> saved toast', toast('#pMsg') is not None)
     sv.click('#pAddBox summary') if not sv.locator('#pAdd').is_visible() else None; sv.fill('#pAdd', '3865'); sv.click('#pAddBtn'); sv.wait_for_timeout(150)
     ok('B5f colors added -> saved toast with a short note', toast('#pMsg') is not None and 'Added 1 color' in sv.inner_text('#pMsg'))
     sv.fill('#pAdd', 'zzz'); sv.click('#pAddBtn'); sv.wait_for_timeout(150); ok('B5g nothing added -> no toast (only real events)', toast('#pMsg') is None)
     sv.click('#pClose'); sv.click('#backupBox summary'); sv.set_input_files('#restoreFile', {'name': 'b.json', 'mimeType': 'application/json', 'buffer': open(FIX, 'rb').read()}); sv.wait_for_timeout(300); sv.click('#rGo'); sv.wait_for_timeout(200)
     ok('B5h backup restored (updated) -> saved toast', toast('#projStatus') is not None and 'Restore done' in sv.inner_text('#projStatus'))
-    sv.click('#tabConvert'); sv.click('#pipToggle'); sv.click('#copy'); sv.wait_for_timeout(200); ok('B5i Pip hidden -> no decorative toast, status still shown', toast('#copymsg') is None and 'Copied' in sv.inner_text('#copymsg'))
+    sv.click('#tabConvert'); sv.evaluate("document.getElementById('pipToggle').click()"); sv.click('#copy'); sv.wait_for_timeout(200); ok('B5i Pip hidden -> no decorative toast, status still shown', toast('#copymsg') is None and 'Copied' in sv.inner_text('#copymsg'))
     fi = sv.evaluate("(()=>{const i=document.querySelector('#askPipBtn img');return [i.naturalWidth,i.naturalHeight,/face-icon/.test(i.currentSrc)]})()")
     ok('B6 face icon avatar on Ask Pip (square, loads, even with Pip hidden)', fi[0] > 0 and fi[0] == fi[1] and fi[2], fi)
     fav = sv.evaluate("[...document.querySelectorAll('link[rel~=icon]')].map(l=>l.getAttribute('href'))")
@@ -939,10 +941,11 @@ with sync_playwright() as p:
     c = page(412, True, init=SEED); c.goto(B); c.wait_for_timeout(200)
     c.click('#tabProjects'); c.wait_for_timeout(150)
     og = c.evaluate("(()=>{const i=document.querySelector('#projectsView .empty img[data-pose=organizing]');if(!i)return null;const r=i.getBoundingClientRect(),p=i.closest('.card').getBoundingClientRect();return [i.naturalWidth>0,Math.round(r.height-r.width*566/480),r.width,r.bottom<=p.bottom]})()")
-    ok('C2 empty projects -> organizing, full image (bottom spools not cropped), ~200px', og and og[0] and abs(og[1]) <= 1 and 180 <= og[2] <= 240 and og[3], og)
+    cp = c.evaluate("document.getElementById('pip').dataset.pose")
+    ok('C2 empty projects -> organizing pose, carried by the one companion Pip (card art hidden)', og is not None and og[2] == 0 and cp == 'organizing', (og, cp))
     c.click('#tabHelp') if c.locator('#tabHelp').count() else c.evaluate("document.getElementById('helpView').hidden=false")
     c.wait_for_timeout(100); hn = c.evaluate("(()=>{const i=document.querySelector('#helpView .helphead img');return i?[i.dataset.pose,i.naturalWidth>0,Math.round(i.getBoundingClientRect().width)]:null})()")
-    ok('C3 Help (how-to) header uses needle at ~80-120px', hn and hn[0] == 'needle' and hn[1] and 80 <= hn[2] <= 120, hn)
+    ok('C3 Help (how-to) header keeps needle markup but its art is hidden; the companion carries the Help pose', hn and hn[0] == 'needle' and hn[2] == 0 and c.evaluate("document.getElementById('pip').dataset.pose") in ('helpful', 'needle'), (hn, c.evaluate("document.getElementById('pip').dataset.pose")))
     c.goto(B); c.click('#tabHelp'); poses = []
     for _ in range(2):
         c.click('#helpPip [data-a=enter]'); c.wait_for_timeout(80); poses.append(c.get_attribute('#helpPip .ahead', 'data-pose'))
