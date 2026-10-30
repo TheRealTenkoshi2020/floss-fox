@@ -27,7 +27,7 @@ function reading(on,anchor){clearTimeout(rT);document.querySelectorAll('.pipb2-r
  rT=setTimeout(()=>{if(!anchor.isConnected||!allowed('reading',anchor))return;const d=art('reading',64,'b2.reading');d.setAttribute('aria-hidden','true');anchor.before(d)},1000)}
 // 03 checkOk: green verdict, once per file
 function checkOk(box,fileId){if(!box||!allowed('checkOk',box))return false;const id='ok:'+fileId;if(capFile.has(id))return false;capFile.add(id);
- const v=box.querySelector('.pt-verdict')||box.querySelector('h3');v.after(art('checkOk',64,'b2.checkOk'));return true}
+ const v=box.querySelector('.pt-verdict')||box.querySelector('h3');v.after(art('checkOk',64,'b2.checkOk'));box.querySelectorAll('.pat-check-ok').forEach(e=>e.remove());return true}
 // 10 fixSheet: Fix it sheet header, once per file (not on every open)
 function fixSheet(s,fileId){if(!s||!allowed('fixSheet',s))return false;const id='fix:'+fileId;if(capFile.has(id))return false;capFile.add(id);
  const h=s.querySelector('.pt-title');(h||s.firstChild).after(art('fixSheet',64,'b2.fixSheet'));return true}

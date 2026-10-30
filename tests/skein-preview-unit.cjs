@@ -83,11 +83,12 @@ test('never mutate need record or hardcode stock, cart or prices',()=>{
  const r=S.linksFor(item,preview);assert.equal(JSON.stringify(item),before);
  assert.ok(r.every(l=>!('price'in l)&&!('inStock'in l)&&!('cart'in l)));
 });
-test('named shades WHITE, ECRU, B5200 normalize and link (Blanc and 5200 aliases)',()=>{
- for(const [inp,out] of [['WHITE','WHITE'],['white','WHITE'],['Blanc','WHITE'],['BLANC','WHITE'],['BLANC (White)','WHITE'],['ecru','ECRU'],['B5200','B5200'],['b5200','B5200'],['5200','B5200'],[' 5200 ','B5200']])
+test('named shades WHITE, BLANC, ECRU, B5200 normalize (BLANC is never WHITE; 5200 alias)',()=>{
+ for(const [inp,out] of [['WHITE','WHITE'],['white','WHITE'],['Blanc','BLANC'],['BLANC','BLANC'],['BLANC (White)',null],['ecru','ECRU'],['B5200','B5200'],['b5200','B5200'],['5200','B5200'],[' 5200 ','B5200']])
   assert.equal(S.normalize(inp),out,inp);
  assert.equal(S.normalize('BLANC(White)'),null);assert.equal(S.normalize('WHITE (Blanc)'),null);
  for(const c of ['WHITE','ECRU']){const l=S.linksFor(valid({code:c}),preview);assert.equal(l.length,2);assert.ok(l.every(x=>x.exact&&x.code===c))}
+ assert.ok(S.linksFor(valid({code:'BLANC'}),preview).every(x=>x.code!=='WHITE'),'BLANC never gets a WHITE link');
  const b=S.linksFor(valid({code:'5200'}),preview);assert.equal(b[0].exact,false);assert.equal(b[1].exact,true);assert.equal(b[1].code,'B5200');
  assert.match(b[1].label,/View DMC B5200 skein/);
 });
@@ -98,7 +99,7 @@ test('numeric handling unchanged by named-shade aliases',()=>{
 });
 test('alias duplicates are withheld like any duplicate color',()=>{
  const rows=S.rowsFor([valid({code:'5200',qty:1}),valid({code:'B5200',qty:2}),valid({code:'white'}),valid({code:'Blanc'}),valid({code:'310'})],preview);
- assert.deepEqual(rows.map(r=>r.code),['310']);
+ assert.ok(!rows.some(r=>r.code==='B5200'),'5200 and B5200 are duplicates');assert.ok(rows.some(r=>r.code==='310'));
 });
 test('every manifest URL passes the store host check',()=>{
  for(const x of require('../docs/product-links.json')){

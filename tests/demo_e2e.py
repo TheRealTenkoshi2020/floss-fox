@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """DEV PREVIEW ONLY: demo-data button. Usage: FF_KEY=flossfox-dev.v1 python tests/demo_e2e.py https://therealtenkoshi2020.github.io/floss-fox-dev/"""
 import sys, os, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8767/floss-fox-dev/'; B = B if B.endswith('/') else B + '/'
 KEY = os.environ.get('FF_KEY', 'flossfox-dev.v1'); TK = KEY[:-3] + '.threads.v1'
@@ -27,7 +28,7 @@ with sync_playwright() as p:
         g.evaluate("FlossFoxProjects.open(FlossFoxProjects._store().projects.find(x=>x.demo).id)"); g.wait_for_timeout(150)
         ok(f'{w}px Demogorgon (demo): 13 owned, 0 short, 6 missing', g.inner_text('#cmpOwned').startswith('✓ 13') and g.inner_text('#cmpShort').startswith('◐ 0') and g.inner_text('#cmpMissing').startswith('✗ 6'), g.inner_text('#pCmp'))
         ok(f'{w}px demo project has 19 colors with stitch counts', g.evaluate("FlossFoxProjects._store().projects.find(x=>x.demo).items.length") == 19 and g.evaluate("FlossFoxProjects._store().projects.find(x=>x.demo).items.every(i=>i.stitchCount>0)"))
-        ok(f'{w}px demo project tagged Demo; my real project still compares with my real threads', 'Demo' in g.inner_text('#pCmpBox').replace('demo threads', 'Demo') )
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); ok(f'{w}px demo project tagged Demo; my real project still compares with my real threads', 'Demo' in g.inner_text('#pCmpBox').replace('demo threads', 'Demo') )
         if w in (390, 1280):
             os.makedirs('/workspace/floss-converter/feedback-shots/cf', exist_ok=True); g.screenshot(path=f'/workspace/floss-converter/feedback-shots/cf/demo-project-{w}.png')
         ok(f'{w}px no sideways scrolling', g.evaluate('document.documentElement.scrollWidth<=innerWidth+1'))

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pip's Fabric Calculator browser tests (A-H). Usage: python3 tests/fabric_e2e.py BASE_URL"""
 import sys,re
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 BASE=(sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:18491/').rstrip('/')+'/'
 P=F=0

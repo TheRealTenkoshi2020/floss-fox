@@ -7,6 +7,7 @@ Usage: python tests/wk_run.py tests/workflow_e2e.py [args...]
 - page.pdf is Chromium-only: it is replaced by a no-op that prints SKIP and removes any old PDF, so print checks are not verified on WebKit
 NOTE: WebKit on Linux is not real iOS Safari."""
 import sys, runpy
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 import playwright.sync_api._generated as G
 IPH = None

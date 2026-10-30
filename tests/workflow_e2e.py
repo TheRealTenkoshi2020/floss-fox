@@ -5,6 +5,7 @@ missing/short counts -> shopping list -> close + reopen (persisted) -> edit + un
 export, clear storage, import, restored. Also nav, readability, 44px touch targets, scrolling, Pip, quick DMC conversion.
 Usage: python tests/workflow_e2e.py [BASE_URL] [--shots DIR]   (preview: set FF_KEY like regression.py)"""
 import sys, os, argparse, json, tempfile, shutil
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/'); ap.add_argument('--chrome', default='/usr/bin/google-chrome'); ap.add_argument('--shots', default=None)
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'
@@ -55,11 +56,11 @@ with sync_playwright() as p:
         ok(f'W6 {T} project saved with 24 items, stitchCount kept apart from skeins', len(pr['items']) == 24 and pr['items'][2]['stitchCount'] == 411 and all(i['qty'] == 1 and i['assumed'] == 1 for i in pr['items']))
         # set a real amount for 321 (need 3, have 1) -> short
         g.click('#x-321'); g.fill('#q-321', '3'); g.dispatch_event('#q-321', 'change'); g.wait_for_timeout(100)
-        box = g.inner_text('#pCmpBox')
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); box = g.inner_text('#pCmpBox')
         ok(f'W7 {T} compare: 0 owned, 17 owned-not-verified, 1 short, 6 missing', g.inner_text('#cmpOwned').startswith('✓ 0') and g.inner_text('#cmpUnver').startswith('? 17') and g.inner_text('#cmpShort').startswith('◐ 1') and g.inner_text('#cmpMissing').startswith('✗ 6'), box)
         ok(f'W8 {T} short color shows need vs have', '321 (need 3 skeins, have 1 skein)' in box, box)
         collBefore = ls(TKEY)
-        g.click('#pUseColl'); g.wait_for_timeout(80); shot('03-preview'); g.click('#pApplyColl'); g.wait_for_timeout(150)
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.wait_for_timeout(80); shot('03-preview'); g.click('#pApplyColl'); g.wait_for_timeout(150)
         plan = g.inner_text('#pPlan'); top = plan.split('Check first')[0].split('Needs attention')[0]
         ok(f'W9 {T} shopping list: the 6 missing + 321 × 2 (only the difference)', all(f'DMC {c}' in top for c in MISSING) and 'DMC 321 × 2' in top and 'DMC 310 ' not in top, top[:500])
         shot('04-shopping')
@@ -69,10 +70,10 @@ with sync_playwright() as p:
         ok(f'W10 {T} after closing and reopening: project, decisions and collection are still there', 'Workflow project' in g.inner_text('#projList') and ls(TKEY) == collBefore and json.loads(ls(KEY))['projects'][0]['decisions']['699']['status'] == 'buy')
         g.click('#projList [data-open]'); g.wait_for_timeout(150)
         # edit then undo
-        g.click('#pUseColl'); g.wait_for_timeout(80)
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.wait_for_timeout(80)
         nothing = 'Nothing to change' in g.inner_text('#pCmpPrev'); g.click('#pCancelColl')
         g.click('#st-310-buy'); g.wait_for_timeout(80); dec0 = json.loads(ls(KEY))['projects'][0]['decisions']
-        g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(100)
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(100)
         ok(f'W11 {T} re-apply after a manual edit puts 310 back to Not sure', nothing and json.loads(ls(KEY))['projects'][0]['decisions']['310']['status'] == 'check')
         g.click('#pUndoColl'); g.wait_for_timeout(100); dec1 = json.loads(ls(KEY))['projects'][0]['decisions']
         ok(f'W12 {T} Undo restores the manual edit; collection unchanged throughout', dec1['310']['status'] == 'buy' and dec1 == dec0 and ls(TKEY) == collBefore, (dec0.get('310'), dec1.get('310')))
@@ -81,7 +82,7 @@ with sync_playwright() as p:
         with g.expect_download() as dl: g.click('#backupBtn')
         bp = os.path.join(prof, 'bk.json'); dl.value.save_as(bp); snapP, snapT = ls(KEY), ls(TKEY)
         g.evaluate('localStorage.clear()'); g.reload(); g.wait_for_load_state('networkidle')
-        if g.locator('#tourNo').count(): g.click('#tourNo')
+        if g.locator('#tourNo').is_visible(): g.click('#tourNo')  # the tour invite sits on Find floss; a reload on #projects keeps it out of view
         g.click('#tabProjects'); ok(f'W13 {T} storage cleared', ls(KEY) is None or json.loads(ls(KEY))['projects'] == [])
         g.click('#backupBox summary'); g.set_input_files('#restoreFile', bp); g.wait_for_timeout(250); g.click('#rGo'); g.wait_for_timeout(200)
         ok(f'W14 {T} import restores projects and collection exactly', json.loads(ls(KEY))['projects'] == json.loads(snapP)['projects'] and json.loads(ls(TKEY))['threads'] == json.loads(snapT)['threads'])

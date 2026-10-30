@@ -1,6 +1,7 @@
 """Pattern import end to end on SYNTHETIC fixtures (tests/fixtures/patterns). Real-pattern validation is a separate manual protocol.
 Usage: FF_KEY=flossfox-dev.v1 python3 tests/pattern_import_e2e.py URL"""
 import sys, os, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1]; KEY = os.environ.get('FF_KEY', 'flossfox-dev.v1'); PFX = KEY.replace('.v1', '')
 FX = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures', 'patterns')
@@ -26,6 +27,7 @@ with sync_playwright() as p:
     ok('I1c Create stays disabled until the one confirmation, and says why next to the button', g.locator('#patImport').is_disabled() and 'Tick the box above to create your project.' in g.inner_text('#patWhy') and g.locator('#patWhy a[href="#patAll"]').count() == 1, g.inner_text('#patWhy'))
     ok('I1c2 no per-color checkboxes (only the one confirmation)', g.locator('#patRows .pat-row input[type=checkbox]').count() == 0 and g.locator('#patAll').count() == 1)
     for t in g.locator('#patRows input[type=checkbox]').all(): t.check()
+    if g.locator('#patAll').count() and not g.locator('#patAll').is_checked(): g.check('#patAll')  # flow pass: the one tick now sits in the pinned bar
     g.fill('#patName', 'Synthetic sampler'); g.click('#patImport'); g.wait_for_timeout(400)
     pr = projects(g)
     ok('I1d save: one project with stated amounts only', len(pr) == 1 and {i['code']: i['qty'] for i in pr[0]['items']} == {'310': 2, '321': 1, '666': None, '3865': None}, pr)
@@ -35,19 +37,20 @@ with sync_playwright() as p:
     h = page("localStorage.setItem('%s.threads.v1',JSON.stringify({schema:2,threads:{'310':{n:3,partial:false,restock:false,updated:'2026-10-01T00:00:00Z'},'321':{n:0,partial:true,restock:false,updated:'2026-10-01T00:00:00Z'}}}))" % PFX)
     load(h, 'native-legend.pdf')
     for t in h.locator('#patRows input[type=checkbox]').all(): t.check()
+    if h.locator('#patAll').count() and not h.locator('#patAll').is_checked(): h.check('#patAll')  # flow pass: tick is in the pinned bar
     h.click('#patImport'); h.wait_for_timeout(400)
     ok('I2 after import Pip checks the collection automatically (banner shown)', 'Pip checked your threads' in h.inner_text('#pAuto'), h.inner_text('#pAuto'))
     h.click('#pFlow [data-flow=cmp]'); h.wait_for_timeout(200)
     cmp = h.inner_text('#pCmp')
     ok('I2b comparison uses the existing engine: 310 owned, others short/missing', 'Compared with my thread collection' in cmp and '1 owned' in cmp.replace('\n', ' ').replace('✓ ', ''), cmp[:300])
     if h.locator('#pUseColl').count():
-        h.click('#pUseColl'); h.wait_for_timeout(200)
+        h.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); h.click('#pUseColl'); h.wait_for_timeout(200)
         if h.locator('#pApplyColl').count(): h.click('#pApplyColl'); h.wait_for_timeout(200)
     h.screenshot(path=os.path.join(SHOTS, '12-import-compared.png'), full_page=False)
     ok('I2c imported items flow into the shopping list without re-entry', h.locator('#pPlan').count() == 1)
     # 3 column table
     k = page(); info, codes = load(k, 'column-table-legend.pdf')
-    ok('I3 column-table legend: codes taken, Blanc as White', codes == ['DMC 310', 'DMC WHITE', 'DMC 3865', 'DMC 321'], codes)
+    ok('I3 column-table legend: codes taken, BLANC stays BLANC', codes == ['DMC 310', 'DMC BLANC', 'DMC 3865', 'DMC 321'], codes)
     vals = k.evaluate("[...document.querySelectorAll('#patRows input[type=number]')].map(i=>i.value)")
     ok('I3b unlabeled numbers are not filled in', all(v == '' for v in vals), vals)
     ok('I3c plain-language warning shown', 'no label' in k.inner_text('#patRows'))

@@ -57,7 +57,7 @@ function verdict(r1,r2){r1=r1||{};const P=PC(),H=PCH(),items=[],tips=[];let red=
  for(const x of r1.amounts||[])tips.push({kind:'amount',code:x.code,show:x.code,text:P.STR.amt(x)});
  if(r2){for(const x of r2.symMulti||[]){items.push({kind:'symMulti',text:H.STR.symMulti(x)});red=true}for(const x of r2.extra||[]){items.push({kind:'extra',text:H.STR.extra(x)});red=true}
   if(r2.labels&&r2.labels.missing&&r2.labels.missing.length){items.push({kind:'missing',text:H.STR.missing(r2.labels.missing)});red=true}
-  for(const x of r2.codeMulti||[])items.push({kind:'codeMulti',code:x.code,show:x.code,text:H.STR.codeMulti(x)});
+  for(const x of r2.symUnsure||[])items.push({kind:'symUnsure',text:H.STR.symUnsure(x)});/* symcheck: softer, not red */for(const x of r2.codeMulti||[])items.push({kind:'codeMulti',code:x.code,show:x.code,text:H.STR.codeMulti(x)});
   for(const x of r2.counts||[])items.push({kind:'count',code:x.code,show:x.code,text:H.STR.count(x)});
   if(r2.sum)items.push({kind:'sum',text:H.STR.sum(r2.sum)});if(r2.labels&&r2.labels.repeat&&r2.labels.repeat.length)items.push({kind:'repeat',text:H.STR.repeat(r2.labels.repeat)});
   const un=r2.unused||[];if(un.length>3)tips.push({kind:'unused',text:H.STR.unusedMany(un)});else un.forEach(x=>tips.push({kind:'unused',code:x.code,text:H.STR.unused(x)}))}

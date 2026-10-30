@@ -1004,8 +1004,8 @@
     if (typeof code !== 'string' && typeof code !== 'number') return null;
     const c = String(code).trim().toUpperCase();
     // Named shades: canonical keys match the DMC table (WHITE, ECRU, B5200).
-    // BLANC is DMC's own name for white, and the app labels it 'BLANC (White)'; 5200 is the plain number printed for B5200.
-    const NAMED = { WHITE:'WHITE', BLANC:'WHITE', 'BLANC (WHITE)':'WHITE', ECRU:'ECRU', B5200:'B5200', '5200':'B5200' };
+    // BLANC is its own DMC color (ci005-82) and is never linked as WHITE; 5200 is the plain number printed for B5200.
+    const NAMED = { WHITE:'WHITE', BLANC:'BLANC', ECRU:'ECRU', B5200:'B5200', '5200':'B5200' };
     if (Object.prototype.hasOwnProperty.call(NAMED, c)) return NAMED[c];
     // Preserve 01-09 as 2-digit codes. Do not turn 0310 into 310 silently.
     if (!/^(?:0[1-9]|[1-9][0-9]{0,3})$/.test(c)) return null;

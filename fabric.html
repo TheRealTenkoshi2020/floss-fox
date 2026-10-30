@@ -2,6 +2,13 @@
 <title>Pip's Fabric Calculator: cross stitch fabric size · Floss Fox</title>
 <meta name="description" content="Free cross stitch fabric calculator: enter your pattern's stitch count, pick Aida or evenweave and how much extra fabric you want, and get your finished design size and the fabric to cut, in inches and centimeters.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="canonical" href="https://flossfox.com/fabric.html"><style>
+.fchow>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px}
+.fchow>summary::-webkit-details-marker{display:none}
+.fchow>summary h2{display:inline;margin:0;font-size:1.15rem}
+.fchow[open]>summary{margin-bottom:8px}
+.fchow>summary::after{content:"";margin-left:auto;width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.7;flex:none}
+.fchow[open]>summary::after{transform:rotate(-135deg)}
+
 :root{--bg:#f7f1e6;--card:#fffaf2;--line:#e6dccb;--txt:#3b2f28;--mut:#6f6257;--lime:#b4532a;--pink:#5f7a5c;--blush:#f3d9cf}
 *{box-sizing:border-box}body{margin:0;background:var(--bg) radial-gradient(#e9dfcd 1px,transparent 1px) 0 0/14px 14px;color:var(--txt);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
@@ -50,10 +57,18 @@ details.others summary,details.tips summary{cursor:pointer;min-height:44px;displ
 .ffask{min-height:44px;margin:8px 0}.ffpipbox{background:#fff8e8;border-radius:10px;padding:8px 12px;margin:8px 0}.ffpipbox button,.fftopic summary{min-height:44px}.ffterm{min-width:44px;min-height:44px;border:0;background:transparent;font-weight:800;color:#7a3a22;text-decoration:underline dotted}.fftermpop{display:block;background:#fff8e8;border:1px solid #c8642f;border-radius:10px;padding:8px 12px;margin:4px 0;font-weight:400}.fftermpop button{min-height:44px}
 .ffaskrow{display:flex;align-items:center;gap:8px;margin:8px 0}.ffpipslot{display:flex;align-items:center;gap:8px;flex:1}.ffpipslot img{width:56px;height:auto}.ffpipline{margin:0;background:#fff8e8;border-radius:10px;padding:6px 10px;font-size:.95rem}
 </style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f7f1e6"><link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png"><link rel="stylesheet" href="assets/nav.css"><script src="analytics.js" defer></script>
-<link rel="stylesheet" href="pip-follow.css">
-</head>
+<link rel="stylesheet" href="pip-follow.css"><link rel="stylesheet" href="theme-pair.css">
+<style>/* ci005-77: Fabric uses the refreshed header (root cause: the one-row tab strip and Ask Pip chip lived only in index's flow-pass.css, and fabric.html hand-copies its header). */
+@media(max-width:560px){.fcnav.tabsrow{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px!important;padding:4px 0}
+ .fcnav.tabsrow::-webkit-scrollbar{display:none}
+ .fcnav.tabsrow a{flex:0 0 auto!important;min-height:44px!important;padding:0 12px!important;scroll-snap-align:start;white-space:nowrap!important;font-size:.88rem!important}
+ .fcnav.tabsrow a[href="index.html#settings"]{display:inline-flex!important}}
+.wrap>header{display:flex!important;flex-wrap:nowrap!important;align-items:center;gap:10px}.wrap>header .t{min-width:0;flex:1 1 auto}
+.askpipbtn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid #e6dccb;background:#fffaf2;color:#3b2f28;font:inherit;font-weight:650;cursor:pointer;flex:none}
+.askpipbtn:focus-visible{outline:3px solid #e9a77f;outline-offset:2px}
+</style></head>
 <body><div class="wrap"><header><svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Floss Fox logo"><path d="M10 8l14 14h16L54 8l-2 26-20 24L12 34z" fill="#c8642f"/><path d="M14 13l9 10-7 6zM50 13l-9 10 7 6z" fill="#7a3a22"/><path d="M12 34l20 24 20-24-12 2-8 10-8-10z" fill="#fbf3e6"/><circle cx="24" cy="31" r="2.6" fill="#3b2f28"/><circle cx="40" cy="31" r="2.6" fill="#3b2f28"/><path d="M29 47h6l-3 4z" fill="#3b2f28"/><path d="M4 60c10-6 18-2 28-6s18 0 28-4" stroke="#5f7a5c" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/></svg><div class="t"><p class="brand" style="margin:0;font-size:1.5rem;font-weight:800">Floss <span>Fox</span></p></div></header>
-<nav class="fcnav noprint" aria-label="Main"><a href="index.html#convert">🧵 Find floss</a><a href="index.html#threads">🧶 My threads</a><a href="index.html#projects">📁 Projects</a><a href="index.html#shop">🛒 Shopping</a><a href="fabric.html" aria-current="page">📐 Fabric</a><a href="index.html#help">💬 Help</a><a href="index.html#settings">⚙ Settings</a></nav>
+<nav class="fcnav tabsrow noprint" aria-label="Main"><a href="index.html#convert">🧵 Find floss</a><a href="index.html#threads">🧶 My threads</a><a href="index.html#projects">📁 Projects</a><a href="index.html#shop">🛒 Shopping</a><a href="fabric.html" aria-current="page">📐 Fabric</a><a href="index.html#help">💬 Help</a><a href="index.html#settings">⚙ Settings</a></nav>
 <main class="fc" id="fc">
 <h1>Pip's Fabric Calculator</h1><p class="ffsub mut small">Room for every stitch</p><p class="intro">Let's measure out your canvas: how much fabric to cut, with room around the design.</p>
 <div class="fcgrid">
@@ -90,7 +105,7 @@ details.others summary,details.tips summary{cursor:pointer;min-height:44px;displ
 <div class="tip"><img src="assets/pip/pip-organizing-160.png" width="160" height="189" alt="" loading="lazy" decoding="async"><p><b>Why extra fabric?</b> A margin of fabric gives the hoop something to hold now and the frame something to grip later.</p></div>
 <div class="tip"><img src="assets/pip/pip-presenting-160.png" width="160" height="222" alt="" loading="lazy" decoding="async"><p><b>What do the results mean?</b> "Your finished design" is the stitched area. "Fabric to cut" adds your extra fabric on every side and rounds up to the next ¼ inch.</p></div></details>
 </section></div>
-<section class="card"><h2>How this cross stitch fabric calculator works</h2><p>Divide the number of stitches by the stitches per inch of your fabric. On Aida, stitches per inch equals the count; on evenweave or linen stitched over two threads, it's half the count (28-count over two = 14 stitches per inch). Then add the extra fabric twice, once for each side, to get the fabric to cut. Floss Fox rounds the fabric to cut up to the next ¼ inch, so rounding never leaves you short, and works out centimeters from that rounded inch value. Everything runs in your browser; nothing is sent anywhere.</p></section>
+<section class="card"><details class="fchow" id="fcHow"><summary><h2>How this calculator works</h2></summary><p>Divide the number of stitches by the stitches per inch of your fabric. On Aida, stitches per inch equals the count; on evenweave or linen stitched over two threads, it's half the count (28-count over two = 14 stitches per inch). Then add the extra fabric twice, once for each side, to get the fabric to cut. Floss Fox rounds the fabric to cut up to the next ¼ inch, so rounding never leaves you short, and works out centimeters from that rounded inch value. Everything runs in your browser; nothing is sent anywhere.</p></details></section>
 </main>
 <footer><p><a href="index.html">Find My Floss</a> · <a href="fabric.html">Fabric calculator</a> · <a href="about.html">About</a> · <a href="privacy.html">Privacy</a><span class="ffsettingslink"> · <a href="index.html#settings">Backup and settings</a></span> · Works offline in this page; nothing is sent anywhere.</p></footer></div>
 <script src="flow-strings.js"></script><script src="pip-help.js" defer></script><script src="pip-b2.js" defer></script><script src="pip-follow.js" defer></script><script src="fabric/calc.js"></script><script src="fabric/ui.js"></script><script>if("serviceWorker"in navigator&&/[?&]nosw\b/.test(location.search)){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});if(self.caches)caches.keys().then(ks=>ks.forEach(k=>/^flossfox/.test(k)&&caches.delete(k))).catch(()=>{})}else if("serviceWorker"in navigator&&!/[?&]nosw\b/.test(location.search))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script></body></html>

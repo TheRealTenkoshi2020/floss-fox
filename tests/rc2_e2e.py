@@ -3,6 +3,7 @@
 (screen, shop view, Copy text, CSV, print, price estimate, Pip completion states).
 Usage: python tests/rc2_e2e.py [BASE_URL] [--shots DIR] [--webkit]   (preview: set FF_KEY like regression.py)"""
 import sys, os, argparse, json, subprocess, csv, io
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/'); ap.add_argument('--chrome', default='/usr/bin/google-chrome'); ap.add_argument('--shots', default=None); ap.add_argument('--webkit', action='store_true')
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'
@@ -38,7 +39,7 @@ with sync_playwright() as p:
         dec = lambda: json.loads(ls(KEY))['projects'][0]['decisions']
         vh = g.evaluate('innerHeight')
         # ---- 1. compact preview ----
-        g.click('#pUseColl'); g.wait_for_timeout(150)
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.wait_for_timeout(150)
         sm = g.inner_text('#pPrevSum')
         ok(f'C1 {T} compact summary: "Will mark 1 Have enough, 16 Not sure, 7 Need to buy"', sm.startswith('Will mark 1 Have enough, 16 Not sure, 7 Need to buy'), sm)
         ok(f'C2 {T} full list is behind a closed "Show all 24 changes" expander', g.inner_text('#pPrevAll summary') == 'Show all 24 changes' and not g.evaluate("document.getElementById('pPrevAll').open") and g.locator('#pPrevAll li').count() == 24)
@@ -48,18 +49,18 @@ with sync_playwright() as p:
         if A.shots and W == 390: os.makedirs(A.shots, exist_ok=True); g.screenshot(path=f'{A.shots}/compact-preview-390{"-webkit" if A.webkit else ""}.png')
         g.click('#pPrevAll summary'); ok(f'C5 {T} expander lists every change', g.locator('#pPrevAll li:visible').count() == 24 and 'DMC 699 (missing)' in g.inner_text('#pPrevAll'))
         g.click('#pCancelColl'); ok(f'C6 {T} Cancel changes nothing', dec() == {} or all(not v.get('status') for v in dec().values()))
-        g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(150); d = dec()
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(150); d = dec()
         ok(f'C7 {T} Apply: 1 have, 16 not sure, 7 buy', sum(v['status'] == 'have' for v in d.values()) == 1 and sum(v['status'] == 'check' for v in d.values()) == 16 and sum(v['status'] == 'buy' for v in d.values()) == 7)
         g.click('#pUndoColl'); g.wait_for_timeout(100); ok(f'C8 {T} Undo still restores the previous state', all(not v.get('status') for v in dec().values()))
-        g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(100); g.click('#st-310-buy'); g.wait_for_timeout(100)
+        g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(100); g.click('#st-310-buy'); g.wait_for_timeout(100)
         ok(f'C9 {T} manual edit still clears Undo', g.locator('#pUndoColl').count() == 0)
         g.click('#st-310-have'); g.wait_for_timeout(100)
         # ---- 2. Need to buy vs Check first ----
         plan = g.inner_text('#pPlan'); nb = plan.split('Check first')[0]; cf = g.inner_text('#pCheck')
         ok(f'S1 {T} screen: Check first (16) is its own section', g.inner_text('#pCheckH') == 'Check first (16)' and g.locator('#pCheck li').count() == 16)
-        ok(f'S2 {T} plain note: "16 colors still need checking before this list is complete."', '16 colors still need checking before this list is complete.' in g.inner_text('#pCfNote'))
+        ok(f'S2 {T} plain note (Pixel final, n>1, ci005-65)', g.inner_text('#pCfNote').strip() == "These colors still need a look. Check them in My threads, or buy any you already know you need.")
         ok(f'S3 {T} Need to buy holds only known short/missing (321 + 6 missing), no check-first color', all(f'DMC {c}' in nb for c in MISS) and 'DMC 321' in nb and not any(f'DMC {c} ' in nb for c in OWN[2:]), nb[:500])
-        ok(f'S4 {T} check-first colors explain why (owned, quantity not verified -> Not sure)', 'marked Not sure' in cf and 'DMC 815' in cf)
+        ok(f'S4 {T} owned, quantity not verified color is listed under Check first (ci005-65: color only, no reason line)', 'DMC 815' in cf and 'marked Not sure' not in cf)
         tot = g.inner_text('#pPlan .totals')
         ok(f'S5 {T} estimate is labelled "Need to buy only" and says check-first colors are not included', 'Need to buy only' in tot and 'Not included: 16 colors in Check first' in tot, tot)
         ok(f'S6 {T} headline not ready; Check first counted in the summary', g.get_attribute('#pSummary', 'data-ready') == 'false' and g.inner_text('#sCf') == '16')

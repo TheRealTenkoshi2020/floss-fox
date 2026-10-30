@@ -4,6 +4,7 @@
   stubs gc.zgo.at (nothing leaves the box). Checks the tag: async, right src, data-goatcounter.
 - Offline on localhost with the service worker: pages still load, the SW never answers cross-origin."""
 import sys, os, re
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 L = sys.argv[1].rstrip('/') + '/'; PV = sys.argv[2].rstrip('/') + '/' if len(sys.argv) > 2 else None
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); PAGES = ['', 'about.html', 'privacy.html', 'fabric.html']; R = [0, 0]

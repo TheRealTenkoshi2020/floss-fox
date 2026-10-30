@@ -1,0 +1,103 @@
+/* Flow pass (dev): layout only. Same colors, fonts and Pip art. */
+.thquick{margin:6px 0 4px}.thqrow{display:flex;gap:8px;align-items:stretch}
+.thqrow textarea{flex:1;min-width:0;min-height:44px;height:44px;resize:vertical;padding:10px;line-height:1.3}
+.thqrow button{flex:none;white-space:nowrap}
+@media(max-width:420px){.thqrow #thAddBtn{padding-left:12px;padding-right:12px}}
+.thmore{display:flex;flex-wrap:wrap;gap:4px 8px;margin:4px 0 0}
+.thfrom{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}.thfrom button{text-align:left}
+.ffundo{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.ffto{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.ffmore{margin:6px 0}.ffmore>summary{cursor:pointer;color:var(--sage-ink,#3d5a40);font-weight:650;min-height:44px;display:flex;align-items:center}
+.ffmore>summary::-webkit-details-marker{margin-right:6px}
+
+.ffill{display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center;margin:.5rem 0}
+.ffill .hint{flex:1 1 14rem}
+@media(max-width:360px){.thqrow{flex-wrap:wrap}.thqrow textarea{flex:1 1 100%}.thqrow #thAddBtn{flex:1 1 100%}}
+/* Item 1: phones get one row of tabs that scrolls sideways (Settings included) and a smaller Ask Pip. */
+@media(max-width:560px){
+ nav.tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px!important;padding-top:4px;padding-bottom:4px;position:relative}
+ nav.tabs::-webkit-scrollbar{display:none}
+ nav.tabs>*{flex:0 0 auto!important;grid-column:auto!important;min-height:44px!important;padding:0 12px!important;scroll-snap-align:start;white-space:nowrap!important;font-size:.88rem!important}
+ nav.tabs #tabSettings{display:inline-flex!important}
+ #askPipBtn{min-height:44px;padding-top:2px;padding-bottom:2px}#askPipBtn img{width:28px;height:auto}
+}
+/* Item 6: store links as small chips side by side; the store note is a one-line fold. */
+.ffstore{margin:2px 0 8px}.ffstore summary{font-size:.85rem;min-height:44px;display:flex;align-items:center}
+#shopView .ff-skein-inline{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#shopView .ff-skein-pill{display:inline-flex;align-items:center;font-size:.8rem;padding:4px 10px;min-height:36px;width:auto;border-radius:999px}
+/* Item 7: a shorter project page on phones: one-line counts and one row of jump links. */
+@media(max-width:560px){
+ #pSummary .stats{display:flex!important;flex-wrap:wrap;gap:6px!important}
+ #pSummary .stats li{display:inline-flex!important;flex-direction:row!important;align-items:baseline;gap:4px;padding:4px 10px!important;min-height:0!important;border-radius:999px;font-size:.85rem}
+ #pSummary .stats li b{font-size:1rem!important}
+ #pSummary nav.jump{display:flex!important;flex-wrap:wrap;gap:6px}
+ #pSummary nav.jump a{padding:6px 10px!important;min-height:36px;font-size:.85rem}
+}
+
+/* Tab row scroll hint: soft fade + chevron only on a side with more tabs (classes set by tab-hint.js). */
+@media(max-width:560px){
+ nav.tabs{padding-left:0!important;padding-right:0!important}
+ nav.tabs::before,nav.tabs::after{content:'';position:sticky;z-index:2;flex:0 0 30px;width:30px;align-self:stretch;opacity:0;pointer-events:none;transition:opacity .2s ease;background-repeat:no-repeat}
+ nav.tabs::before{left:0;order:-1;margin-right:calc(var(--s4,16px) - 36px);scroll-snap-align:start;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10 3 5 8l5 5' fill='none' stroke='%233D5C48' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),linear-gradient(90deg,var(--canvas,#F8F4EB) 40%,transparent);background-size:14px 14px,100% 100%;background-position:2px center,0 0}
+ nav.tabs::after{right:0;order:99;margin-left:calc(var(--s4,16px) - 36px);scroll-snap-align:end;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3l5 5-5 5' fill='none' stroke='%233D5C48' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),linear-gradient(270deg,var(--canvas,#F8F4EB) 40%,transparent);background-size:14px 14px,100% 100%;background-position:calc(100% - 2px) center,0 0}
+ nav.tabs.th-l::before,nav.tabs.th-r::after{opacity:1;pointer-events:auto;cursor:pointer}
+}
+@media(prefers-reduced-motion:reduce){nav.tabs::before,nav.tabs::after{transition:none}}
+/* ci005-59 projects scroll pass: compact cards, collapsed compare, compact summary */
+#pCards .tcard{padding:8px 10px;margin-bottom:6px}
+#pCards .tcard .top{gap:8px}
+#pCards .tcard .ident{display:flex;flex-wrap:wrap;column-gap:6px;align-items:baseline}
+#pCards .tcard .code{font-size:1.05rem}#pCards .tcard .cname{font-size:.85rem}
+#pCards .tcard .need{order:3;flex-basis:100%;margin:0}
+#pCards .tcard .stat{order:4;margin:2px 0 0;padding:1px 8px;font-size:.78rem}
+#pCards .tcard .seg{margin-top:6px}
+.tcard .caut{font-size:.82rem;font-weight:700;color:var(--warn-ink,#8a2f17);margin-top:4px}
+.tcard .caut::before{content:"! ";}
+.tdet>.why{margin:0 0 var(--s2,8px)}
+.pcmp>summary{cursor:pointer;list-style:none}.pcmp>summary::-webkit-details-marker{display:none}
+.pcmp>summary:focus-visible{outline:3px solid var(--focus,#2f6f9f);outline-offset:2px;border-radius:6px}
+.pcmp>summary .cnt{margin:4px 0 0}
+#pAutoMore{margin-top:4px;min-height:44px}
+#pSummary .stats{margin:6px 0!important}
+.psum .skeins{font-size:.88rem;margin:4px 0}
+.psum ul.next{margin:6px 0}.psum ul.next li{padding:6px 10px;gap:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap}
+/* ci005-61: Check first rows: quick status buttons + Buy chooser (same pills as Store Mode) */
+.ffcf-acts{display:flex;flex-wrap:wrap;gap:.4rem;margin:.4rem 0 .2rem}
+.ffcf-acts button{white-space:nowrap}
+.ffcf-buy .ffcf-buynote{flex-basis:100%;margin:0 0 .25rem}
+#smCheck .ffsm-row{flex-wrap:wrap}
+#smCheck .ffcf-acts,#smCheck .ffcf-buy{flex-basis:100%}
+#pCheck li{padding:.45rem 0}
+/* ci005-62: Buy on Check first rows sits on its own line below the status buttons */
+.ffcf-acts .ffcf-buyrow{flex-basis:100%;display:flex}
+
+/* compact-ci005: compact rows and closed-by-default sections (layout only, no data change) */
+html:not(.ffall) .tcard.cmp .seg{display:none}
+.tcard.cmp .need{margin-top:2px}
+.th .thtog{flex:1;min-width:0;min-height:44px;overflow-wrap:anywhere;text-align:left;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer;position:relative;border-radius:8px}
+.th .thtog:focus-visible{outline:3px solid var(--focus,#2f6f5e);outline-offset:2px}
+.th .thedit{display:inline-block;margin-left:8px;padding:0 8px;border:1px solid currentColor;border-radius:999px;font-size:.85em;line-height:1.6;opacity:.85}
+html:not(.ffall) .th:not(.thx) .thopts:not(:focus-within){display:none}
+html:not(.ffall) .th:not(.thx) .ff-storage:not([open]):not(:focus-within){display:none}
+.ffkitgo{align-items:center;gap:8px;margin-top:var(--s3,12px)}
+.help details.helpsec{border-top:1px solid var(--line,#d9ddd6);margin:0}
+.help details.helpsec:last-of-type{border-bottom:1px solid var(--line,#d9ddd6);margin-bottom:var(--s3,12px)}
+.help details.helpsec>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;padding:4px 0}
+.help details.helpsec>summary h3{display:inline;margin:0;font-size:1.05rem}
+.help details.helpsec[open]>summary{margin-bottom:6px}
+.phavetog{list-style:none;margin:0 0 var(--s2,8px)}
+.phavetog>button{width:100%;min-height:44px}
+/* ci005-77: every expander row is a 44px tap target */
+summary{min-height:44px;box-sizing:border-box;padding-top:10px;padding-bottom:10px}
+.ffhelplink{margin:var(--s3,12px) 0}.ffhelplink button{min-height:44px}
+.ffchiprow{margin:4px 0 8px}
+
+/* ci005-77 (Myke's phone report): My threads add row. */
+.thlblrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.thlblrow .flbl{margin:0}
+.thhint{margin:2px 0 6px}
+@media(max-width:560px){.thqrow{flex-wrap:wrap}.thqrow textarea{flex:1 1 100%;min-width:0;width:100%}.thqrow #thAddBtn{flex:1 1 100%}}
+.fffrom{display:flex;max-width:100%;min-width:0;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-align:left}
+.fffrom>span:first-child{flex:none;white-space:pre}.fffrom .fffname{min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* ci005-78 (Pixel compact-2): Edit chip keeps its slim look but gets a 44px hit area; one Pip hides the skein panel art, so drop its empty frame */
+.th .thedit{position:relative;white-space:nowrap}.th .thedit::after{content:'';position:absolute;left:-6px;right:-6px;top:50%;height:44px;transform:translateY(-50%)}
+body.pipone .skein-summary-mark{display:none}

@@ -1,6 +1,7 @@
 """First-time flow phases 1-2 (SIMULATED browser testing: headless Chrome, 390px, mobile + touch emulation; not real devices).
 Usage: python3 tests/flow_p12_e2e.py BASE_URL"""
 import sys, json, os
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1].rstrip('/') + '/'; KEY = 'flossfox-dev.v1'; R = [0, 0]
 def ok(n, c, d=''): R[0 if c else 1] += 1; print(('PASS ' if c else 'FAIL ') + n + ('' if c else ' -> ' + str(d)[:300]))
@@ -26,7 +27,7 @@ with sync_playwright() as p:
     # (a) auto-compare on a new project, with Undo
     g = page(seed([]))
     paste_save(g, '310 x1\n321 x1\n666\n3865\n815')
-    g.click('#openSaved'); g.wait_for_timeout(400); a = g.inner_text('#pAuto')
+    g.click('#openSaved'); g.wait_for_timeout(400); g.click('#pAutoMore'); g.wait_for_timeout(60); a = g.inner_text('#pAuto')
     ok('a1 new project: Pip checks My threads automatically and says so', 'Pip checked your threads: you have enough of 2 of these 5 colors.' in a, a)
     ok('a2 banner explains Not sure and Need to buy with exact plurals', "1 color you own needs an amount check, so it's marked Not sure." in a and '2 colors are short or missing, so they went on Need to buy.' in a, a)
     d = store(g)[0]['decisions']; ok('a3 auto-compare used the existing engine result (310/321 Have enough, 666 Not sure, 3865/815 Need to buy)', [d[c]['status'] for c in ['310', '321', '666', '3865', '815']] == ['have', 'have', 'check', 'buy', 'buy'], d)
@@ -73,7 +74,7 @@ with sync_playwright() as p:
     g.click('#thNext'); g.wait_for_timeout(200); ok('c2 threads Next carries you to adding a pattern', g.is_visible('#convertView'))
     g.fill('#inp', '310 x1\n321'); g.click('#go'); g.wait_for_timeout(250); ok('c3 results show one Next: save as a project', g.is_visible('#findNextBtn') and 'save as a project' in g.inner_text('#findNextBtn'))
     g.click('#saveProj'); g.wait_for_timeout(300); g.click('#openSaved'); g.wait_for_timeout(300)
-    ok('c4 project has Next: see readiness and Next: see what to buy', g.locator('[data-ffgo="ready"]').count() == 1 and g.locator('#pNext').count() == 1)
+    ok('c4 project keeps one Next: see what to buy (#pNext); duplicate Next buttons removed in ci005-59, readiness is the Readiness step', g.locator('[data-ffgo="ready"]').count() == 0 and g.locator('#pNext').count() == 1 and g.locator('#pFlow [data-flow="ready"]').count() == 1)
     g.click('#pNext'); g.wait_for_timeout(200); ok('c5 project Next carries the project into Shopping', g.is_visible('#shopView') and g.is_visible('#shopBody'))
     ok('c6 Shopping has Back to my project', g.is_visible('#shopBack') and g.inner_text('#shopBack') == 'Back to my project')
     # (d) import label everywhere
@@ -168,7 +169,7 @@ with sync_playwright() as p:
     ok('j4 reduced motion: strip has no animation', g.evaluate("getComputedStyle(document.getElementById('pipStrip')).animationName") == 'none')
     ok('j5 strip is decorative only (no new tap targets, hidden from screen readers; Ask Pip stays the entry)', g.locator('#pipStrip button, #pipStrip a').count() == 0 and g.get_attribute('#pipStrip', 'aria-hidden') == 'true')
     # Pixel batch 2
-    g = page(seed([])); paste_save(g, '310 x1\n321 x1\n815'); g.click('#openSaved'); g.wait_for_timeout(300)
+    g = page(seed([])); paste_save(g, '310 x1\n321 x1\n815'); g.click('#openSaved'); g.wait_for_timeout(300); g.click('#pAutoMore'); g.wait_for_timeout(60)
     ok('k1 banner says how many colors Pip filled in (n wired)', "Pip filled in 3 colors you hadn't decided yet." in g.inner_text('#pAuto'), g.inner_text('#pAuto'))
     g.reload(); g.wait_for_timeout(300); g.click('#tabProjects'); g.click('[data-open]') if g.is_visible('[data-open]') else None; g.wait_for_timeout(300)
     ok('k2 reload: nothing-to-fill banner shown once', 'nothing to fill in' in g.inner_text('#pAuto'), g.inner_text('#pAuto'))

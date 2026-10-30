@@ -2,3 +2,5 @@
 .bknotice{border:1.5px solid var(--line);background:var(--surface,#fffaf2);border-radius:var(--r2,16px);padding:var(--s3,12px);margin:0 0 var(--s4,16px)}
 .bknotice p{margin:0}.bknotice .row{margin-top:8px}.bksettings h2{margin-top:0}.bksettings fieldset{border:1px solid var(--line);border-radius:var(--r2,16px);margin:20px 0 0;padding:16px}.bksettings legend{font-weight:700;padding:0 6px}.bksettings label{display:flex;align-items:center;gap:10px;min-height:44px}.bksettings select{font:inherit;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;max-width:100%}.bksettings .bkinterval{flex-wrap:wrap}.bksettings .bkstatus{margin:12px 0 0;min-height:1.5em}.bksettings input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--sage-ink,#3d5a45)}
 @media print{#settingsView,.bknotice{display:none!important}}
+/* Phase 0: automatic copies list */
+.snapbox{margin-top:14px}.snaplist{list-style:none;padding:0;margin:8px 0}.snaplist li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line,#ddd)}.snaplist li:first-child{border-top:0}

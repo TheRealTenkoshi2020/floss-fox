@@ -60,15 +60,20 @@ function stateFor(r,submitted){const c=[greeted?'idle':returning?'welcomeBack':'
  return c.sort((a,b)=>STATES[b].pri-STATES[a].pri)[0]}
 const $=id=>document.getElementById(id);
 const el=$('pip');if(!el)return;
+const REST=['greeting','greeting-alt','neutral'],dk=$('pipSrcDark');
 const img=$('pipImg'),src=$('pipSrc'),msg=$('pipMsg'),fig=$('pipFig'),tog=$('pipToggle'),hi=$('pipHi');
 let greeted=false,touring=false,cur=null,base='welcome',lastR={items:[],errs:[]},over=null,overT=0,celebrated=false;
 const T={toast:3500,celebrate:4000,tangle:2600,tangleGap:60000,idle:90000,minSleep:4000,throttle:1000};
 const set=(a,ext)=>SIZES.map(w=>`assets/pip/pip-${a}-${w}.${ext} ${w}w`).join(', ');
 let screenK=null,screenT='',screenPose=null,secPose=null,secText='',evPose=null,evText='';
+function paint(a){// Visual refresh: in the hero (Find floss), Pip's resting poses show the theme art: gardener (light), starlight (dark). Other poses unchanged.
+ const th=REST.includes(a)&&!!el.closest('.herogrid'),la=th?'gardener':a,key=th?'theme':a;
+ if(img.dataset.art!==a||img.dataset.show!==key){src.srcset=set(la,'webp');img.srcset=set(la,'png');img.src=`assets/pip/pip-${la}-320.png`;img.dataset.art=a;img.dataset.show=key;
+  if(dk){dk.media=th?'(prefers-color-scheme: dark)':'not all'}}}
 function show(name,r,anim=true){if(screenK&&name===base)name='screen';const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);const pz=typeof S.pose==='function'?S.pose(lastR):S.pose;
  if(cur===name&&msg.textContent===text&&el.dataset.pose===poseArt(pz))return; // nothing meaningful changed
  const a=poseArt(pz);cur=name;el.dataset.state=name;el.dataset.pose=a;
- if(img.dataset.art!==a){src.srcset=set(a,'webp');img.srcset=set(a,'png');img.src=`assets/pip/pip-${a}-320.png`;img.dataset.art=a}
+ paint(a);
  msg.textContent=text;msg.classList.toggle('quiet',!text);
  fig.classList.remove('pip-pop','pip-tilt','pip-fade','pip-cheer','pip-wiggle','pip-doze');if(anim){void fig.offsetWidth;fig.classList.add('pip-'+S.anim)}}
 const clearOver=()=>{clearTimeout(overT);over=null};
@@ -117,6 +122,7 @@ const api={result,show,stateFor,STATES,ART,FUTURE,current:()=>cur,base:()=>base,
  errPose,
  screen:(k,t,pose)=>{if(!k){if(!screenK)return;screenK=null;if(cur==='screen')show(base,null,false);return}if(k!==screenK){secPose=null;secText=''}screenK=k;screenT=String(t||'');screenPose=pose||null;if(over!=='event')clearOver();if(over!=='event')show('screen')},screenKey:()=>screenK,
  isHidden:()=>fig.hidden,
+ retheme:()=>{if(el.dataset.pose)paint(el.dataset.pose)},
  // one-Pip (pip-follow.js): the active section sets pose (and optionally a line) on the single companion; events briefly take over.
  section:(pose,text)=>{secPose=pose||null;secText=String(text||'');if(!over&&(cur==='screen'||screenK))show(screenK?'screen':base,null,false);else if(!over&&!screenK&&pose){/* Find floss keeps its own state machine */}},
  event:(pose,ms,text)=>{if(fig.hidden||!pose)return false;if(STATES[base].pri>STATES.event.pri)return false;evPose=pose;evText=String(text||'');overlay('event',ms||4000);return true},
@@ -213,7 +219,7 @@ function react(key,vars,anchor,opts){opts=opts||{};vars=vars||{};if(key==='pipA.
 function mountSettings(){const h=document.querySelector('#helpView .card.help');if(!h||document.getElementById('pipSettings'))return;
  const f=document.createElement('fieldset');f.id='pipSettings';f.className='pipA-settings';const cur=level();
  f.innerHTML=`<legend>${AL.label}</legend>`+['chatty','important','quiet','off'].map(l=>`<label><input type="radio" name="pipLevel" value="${l}"${l===cur?' checked':''}> ${AL[l]}</label>`).join('')+'<p class="hint" id="pipLevelMsg" role="status" aria-live="polite"></p>';
- const before=[...h.querySelectorAll('h3')].find(x=>/Your data/.test(x.textContent));h.insertBefore(f,before||null);
+ const ps=h.querySelector('#helpPipSec');if(ps)ps.append(f);else{const before=[...h.querySelectorAll('h3')].find(x=>/Your data/.test(x.textContent));h.insertBefore(f,before&&before.parentElement===h?before:null)}
  f.addEventListener('change',e=>{if(e.target.name!=='pipLevel')return;setLevel(e.target.value);document.getElementById('pipLevelMsg').textContent=AL.saved})}
 function syncSettings(){const f=document.getElementById('pipSettings');if(!f)return;const c=f.querySelector(`input[value="${level()}"]`);if(c)c.checked=true}
 mountSettings();tog.addEventListener('click',()=>{syncSettings();if(fig.hidden)closeBubble()});

@@ -2,6 +2,7 @@
 """Floss Fox 1.7 Stages C-E: My Thread Collection, project status + comparison, nav, Pip tips.
 Usage: python tests/collection_e2e.py [BASE_URL] [--shots DIR]   (preview: set FF_KEY / FF_PIP_KEY like regression.py)"""
 import sys, os, argparse, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/'); ap.add_argument('--chrome', default='/usr/bin/google-chrome'); ap.add_argument('--shots', default=None)
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'
@@ -32,7 +33,7 @@ with sync_playwright() as p:
 
     # ---- C: collection basics, persistence, quantities, duplicates, search ----
     g = page(390); g.click('#tabThreads')
-    ok('C0 storage note is shown in plain words', 'only in this browser' in g.inner_text('#thCard') and 'deletes it' in g.inner_text('#thCard'))
+    ok('C0 storage note is shown in plain words', 'only in this browser' in g.text_content('#thCard') and 'deletes it' in g.text_content('#thCard'))
     add(g, '310, 321 x2\n310\n03')
     ok('C1 add several at once; duplicate lines merge (310 twice = 2)', n(g, '310') == 2 and n(g, '321') == 2 and n(g, '03') == 1 and g.locator('#thList .th').count() == 3)
     add(g, '310 x3'); ok('C2 adding an owned color again merges into one row', g.locator('#thList .th[data-code="310"]').count() == 1 and n(g, '310') == 5)
@@ -94,7 +95,7 @@ with sync_playwright() as p:
     d.click('#openSaved'); d.wait_for_timeout(100)
     ok('D3 Demogorgon (no amounts): 13 owned-not-verified, 0 owned, 0 short, 6 missing', d.inner_text('#cmpUnver').startswith('? 13') and d.inner_text('#cmpOwned').startswith('✓ 0') and '0' in d.inner_text('#cmpShort') and d.inner_text('#cmpMissing').startswith('✗ 6'), d.inner_text('#pCmp'))
     ok('D4 stitch counts kept on the project', json.loads(ls(d, KEY))['projects'][0]['items'][0]['stitchCount'] == 100)
-    d.click('#pUseColl'); d.click('#pApplyColl'); d.wait_for_timeout(100); plan = d.inner_text('#pPlan')
+    d.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); d.click('#pUseColl'); d.click('#pApplyColl'); d.wait_for_timeout(100); plan = d.inner_text('#pPlan')
     ok('D5 shopping list holds exactly the 6 missing colors', all(f'DMC {c}' in plan for c in ['498', '304', '3799', '535', '3371']) and 'Ecru' in plan.replace('ECRU', 'Ecru') and 'DMC 310 ' not in plan.split('Check first')[0].split('Needs attention')[0], plan[:500])
     ok('D6 price estimate shown for the missing list', '$' in plan, plan[:300])
     d.click('#pCopy'); d.wait_for_timeout(150); clip = d.evaluate('navigator.clipboard.readText()')
@@ -105,7 +106,7 @@ with sync_playwright() as p:
     d.click('#tabThreads'); d.click('#tm-310'); d.click('#tm-310'); d.click('#tm-321')  # 310 -> 0 (out), 321 -> 1 (short of 2)
     d.click('#tabConvert'); d.fill('#inp', '310 x1\n321 x2\n666 x2\n3865 x1'); d.click('#go'); d.fill('#newProjName', 'Short test'); d.click('#saveProj'); d.click('#openSaved'); d.wait_for_timeout(100)
     ok('D9 short counted apart from missing (out of stock = missing)', d.inner_text('#cmpOwned').startswith('✓ 2') and d.inner_text('#cmpShort').startswith('◐ 1') and d.inner_text('#cmpMissing').startswith('✗ 1') and '321 (need 2 skeins, have 1 skein)' in d.inner_text('#pCmp'), d.inner_text('#pCmp'))
-    d.click('#pUseColl'); d.click('#pApplyColl'); d.wait_for_timeout(100); pl = d.inner_text('#pPlan')
+    d.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); d.click('#pUseColl'); d.click('#pApplyColl'); d.wait_for_timeout(100); pl = d.inner_text('#pPlan')
     ok('D10 short color asks only for the difference (321 × 1), missing for the full amount (310 × 1)', 'DMC 321 × 1' in pl and 'DMC 310 × 1' in pl and 'DMC 666' not in pl.split('Needs attention')[0], pl[:400])
     if A.shots:
         os.makedirs(A.shots, exist_ok=True); d.locator('#pCmp').scroll_into_view_if_needed(); d.screenshot(path=f'{A.shots}/project-compare-390.png')

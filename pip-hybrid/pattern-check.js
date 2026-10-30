@@ -42,7 +42,7 @@ function check(parsed,catalog,SK,fab){const rows=(parsed&&parsed.rows)||[],out={
  out.count=out.fake.length+out.dup.length+out.names.length+out.amounts.length;return out}
 // PLACEHOLDER wording for Pixel (plain, short, no em dashes; Pip is they/them).
 const sk=n=>`${n} skein${n===1?'':'s'}`;
-const STR={title:'Pattern check',clean:"Nothing stands out. It's still worth checking each color against your pattern.",
+const STR={title:'Pattern check',clean:"Nothing caught my eye. Still give each color a quick look against your pattern.",
  fake:l=>`We couldn't find ${l.join(', ')} in the DMC catalog. Check those numbers against your pattern.`,
  dup:l=>`DMC ${l.join(', ')} ${l.length===1?'is':'are'} listed more than once. Check which amount is right.`,
  name:x=>`DMC ${x.code} is listed as "${x.listed}", but the DMC catalog calls it ${x.catalog}. Check which one your pattern means.`,

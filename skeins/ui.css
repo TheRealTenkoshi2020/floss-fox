@@ -32,3 +32,5 @@
 @media(max-width:440px){.skein-fields{grid-template-columns:1fr}.skein-summary-mark{width:40px;height:40px}.skein-summary-mark img{width:32px}}
 @media(prefers-reduced-motion:reduce){.skein-summary-chev,.skein-switch,.skein-switch::after{transition:none}}
 @media print{.skein-panel{display:none!important}.skein-print{white-space:pre-wrap;font-size:.9rem;break-inside:auto}}
+/* One arrow only, as on "Compared with my threads": no second marker beside the chevron */
+.skein-panel>summary.skein-summary::before{content:none;display:none}

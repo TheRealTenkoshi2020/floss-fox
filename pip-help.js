@@ -61,7 +61,7 @@ let last=null,lastKey=null,lastL=null,lastB=false;function bubble(){const k=scre
  if(g==='convert'||g==='results'){lastKey=null;if(Pp&&Pp.screen)Pp.screen(null);return}
  const l=pickLine(g);lastKey=l&&l.key;lastL=l;if(g==='fabric'){fabricLine(l);return}if(!Pp||!Pp.screen)return;if(l)Pp.screen(g,l.text,bk?'meditating':l.pose);else Pp.screen(null)}
 /* refresh the project/shop line when its condition changes (e.g. becomes ready), still one line per condition */
-let lastCond='';function bubbleCond(){const g=last;if(!['project','shop','threads','projects'].includes(g))return;const c=bubbleKeys(g).map(x=>x[0]).join('|');if(c===lastCond)return;const first=!lastCond;lastCond=c;if(first)return;last=null;bubble()}
+let lastCond='';function bubbleCond(){const g=last;if(!['project','shop','threads','projects'].includes(g))return;const c=bubbleKeys(g).map(x=>x[0]+JSON.stringify(x[1]||'')).join('|');if(c===lastCond)return;const first=!lastCond;lastCond=c;if(first)return;last=null;bubble()}
 function fabricLine(l){const slot=$('ffFabricPip');if(!slot||!l)return;slot.querySelector('.ffpipline').textContent=l.text;slot.dataset.key=l.key}
 /* Find floss results: one Next to save */
 function findNext(){const w=$('findNext'),r=$('results');if(!w||!r)return;w.hidden=r.hidden;const b=$('findNextBtn');const l=(S().next||{}).find;if(b&&l&&b.textContent!==l+' →'){b.textContent=l+' →';b.onclick=()=>{const sb=$('saveBox');if(sb)sb.scrollIntoView({block:'center'});const n=$('newProjName');if(n)n.focus()}}}
@@ -87,11 +87,13 @@ function chip(term){const t=(S().terms||{})[term];if(!t)return null;const b=docu
   const p=document.createElement('span');p.className='fftermpop';p.setAttribute('role','note');p.id='ffTermPop';
   p.innerHTML=`<b>${esc(t[0])}</b> ${esc(t[1])} <button type="button" class="ghost small">${esc(S().termClose||'Got it')}</button>`;p.owner=b;b.after(p);pop=p;b.setAttribute('aria-expanded','true');
   p.querySelector('button').onclick=ev=>{ev.preventDefault();ev.stopPropagation();closePop(true)}};return b}
-const CHIPS=[['#inpHint','dmc'],['label[for="thAdd"] b','skein'],['#patPaste','legend',true],['#pReady summary','readiness'],['#pReady .ff-rg-review h4, #pReviewH','attention'],
+const CHIPS=[['#inpHint','dmc'],['.thlblrow label[for="thAdd"]','skein'],['#patPaste','legend',true],['#pReady summary','readiness'],['#pReady .ff-rg-review h4, #pReviewH','attention'],
  ['label[for="fcCount"]','count'],['label[for="seStrands"]','strands']];
 function chips(){for(const [sel,term,before] of CHIPS){const el=document.querySelector(sel);if(!el||el.dataset.ffchip)continue;
  if(before){const sum=el.closest('details')&&el.closest('details').querySelector('summary');if(!sum||sum.dataset.ffchip)continue;sum.dataset.ffchip='1';const c=chip(term);if(c)sum.append(' ',c);continue}
- el.dataset.ffchip='1';const c=chip(term);if(!c)continue;el.append(' ',c)}}
+ el.dataset.ffchip='1';const c=chip(term);if(!c)continue;const sm=el.closest('summary');
+ /* a button inside <summary> is nested-interactive (axe); put the chip at the top of the opened section instead */
+ if(sm&&sm.parentElement){const w=document.createElement('p');w.className='ffchiprow small';w.append(c);sm.after(w);continue}el.append(' ',c)}}
 /* import window: Pip help inside the modal (Ask Pip is behind it) */
 function importHelp(){const d=$('ffPatternDialog');if(!d||$('ffImportPip'))return;const h=d.querySelector('.pat-header');if(!h)return;
  const b=document.createElement('button');b.type='button';b.className='ghost';b.id='ffImportPip';b.textContent=S().pipHelpBtn||'Pip, how does this work?';b.setAttribute('aria-expanded','false');
@@ -101,14 +103,14 @@ function importHelp(){const d=$('ffPatternDialog');if(!d||$('ffImportPip'))retur
 function backupHelp(){const bx=$('backupBox');if(!bx||$('ffBackupPip'))return;const sum=bx.querySelector('summary');const d=document.createElement('div');d.id='ffBackupPip';d.className='ffpipbox';d.innerHTML=blockHtml('backup');bindBlock(d);sum.after(d)}
 /* Fabric page: its own Ask Pip entry (separate page, no tour.js) */
 function fabricAsk(){if(screen()!=='fabric'||$('ffFabricAsk'))return;const nav=document.querySelector('.fcnav')||document.querySelector('nav');if(!nav)return;
- const b=document.createElement('button');b.type='button';b.id='ffFabricAsk';b.className='sec ffask';b.textContent=S().askPipFabric||'Ask Pip';b.setAttribute('aria-expanded','false');b.setAttribute('aria-controls','ffFabricPanel');
+ const b=document.createElement('button');b.type='button';b.id='ffFabricAsk';b.className='askpipbtn ffask noprint';b.textContent=S().askPipFabric||'Ask Pip';b.setAttribute('aria-expanded','false');b.setAttribute('aria-controls','ffFabricPanel');
  const p=document.createElement('section');p.id='ffFabricPanel';p.className='card ffpipbox';p.hidden=true;p.setAttribute('aria-label','Ask Pip');
  p.innerHTML=`<h2 tabindex="-1">${esc(S().askPipFabric||'Ask Pip')}</h2>${blockHtml('fabric')}<div class="row"><button type="button" class="ghost" data-ffclose>${esc(S().pipHelpClose||'Close')}</button></div>`;
  bindBlock(p);p.querySelector('[data-ffclose]').onclick=()=>{p.hidden=true;b.setAttribute('aria-expanded','false');b.focus()};
  b.onclick=()=>{p.hidden=!p.hidden;b.setAttribute('aria-expanded',String(!p.hidden));if(!p.hidden)p.querySelector('h2').focus()};
  const slot=document.createElement('aside');slot.id='ffFabricPip';slot.className='ffpipslot noprint';slot.setAttribute('aria-label','Pip');
  slot.innerHTML='<picture><source type="image/webp" srcset="assets/pip/pip-needle-160.webp"><img src="assets/pip/pip-needle-160.png" width="64" height="94" alt=""></picture><p class="ffpipline" aria-live="polite"></p>';
- const wrap=document.createElement('div');wrap.className='ffaskrow';wrap.append(slot,b);nav.after(wrap,p);last=null}
+ const wrap=document.createElement('div');wrap.className='ffaskrow';wrap.append(slot);const hd=document.querySelector('.wrap>header')||document.querySelector('header');if(hd)hd.append(b);else wrap.append(b);nav.after(wrap,p);last=null}
 function fillStr(){document.querySelectorAll('[data-ffs]').forEach(e=>{const v=S()[e.dataset.ffs];if(v&&e.dataset.ffsDone!==v){e.textContent=v;e.dataset.ffsDone=v}})}
 
 /* Pip strip: the same bubble (text + pose from pip.js) shown under the tab bar on every tab except Find floss, where the full Pip already sits.

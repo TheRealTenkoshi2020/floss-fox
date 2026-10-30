@@ -2,6 +2,7 @@
 """1.8.1 S-004/S-005: offline Pip images from the SW precache, and ?nosw true bypass. Fresh contexts only.
 Usage: python tests/sw_e2e.py [BASE_URL]   (preview: set FF_KEY)"""
 import sys, os, json, argparse
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/'); ap.add_argument('--chrome', default='/usr/bin/google-chrome')
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'

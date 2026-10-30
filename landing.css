@@ -1,0 +1,34 @@
+/* Floss Fox landing (dev, ci005-79): Pixel's approved mockup (pip-art/landing). Shown once per fresh open; see landing.js. */
+#ffLanding{display:none}
+html.ff-landing body>*:not(#ffLanding){display:none!important}
+html.ff-landing #ffLanding{display:flex}
+html.ff-landing body{padding:0!important;margin:0!important}
+.land{box-sizing:border-box;min-height:100vh;min-height:100dvh;max-width:480px;margin:0 auto;padding:20px 18px 14px;flex-direction:column;align-items:center;font-family:var(--font-body)}
+.land .lpip{margin-top:auto;position:relative;width:170px;height:170px;flex:none}
+.land .lhalo{position:absolute;inset:6px;border-radius:50%;background:var(--pip-halo)}
+.land .lpip img{position:relative;width:100%;height:100%;object-fit:contain;filter:var(--pip-glow);animation:pip-in .9s ease-out both}
+@keyframes pip-in{from{opacity:0}to{opacity:1}}
+@keyframes halo-pulse{0%,100%{opacity:.75;transform:scale(.97)}50%{opacity:1;transform:scale(1.04)}}
+@media (prefers-color-scheme:dark){.land .lhalo{animation:halo-pulse 4.5s ease-in-out infinite}}
+.land .say{position:relative;margin:10px 0 18px;padding:12px 18px;max-width:330px;text-align:center;font:600 22px/1.25 var(--font-head);background:var(--bubble-bg);color:var(--bubble-text);border:1px solid var(--bubble-border);border-radius:22px}
+.land .say::before{content:"";position:absolute;top:-8px;left:50%;width:16px;height:16px;transform:translateX(-50%) rotate(45deg);background:var(--bubble-bg);border-left:1px solid var(--bubble-border);border-top:1px solid var(--bubble-border)}
+.land .choices{margin-bottom:auto;width:100%;display:flex;flex-direction:column;gap:10px;position:static;background:none;border:0;padding:0}
+.land .ch{box-sizing:border-box;display:flex;align-items:center;gap:12px;min-height:58px;padding:8px 16px;text-decoration:none;background:var(--surface);border:1.5px solid var(--chip-border);border-radius:20px;box-shadow:var(--card-shadow);color:var(--text)}
+.land .ch b{display:block;font:700 18px/1.2 var(--font-head);color:var(--text-strong)}
+.land .ch small{display:block;font-size:14px;line-height:1.3;color:var(--text-muted)}
+.land .ic{flex:none;width:36px;height:36px;display:grid;place-items:center;font-size:20px;border-radius:50%;background:var(--chip-bg);border:1px solid var(--chip-border)}
+#ffLanding .ch:focus-visible,#ffLanding .quiet a:focus-visible,#ffLanding .ch:focus,#ffLanding .quiet a:focus{outline:3px solid var(--brand-accent)!important;outline-offset:2px;box-shadow:var(--card-shadow)}
+.land .quiet{margin:auto 0 0;padding-top:14px;display:flex;gap:6px;align-items:center;color:var(--text-muted);font-size:14px}
+.land .quiet a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;color:var(--text-muted);text-decoration:none}
+.land .quiet a .tx{text-decoration:underline;text-underline-offset:3px}
+.land .lan{font-size:13px;margin-right:4px;text-decoration:none;display:inline-block}
+#appname.fflandlink{cursor:pointer}
+.ffstart{white-space:nowrap}
+@media (prefers-reduced-motion:reduce){#ffLanding *,#ffLanding *::before,#ffLanding *::after{animation:none!important;transition:none!important}}
+@media print{#ffLanding{display:none!important}html.ff-landing body>*:not(#ffLanding){display:revert!important}}
+.land .lpip picture{display:contents}
+#ffLanding:focus{outline:none}
+.land .ltour{margin:14px 0 0;width:100%;display:flex;justify-content:center}
+.land .ltourbtn{box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;min-height:44px;max-width:100%;padding:0 18px;font:600 16px/1.2 var(--font-head);color:var(--text);background:transparent;border:1.5px solid var(--chip-border);border-radius:22px;cursor:pointer}
+.land .ltourbtn:hover{background:var(--chip-bg)}
+#ffLanding .ltourbtn:focus-visible{outline:3px solid var(--brand-accent)!important;outline-offset:2px}

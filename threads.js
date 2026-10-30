@@ -43,7 +43,7 @@ function core(DMC){
  // owned = amount needed is stated and covered; unverified = owned but the amount needed is unknown or (partly) assumed
  function verdict(e,need,assumed){if(!e||state(e)==='out')return'missing';if(need===null||need===undefined)return'unverified';
   const a=assumed||0,stated=need-a;if(a>0)return e.n>=stated?'unverified':'short';return e.n>=need?(e.confirmed===true?'owned':'unverified'):'short'}
- // each project is compared with the whole collection on its own: nothing is reserved between projects
+ // compares a project with the entries it is given: the whole collection by default, or (from projects.js allocE) the collection minus skeins set aside for other projects
  function compare(items,data,opts){const r={owned:[],unverified:[],short:[],missing:[]};const M=opts&&opts.demo?data.demo||{}:data.threads;
   for(const it of items){const e=M[it.code];const v=verdict(e,it.qty,it.assumed);r[v].push({code:it.code,need:it.qty,assumed:it.assumed||0,have:e?e.n:0,partial:!!(e&&e.partial)})}return r}
  return{SCHEMA,migrate,empty,add,step,state,verdict,compare,normEntry,normalizeStorage}}
@@ -71,12 +71,13 @@ function save(){bulkStorageUndoState=null;if(!canSave){if(!mem)say('Not saved: s
  try{localStorage.setItem(KEY,JSON.stringify(data));backupChanged();return true}catch(e){say(e&&(e.name==='QuotaExceededError'||e.code===22)?'Not saved: browser storage is full.':'Not saved: your browser blocked the save.');return false}}
 const nm=c=>DMC[c].name.replace(/\b(vy|dk|lt|md|ul)\b/gi,m=>({vy:'very',dk:'dark',lt:'light',md:'medium',ul:'ultra'}[m.toLowerCase()]));
 const ST={stock:'In stock',partial:'Partial skein only',out:'Out of stock'};
+const thOpen=new Set();
 const MM=x=>x&&x.dataset&&x.dataset.m==='d'?(data.demo||{}):data.threads;
-function row(c,dm){const M=dm?data.demo:data.threads,e=M[c],s=C.state(e),id=(dm?'d_':'')+c.replace(/[^\w]/g,'_'),m=dm?' data-m="d"':'',L=esc(lab(c));
- return`<li class="tcard th st-${s==='out'?'buy':s==='partial'?'awaiting':'have'}${dm?' demo':''}" data-code="${esc(c)}"${m} data-q="${esc((lab(c)+' '+nm(c)).toLowerCase())}">
- <div class="thtop">${sw(DMC[c].hex)}<div class="thname"><b>DMC ${L}</b>${dm?' <span class="tag demotag">Demo</span>':''} <small class="mut">${esc(nm(c))}</small><br><small class="thst">${ST[s]}${e.restock?' · <b>restock</b>':''}</small></div>
+function row(c,dm){const M=dm?data.demo:data.threads,e=M[c],s=C.state(e),id=(dm?'d_':'')+c.replace(/[^\w]/g,'_'),m=dm?' data-m="d"':'',L=esc(lab(c)),ox=thOpen.has(id);
+ return`<li class="tcard th st-${s==='out'?'buy':s==='partial'?'awaiting':'have'}${dm?' demo':''}${ox?' thx':''}" data-code="${esc(c)}"${m} data-q="${esc((lab(c)+' '+nm(c)).toLowerCase())}">
+ <div class="thtop">${sw(DMC[c].hex)}<button type="button" class="thname thtog" id="tx-${id}" data-tog="${id}" aria-expanded="${ox}" aria-controls="to-${id}" aria-label="Edit DMC ${L}"><b>DMC ${L}</b>${dm?' <span class="tag demotag">Demo</span>':''} <small class="mut">${esc(nm(c))}</small><br><small class="thst">${ST[s]}${e.restock?' · <b>restock</b>':''}</small><span class="thedit" aria-hidden="true">${ox?'Done':'Edit'}</span></button>
  <div class="stepper" role="group" aria-label="Full skeins of ${dm?'demo ':''}DMC ${L}"><button type="button" class="sec" id="tm-${id}"${m} data-step="-1" data-c="${esc(c)}" aria-label="One fewer skein of ${dm?'demo ':''}DMC ${L}"${e.n?'':' disabled'}>−</button><input type="number" class="thn" id="tn-${id}"${m} data-n="${esc(c)}" value="${e.n}" min="0" max="999" step="1" inputmode="numeric" aria-label="Full skeins of ${dm?'demo ':''}DMC ${L}"><button type="button" class="sec" id="tp-${id}"${m} data-step="1" data-c="${esc(c)}" aria-label="One more skein of ${dm?'demo ':''}DMC ${L}">+</button></div></div>
- <div class="thopts"><label><input type="checkbox" id="tpa-${id}"${m} data-part="${esc(c)}"${e.partial?' checked':''}> Partial skein</label><label><input type="checkbox" id="tr-${id}"${m} data-rs="${esc(c)}"${e.restock?' checked':''}> Restock</label><button type="button" class="ghost small"${m} data-del="${esc(c)}">Remove</button></div>${e.n>0&&e.confirmed!==true?`<p class="hint">Check this full-skein count before using it with Pip’s estimates. <button type="button" class="sec small" id="tv-${id}"${m} data-verify="${esc(c)}">Confirm ${e.n} full skein${e.n===1?'':'s'}</button></p>`:''}</li>`}
+ <div class="thopts" id="to-${id}"><label><input type="checkbox" id="tpa-${id}"${m} data-part="${esc(c)}"${e.partial?' checked':''}> Partial skein</label><label><input type="checkbox" id="tr-${id}"${m} data-rs="${esc(c)}"${e.restock?' checked':''}> Restock</label><button type="button" class="ghost small"${m} data-del="${esc(c)}">Remove</button></div>${e.n>0&&e.confirmed!==true?`<p class="hint">Check this full-skein count before using it with Pip’s estimates. <button type="button" class="sec small" id="tv-${id}"${m} data-verify="${esc(c)}">Confirm ${e.n} full skein${e.n===1?'':'s'}</button></p>`:''}</li>`}
 const byCode=(a,b)=>{const na=/^\d+$/.test(a)?+a:1e6,nb=/^\d+$/.test(b)?+b:1e6;return na-nb||a.localeCompare(b)};
 function sorted(){return Object.keys(data.threads).sort(byCode)}
 function render(){const V=$('threadsView');if(!V)return;const codes=sorted(),T=data.threads,D=Object.keys(data.demo||{}).sort(byCode);
@@ -101,6 +102,7 @@ async function removeDemo(){const n=Object.keys(data.demo||{}).length,P=window.F
  if(!ok)return;
  delete data.demo;save();const rp=P&&P.removeDemo?P.removeDemo():0;render();say(`Demo data removed (${n} threads, ${rp} project${rp===1?'':'s'}). Your own data is unchanged.`);$('thAdd').focus()}
 function bind(){const L=$('thList');
+ L.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{const k=b.dataset.tog,li=b.closest('li');if(thOpen.has(k))thOpen.delete(k);else thOpen.add(k);const o=thOpen.has(k);li.classList.toggle('thx',o);b.setAttribute('aria-expanded',o);const t=b.querySelector('.thedit');if(t)t.textContent=o?'Done':'Edit'});
  L.querySelectorAll('[data-n]').forEach(i=>i.onchange=()=>{const c=i.dataset.n,M=MM(i),v=i.value.trim(),e=M[c];
   if(!/^\d+$/.test(v)){say(`"${v}" isn't a whole number of skeins (0 or more), so nothing changed.`);i.value=e.n;return}
   const k=Math.min(999,+v);if(!okCap(c,k,M)){i.value=e.n;return}e.n=k;e.confirmed=true;stamp(e);save();render();keepFocus(i.id);say(`DMC ${lab(c)}: ${k} full skein${k===1?'':'s'}.`)});
@@ -131,7 +133,7 @@ function tip(name,host){const el=host||$('thTip');if(!el)return;el.innerHTML='';
  if(pipHidden||off||tipSeen.has(name)||dismissed().includes(name))return;
  if(!host&&$('threadsView').hidden)return; // only when the view is on screen (no image is loaded for a hidden view)
  const [pose,h,text,more]=TIPS[name];el.hidden=false;
- el.innerHTML=`<picture><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img src="assets/pip/pip-${pose}-160.png" width="160" height="${h}" alt="" data-pose="${pose}" decoding="async"></picture><div class="tiptx"><p><b>Pip:</b> ${text}</p><details class="tipmore"><summary>More</summary><p>${more}</p></details></div><button type="button" class="ghost small" data-tipx="${name}" aria-label="Dismiss Pip's tip">Got it</button>`;
+ el.innerHTML=`<picture><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img src="assets/pip/pip-${pose}-160.png" width="160" height="${h}" alt="" data-pose="${pose}" decoding="async"></picture><div class="tiptx"><p><b>Pip:</b> ${text}</p><details class="tipmore"><summary>${name==='compare'?'More from Pip about this check':'More'}</summary><p>${more}</p></details></div><button type="button" class="ghost small" data-tipx="${name}" aria-label="Dismiss Pip's tip">Got it</button>`;
  el.querySelector('[data-tipx]').onclick=()=>{const d=dismissed();d.push(name);try{localStorage.setItem(TIPKEY,JSON.stringify(d))}catch(e){}el.hidden=true;el.innerHTML=''}}
 function leaveView(){tipSeen.add('threads')}
 load();
@@ -192,9 +194,18 @@ window.FlossFoxThreadsUI={setStorageLocation,bulkStoragePreview,bulkStorageApply
  addItems:(items,o)=>{const r=C.add(data,items,o);const ok=save();render();return{...r,saved:ok}},set:(code,f,o)=>{const e=(o&&o.demo?data.demo||{}:data.threads)[code];if(!e)return;Object.assign(e,f);save();render()}};
 $('thAddBtn').onclick=addNow;$('thAdd').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!/\n/.test($('thAdd').value)){e.preventDefault();addNow()}});
 $('thSearch').oninput=()=>{q=$('thSearch').value;filter()};
-$('thImport').onclick=()=>{const P=window.FlossFoxProjects&&FlossFoxProjects._store();if(!P)return;let a=0;
- P.projects.forEach(p=>p.items.forEach(it=>{const d=p.decisions[it.code];if(d&&(d.status==='have'||d.recv)&&!data.threads[it.code]){const ex=d.owned!==null&&d.owned!==undefined,own=ex?Math.floor(d.owned):(it.qty||1);data.threads[it.code]={n:Math.min(999,own),partial:ex&&d.owned%1>0,restock:false,updated:new Date().toISOString(),...(ex&&d.ownedSource!=='unverified'?{confirmed:true}:{})};a++}}));
- save();render();say(a?`Added ${a} color${a===1?'':'s'} you marked Have enough (or received) in your projects. Colors already in your collection were left alone.`:'Nothing new to add from your projects.')};
+/* Flow pass item 4: add the colors a project says you have enough of. Shows the count first, never touches colors already
+   in the collection, skips demo projects, and keeps one Undo that removes exactly what it added (if you haven't changed it since). */
+const haveNew=p=>{const seen=new Set();return(p&&!p.demo?p.items:[]).filter(it=>{const d=p.decisions[it.code];if(!d||!(d.status==='have'||d.recv)||data.threads[it.code]||seen.has(it.code))return false;seen.add(it.code);return true})};
+let fromUndo=null;
+function addFromProjects(ids){const P=window.FlossFoxProjects&&FlossFoxProjects._store();if(!P)return{added:[]};const added={};
+ P.projects.filter(p=>!p.demo&&(!ids||ids.includes(p.id))).forEach(p=>haveNew(p).forEach(it=>{if(data.threads[it.code])return;const d=p.decisions[it.code],ex=d.owned!==null&&d.owned!==undefined,own=ex?Math.floor(d.owned):(it.qty||1);data.threads[it.code]={n:Math.min(999,own),partial:ex&&d.owned%1>0,restock:false,updated:new Date().toISOString(),...(ex&&d.ownedSource!=='unverified'?{confirmed:true}:{})};added[it.code]=JSON.stringify(data.threads[it.code])}));
+ const codes=Object.keys(added);if(codes.length){fromUndo=added;save();render()}return{added:codes}}
+function undoFromProjects(){if(!fromUndo)return 0;let n=0;for(const [c,snap] of Object.entries(fromUndo))if(data.threads[c]&&JSON.stringify(data.threads[c])===snap){delete data.threads[c];n++}fromUndo=null;save();render();return n}
+function fromProjectsCount(ids){const P=window.FlossFoxProjects&&FlossFoxProjects._store();if(!P)return 0;const s=new Set();P.projects.filter(p=>!p.demo&&(!ids||ids.includes(p.id))).forEach(p=>haveNew(p).forEach(it=>s.add(it.code)));return s.size}
+Object.assign(window.FlossFoxThreadsUI,{addFromProjects,undoFromProjects,fromProjectsCount,canUndoFrom:()=>!!fromUndo});
+$('thImport').onclick=()=>{const r=addFromProjects(null),a=r.added.length;
+ say(a?`Added ${a} color${a===1?'':'s'} you marked Have enough (or received) in your projects. Colors already in your collection were left alone.`:'Nothing new to add from your projects.');if(window.FlossFoxFlow)FlossFoxFlow.offerUndo(a)};
 const bk=$('thBackup');if(bk)bk.onclick=()=>{const P=window.FlossFoxProjects;if(P&&P.backup){P.backup();say('Backup downloaded (projects and thread collection).')}};
 const rs=$('thRestore');if(rs)rs.onclick=()=>{const P=window.FlossFoxProjects;if(!P)return;P.showView('projects');$('backupBox').open=true;$('backupBox').scrollIntoView({block:'nearest'});$('restoreFile').click()};
 render();

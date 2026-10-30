@@ -3,6 +3,7 @@ Sorted single-family keys, two-column keys and bare symbol/code/count rows must 
 numbers left as Unknown. Full DMC color-chart PDFs must still be rejected.
 Usage: python3 tests/small_legend_e2e.py BASE_URL"""
 import sys, os, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1].rstrip('/') + '/'; H = os.path.dirname(os.path.abspath(__file__)); FX = os.path.join(H, 'fixtures', 'patterns')
 EXP = json.load(open(os.path.join(FX, 'small', 'expected.json'))); R = [0, 0]
@@ -16,7 +17,7 @@ with sync_playwright() as p:
         g.click('#convertView .pat-launch'); g.set_input_files('#patFile', path)
         g.wait_for_function("!/Reading selected file/.test(document.getElementById('patInfo').textContent)", timeout=30000); g.wait_for_timeout(250)
         info = g.inner_text('#patInfo') + ' ' + (g.inner_text('#patUnreadable') if g.locator('#patUnreadable').count() else '')
-        rows = g.evaluate("[...document.querySelectorAll('#patRows .pat-row')].map(r=>({code:r.querySelector('b').textContent.replace('DMC ',''),t:r.textContent}))")
+        rows = g.evaluate("[...document.querySelectorAll('#patRows .pat-row')].map(r=>({code:r.querySelector('b').textContent.replace('DMC ',''),t:r.textContent+(document.querySelector('#patRows .pat-noamt')&&!(r.querySelector('input[type=number]')||{}).value?' Unknown(shared note, empty amount)':'')}))")
         g.click('#ffPatternDialog .pat-header button'); g.wait_for_timeout(120); return info, rows
     for fn, want in sorted(EXP.items()):
         info, rows = load(os.path.join(FX, 'small', fn)); got = sorted(r['code'].upper() for r in rows)

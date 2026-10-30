@@ -21,7 +21,7 @@ ok('generous: 2 skeins and 1 skein for 2400 stitches both ok on 14-count',PC.amo
 ok('no stitch count or no skeins: no amount check',PC.amountCheck({qty:2,stitchCount:null},SK)===null&&PC.amountCheck({qty:null,stitchCount:5000},SK)===null);
 ok('Pip help answer verbatim',PC.HELP[1]==="After you import a pattern or paste a color key, I look for numbers that aren't DMC colors, colors listed twice, names that don't match the DMC number, and skein amounts that don't fit the stitch count. It only points things out. It never changes your colors and never stops you saving. It can miss things, so still check each color against your pattern."&&!/\b(he|she|his|her)\b/i.test(PC.HELP[1]));
 const S=PC.STR;
-ok('clean copy verbatim',S.clean==="Nothing stands out. It's still worth checking each color against your pattern.");
+ok('clean copy verbatim',S.clean==="Nothing caught my eye. Still give each color a quick look against your pattern.");
 ok('not DMC copy',S.fake(['9999','4000'])==="We couldn't find 9999, 4000 in the DMC catalog. Check those numbers against your pattern.");
 ok('duplicate copy: is / are',S.dup(['310'])==='DMC 310 is listed more than once. Check which amount is right.'&&S.dup(['310','321'])==='DMC 310, 321 are listed more than once. Check which amount is right.');
 ok('name copy',S.name({code:'3865',listed:'Sky Blue',catalog:'winter white'})==='DMC 3865 is listed as "Sky Blue", but the DMC catalog calls it winter white. Check which one your pattern means.');

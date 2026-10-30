@@ -1,6 +1,7 @@
 """Backup v1 (production ed2cd1b, thread schema 1) -> dev v2 forward restore.
 Usage: python3 tests/backup_forward_e2e.py PROD_URL DEV_URL   (both served locally; production is only read)."""
 import sys, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 PROD, DEV = sys.argv[1], sys.argv[2]
 R = []

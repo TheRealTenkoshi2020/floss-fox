@@ -11,7 +11,7 @@
 const SKEIN_CAP=20; // more skeins than this of one color needs an explicit "confirmed" (it's usually a stitch count)
 function make(DMC){
  const ID=/^(b5200|ecru|white|blanc|e\d{3,4}|\d{1,4})$/i;
- const norm=c=>{c=c.toUpperCase();if(c==='BLANC')c='WHITE';if(/^\d$/.test(c))c='0'+c;return c};
+ const norm=c=>{c=c.toUpperCase();/* ci005-82: BLANC stays BLANC (its own DMC color, never WHITE) */if(/^\d$/.test(c))c='0'+c;return c};
  const known=c=>Object.prototype.hasOwnProperty.call(DMC,c);
  const notInChart=c=>/^E\d/.test(c)?`DMC ${c} looks like a Light Effects thread. Floss Fox's chart only has 6-strand cotton, so it can't be checked yet`
   :/^4\d{3}$/.test(c)?`DMC ${c} looks like a Color Variations thread, which isn't in Floss Fox's chart yet`

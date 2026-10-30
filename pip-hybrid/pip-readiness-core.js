@@ -25,7 +25,7 @@ function summarize(project,plan,storageMap={}){
  if(sum.total!==count||sum.sufficient!==grouped.have.length+grouped.received.length||sum.toBuy!==grouped.buy.length||sum.awaiting!==grouped.awaiting.length||sum.review!==grouped.review.length)throw new TypeError('Planner summary differs from project rows');
  const ready=plan.ready===true;
  if(ready&&(sum.total===0||sum.sufficient!==sum.total))throw new TypeError('Planner readiness inconsistent');
- return{projectId:clean(project.id),name:clean(project.name)||'Untitled project',total:count,ready,hasEstimates:!!plan.hasEstimates,counts:{ready:sum.sufficient,toBuy:sum.toBuy,awaiting:sum.awaiting,review:sum.review,checkFirst:num(sum.checkFirst)||0},groups:grouped,notice:'This is based on your saved project choices and current plan. It isn\'t a physical check of your threads, and the same skeins aren\'t reserved across projects.'};
+ return{projectId:clean(project.id),name:clean(project.name)||'Untitled project',total:count,ready,hasEstimates:!!plan.hasEstimates,counts:{ready:sum.sufficient,toBuy:sum.toBuy,awaiting:sum.awaiting,review:sum.review,checkFirst:num(sum.checkFirst)||0},groups:grouped,notice:'This plan uses your project choices and My threads. A skein set aside for one project won\'t count for another.'};
 }
 function toText(r,{maxItems=12}={}){
  const nm=r.name,counts=r.counts;

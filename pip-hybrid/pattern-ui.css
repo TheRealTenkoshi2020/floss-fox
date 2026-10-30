@@ -36,3 +36,15 @@
 .pt-altbtn[aria-pressed=true]{border-color:#5f7a5c;box-shadow:0 0 0 2px #5f7a5c33}.pt-altbtn i{display:block;width:100%;height:20px;border-radius:5px;margin-bottom:2px}
 .pt-typerow{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin:6px 0 10px}.pt-type{font-size:.9rem}.pt-type input{display:block;width:8em;min-height:44px}
 .pt-actions{gap:8px}.pt-err{color:#6b2a14;margin:6px 0 0}.pt-err:empty{display:none}.pt-tag{display:block;color:#3d5a3a;font-weight:600}
+/* Flow pass: a short review sheet. One line per color, the tick and Create project pinned at the bottom. */
+.pat-pin{position:sticky;bottom:-16px;margin:0 -16px -16px;padding:10px 16px 14px;background:#fffaf2;border-top:1px solid #e6dccb;box-shadow:0 -6px 14px #29362d14;display:grid;gap:6px;z-index:2}
+.pat-pin .pat-all{margin:0}.pat-pin .pat-why{margin:0}
+.pat-row{grid-template-columns:auto minmax(0,1fr) 7.5em 7.5em auto;align-items:center;gap:4px 10px;padding:6px 0}
+.pat-row b{grid-column:auto;white-space:nowrap}.pat-row>small:not(.pat-warnings){grid-column:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem;color:#425248}
+.pat-row .pat-warnings{grid-column:1 / -1;font-size:.8rem;order:9}.pat-row label{font-size:.8rem}.pat-row input[type=number]{padding:6px!important}
+@media(max-width:560px){.pat-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.pat-row b{grid-column:1 / 2}.pat-row>small:not(.pat-warnings){grid-column:2 / -1}
+ .pat-row label{display:flex;align-items:center;gap:6px}.pat-row label input[type=number]{min-width:0;flex:1}}
+/* ci005-80: number inputs never clip ("Unkn", "1(") */
+.pat-row input[type=number]{min-width:4.5em;height:44px;min-height:44px;box-sizing:border-box}
+@media(max-width:560px){.pat-row label input[type=number]{min-width:4.5em;flex:1 0 4.5em}}
+@media(max-width:370px){.pat-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pat-row .ghost.small{grid-column:1 / -1;justify-self:start}}

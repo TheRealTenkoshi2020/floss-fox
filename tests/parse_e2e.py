@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Floss Fox 1.7 paste checks (Barbara's 24-color list). Usage: python tests/parse_e2e.py [BASE_URL] [--shots DIR]"""
 import sys, os, argparse, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/'); ap.add_argument('--chrome', default='/usr/bin/google-chrome'); ap.add_argument('--shots', default=None)
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'

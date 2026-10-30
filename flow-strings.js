@@ -107,7 +107,7 @@ window.FF_P12={
   "p12.flow.compare.nothing":"Pip checked your threads: there was nothing to fill in, so nothing changed.",
   "p12.flow.compare.empty":"Your thread collection is empty, so there was nothing to compare yet.",
   "p12.flow.compare.empty_btn":"Go to My threads",
-  "p12.flow.compare.reserved":"Each project is checked against your whole collection. Threads aren't set aside for one project.",
+  "p12.flow.compare.reserved":"Each project is checked against My threads, not counting skeins set aside for other projects.",
   "p12.flow.saved.ok":v=>{const {name,have,total,u,b,n,i,time}=v||{};return `✓ “${name}” is safely tucked away in this browser on this device.`},
   "p12.flow.saved.badge":v=>{const {name,have,total,u,b,n,i,time}=v||{};return `Saved in this browser · ${time}`},
   "p12.flow.saved.fail":"Not saved: this browser isn't storing projects right now. Download a backup from My Projects to keep your work.",

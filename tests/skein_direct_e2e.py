@@ -1,4 +1,5 @@
 import json,re
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 import sys
 B=(sys.argv[1] if len(sys.argv)>1 else 'http://localhost:8765/').rstrip('/')+'/';import os;KEY=os.environ.get('FF_KEY','flossfox-dev.v1');PFX=KEY[:-3];TKEY=PFX+'.threads.v1'
@@ -23,7 +24,8 @@ with sync_playwright() as p:
  for w,mob in ((390,True),(1280,False)):
   t='[%d] '%w;c=ctx_for(b,w,mob);g=c.new_page();errs=[];g.on('pageerror',lambda e:errs.append(str(e)))
   openshop(g)
-  pills=g.evaluate("[...document.querySelectorAll('#shopView .ff-skein-pill')].map(a=>({c:a.closest('.ff-skein-inline').dataset.dmc,h:a.href,t:a.target,r:a.rel,k:a.dataset.kind,tr:a.dataset.tracked}))")
+  # Check first rows keep a hidden Buy chooser (#pCheck .ffcf-acts, since ci005-61) behind a Buy button; only the inline Buy-list pills are checked here
+  pills=g.evaluate("[...document.querySelectorAll('#shopView .ff-skein-pill:not(#pCheck .ff-skein-pill)')].map(a=>({c:a.closest('.ff-skein-inline').dataset.dmc,h:a.href,t:a.target,r:a.rel,k:a.dataset.kind,tr:a.dataset.tracked}))")
   got={}
   for x in pills:got.setdefault(x['c'],[]).append(x['h'])
   ok(t+'pill URLs exactly as expected',got==EXP,got)
@@ -37,7 +39,7 @@ with sync_playwright() as p:
   # click each pill -> popup at the right URL
   allok=True
   for i,x in enumerate(pills):
-   with c.expect_page() as pi:g.locator('#shopView .ff-skein-pill').nth(i).click()
+   with c.expect_page() as pi:g.locator('#shopView .ff-skein-pill:not(#pCheck .ff-skein-pill)').nth(i).click()
    pg=pi.value;pg.wait_for_load_state();allok&=pg.url==x['h'];pg.close()
   ok(t+'each pill opens its URL in a new tab',allok)
   # keyboard
@@ -78,7 +80,7 @@ with sync_playwright() as p:
  ctl=g.evaluate("!!navigator.serviceWorker.controller");c.set_offline(True)
  try:
   g.reload();g.wait_for_timeout(800);g.click('#tabProjects');g.click('[data-open="t20a"]');g.wait_for_timeout(250);g.click('#tabShop');g.wait_for_timeout(300)
-  o=g.evaluate("({vis:!document.getElementById('shopView').hidden,list:!!document.querySelector('#shopView #pPlan #pShopH'),pills:document.querySelectorAll('#shopView .ff-skein-inline').length,a:document.querySelectorAll('#shopView .ff-skein-pill').length,off:[...document.querySelectorAll('#shopView .ff-skein-off')].map(e=>e.textContent)})")
+  o=g.evaluate("({vis:!document.getElementById('shopView').hidden,list:!!document.querySelector('#shopView #pPlan #pShopH'),pills:document.querySelectorAll('#shopView .ff-skein-inline').length,a:document.querySelectorAll('#shopView .ff-skein-pill:not(#pCheck .ff-skein-pill)').length,off:[...document.querySelectorAll('#shopView .ff-skein-off')].map(e=>e.textContent)})")
   ok('offline: SW controlled, Shopping tab + list + pills render',ctl and o['vis'] and o['list'] and o['a']==6,o);print('offline detail:',o)
  except Exception as e: ok('offline reload',False,e)
  c.close()

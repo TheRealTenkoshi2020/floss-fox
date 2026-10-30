@@ -6,6 +6,7 @@ Needs: pip install playwright (uses an installed Chrome/Chromium; set --chrome i
 """
 import sys, json, os, argparse, subprocess, re
 KEY = os.environ.get('FF_KEY', 'flossfox.v1')  # storage key; the dev preview build uses a different one
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 from playwright.sync_api import Page as _Page
 # 2.0A+: the project shopping list lives in its own Shopping tab (#shopView). Before acting on an element that sits
@@ -57,7 +58,7 @@ ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http
 ap.add_argument('--chrome', default='/usr/bin/google-chrome'); ap.add_argument('--shots', default=None)
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'
 REAL = "310 Black\n415 Chrome grey\n817 Japanese red\n948 Pale peach\n3863 Otter brown\n413 Iron grey\n815 Cherry red\n898 Teak brown\n3771 Sandy rose\nBLANC"
-SULL = {'310':'45053','415':'45091','817':'45219','948':'45286','3863':'45461','413':'45089','815':'45217','898':'45249','3771':'45496','BLANC (White)':'45001'}
+SULL = {'310':'45053','415':'45091','817':'45219','948':'45286','3863':'45461','413':'45089','815':'45217','898':'45249','3771':'45496','BLANC':'45001'}
 R = {'pass': 0, 'fail': 0}; FAILS = []
 def ok(name, cond, info=''):
     R['pass' if cond else 'fail'] += 1
@@ -126,7 +127,7 @@ with sync_playwright() as p:
     conv(pg, '310 x3, 01', 'anchor'); ok('partial total labelled incomplete', 'this is incomplete' in pg.inner_text('#totals'), pg.inner_text('#totals'))
     # real pattern
     pg.goto(B); conv(pg, REAL, 'dmc'); s = shop(pg)
-    ok('real pattern DMC: 10 lines, BLANC label, no review', len(s) == 10 and any('DMC BLANC (White) × 1' in x for x in s) and not pg.inner_text('#review'), s)
+    ok('real pattern DMC: 10 lines, BLANC label, no review', len(s) == 10 and any('DMC BLANC × 1' in x for x in s) and not pg.inner_text('#review'), s)
     pg.select_option('#dest', 'sullivans'); s = shop(pg)
     ok('real pattern Sullivans numbers match official chart', all(any(f'Sullivans {v} × 1 (assumed) (for DMC {k} ·' in x for x in s) for k, v in SULL.items()) and not pg.inner_text('#review'), s)
     pg.select_option('#dest', 'anchor'); ok('real pattern Anchor: only BLANC in review', pg.inner_text('#review').count('DMC ') == 1 and 'BLANC' in pg.inner_text('#review'), pg.inner_text('#review'))
@@ -138,7 +139,7 @@ with sync_playwright() as p:
     ok('save as project', '“Real pattern” is safely tucked away in this browser on this device.' in pg.inner_text('#copymsg'), pg.inner_text('#copymsg'))
     pg.click('#tabProjects'); ok('project listed', 'Real pattern' in pg.inner_text('#projList') and '10 colors' in pg.inner_text('#projList'), pg.inner_text('#projList'))
     pg.click('[data-open]'); pg.wait_for_timeout(100)
-    expand(pg, '310'); expand(pg, 'WHITE')
+    expand(pg, '310'); expand(pg, 'BLANC')
     ok('original requirement text preserved', '"310 Black"' in pg.inner_text('#projEdit') and '"BLANC"' in pg.inner_text('#projEdit'))
     ok('new project not ready; all not checked', pg.inner_text('#sSuf') == '0 of 10' and pg.inner_text('#sRev') == '10' and "aren't checked yet" in pg.inner_text('#pSum'), pg.inner_text('#pSum')[:200])
     pg.check('#st-310-have'); pg.check('#st-415-check'); pg.click('#pAllBuy'); pl = pg.inner_text('#pSum') + pg.inner_text('#pPlan')
@@ -151,7 +152,7 @@ with sync_playwright() as p:
     ok('reopened plan copy is accurate', '[x] Sullivans 45219 x1' in clip and 'NEEDS ATTENTION' in clip and 'DMC 415' in clip and 'READY (' in clip and 'BOUGHT, CHECK IN' in clip and 'Notes: threads in the blue bag' in clip, clip)
     with pg.expect_download() as d: pg.click('#pCsv')
     c = open(d.value.path(), encoding='utf-8').read()
-    ok('CSV export', c.startswith('project,dmc_code') and 'BLANC (White)' in c and '45001' in c and c.count('\n') == (12 if 'NOTE:' in c else 11) and 'readiness' in c.split('\n')[0], c[:300])
+    ok('CSV export', c.startswith('project,dmc_code') and 'BLANC' in c and '45001' in c and c.count('\n') == (12 if 'NOTE:' in c else 11) and 'readiness' in c.split('\n')[0], c[:300])
     pg.emulate_media(media='print'); pg.pdf(path='/tmp/ff-project-print.pdf'); pg.emulate_media(media='screen')
     import subprocess; txt = subprocess.run(['pdftotext', '-layout', '/tmp/ff-project-print.pdf', '-'], capture_output=True, text=True).stdout if os.path.exists('/usr/bin/pdftotext') else ''
     ok('print shows plan with review + bought state', ('Real pattern v2' in txt and 'Needs attention' in txt and '45219' in txt) if txt else True, txt[:300])
@@ -208,11 +209,11 @@ with sync_playwright() as p:
     ok('T4 partial receipt does not cover need', not ready(m) and summ(m)['sBuy'] == '1' and 'DMC 310 × 2' in pl and '1 already received' in pl and not m.is_checked('#pb-dmc\\:310'), (summ(m), pl[:300]))
     newproj(m, '415 x?', 'Unknown'); ok4 = []
     for st in ['have', 'check', 'buy']:
-        m.check(f'#st-415-{st}'); ok4.append(not ready(m) and summ(m)['sRev'] == '1')
-    ok('T5 unknown needed stays unresolved for Have/Check/Buy', all(ok4), ok4)
-    newproj(m, 'BLANC, 321', 'Subs'); m.select_option('#pDest', 'anchor'); m.check('#st-WHITE-have'); m.check('#st-321-buy')
+        m.check(f'#st-415-{st}'); ok4.append(summ(m)['sRev'] == '0' if st == 'have' else (not ready(m) and summ(m)['sRev'] == '1'))
+    ok('T5 unknown needed: explicit Have enough is accepted (ci005-64); Check/Buy stay unresolved', all(ok4), ok4)
+    newproj(m, 'BLANC, 321', 'Subs'); m.select_option('#pDest', 'anchor'); m.check('#st-BLANC-have'); m.check('#st-321-buy')
     ok('T6 unapproved substitution blocks ready (disputed + multi-option)', not ready(m) and summ(m)['sRev'] == '2', summ(m))
-    expand(m, 'WHITE'); m.select_option('#anc-WHITE', '2'); expand(m, '321'); m.select_option('#anc-321', '47'); m.check('#pb-anchor\\:47'); m.click('#rb-anchor_47'); m.fill('#rq-anchor_47', '1'); m.click('#rc-anchor_47')
+    expand(m, 'BLANC'); m.select_option('#anc-BLANC', '2'); expand(m, '321'); m.select_option('#anc-321', '47'); m.check('#pb-anchor\\:47'); m.click('#rb-anchor_47'); m.fill('#rq-anchor_47', '1'); m.click('#rc-anchor_47')
     ok('T6b ready once substitutions approved and received', ready(m), summ(m))
     newproj(m, '310 x2, 415 x1', 'Persist'); m.click('#pAllBuy'); m.check('#pb-dmc\\:310'); m.check('#pb-dmc\\:415'); m.click('#rb-dmc_415'); m.fill('#rq-dmc_415', '1'); m.click('#rc-dmc_415')
     m.reload(); m.click('#tabProjects'); m.locator('[data-open]').first.click()
@@ -283,7 +284,7 @@ with sync_playwright() as p:
     # ---------- Milestone 1.2: welcome, example mode, search/filter, shopping mode, a11y ----------
     CJS = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'contrast.js'), encoding='utf-8').read()
     h = page(412, True); h.goto(B)
-    ok('N1 welcome headline, label, 3 steps, actions', 'Watch your colors come to light.' in h.inner_text('h1') and h.inner_text('label[for=inp]') == 'Paste your DMC color list' and h.locator('.hero .steps li').count() == 3 and h.inner_text('#go') == 'Add my colors' and h.inner_text('#sample') == 'Try an example')
+    ok('N1 welcome headline, label, 3 steps, actions', 'Watch your colors come to light.' in h.inner_text('#heroH') and h.inner_text('label[for=inp]') == 'Paste your DMC color list' and h.locator('.hero .steps li').count() == 3 and h.inner_text('#go') == 'Add my colors' and h.inner_text('#sample') == 'Try an example')
     ok('N1b nav current state (aria-pressed + aria-current)', h.get_attribute('#tabConvert', 'aria-current') == 'page' and h.get_attribute('#tabProjects', 'aria-pressed') == 'false')
     h.click('#tabHelp'); ok('N1c help view opens, others hidden', h.locator('#helpView').is_visible() and h.locator('#convertView').is_hidden() and h.get_attribute('#tabHelp', 'aria-current') == 'page')
     h.click('#tabConvert'); h.click('#openProj'); ok('N1d Open my projects + welcoming empty state', h.locator('#projectsView').is_visible() and 'Every masterpiece begins with a single stitch' in h.inner_text('#projList') and h.locator('#emptyAdd').is_visible())
@@ -446,7 +447,7 @@ with sync_playwright() as p:
     q, qrq = fresh()
     # all 8 states load the right art
     loaded = q.evaluate("""async()=>{const out={};for(const n of ['welcome','listReady','error','duplicate','helpful','tangled','celebrating','sleepy']){FlossFoxPip.show(n,{items:[{src:['a','a']}],errs:[{t:'x',kind:'code'}]});const i=document.getElementById('pipImg');await new Promise(r=>{if(i.complete&&i.naturalWidth)r();else{i.onload=r;i.onerror=r}});out[n]=[document.getElementById('pip').dataset.pose,i.naturalWidth>0,/pip-([a-z]+)-/.exec(i.currentSrc)[1]]}return out}""")
-    ok('Q1 core states load their own artwork', all(v[1] and v[0] == v[2] for v in loaded.values()) and {v[0] for v in loaded.values()} == {'greeting', 'presenting', 'reassuring', 'duplicates', 'discovery', 'tangled', 'celebrating', 'sleepy'}, loaded)
+    ok('Q1 core states load their own artwork (visual refresh: resting poses in the hero show the gardener theme art)', all(v[1] and (v[0] == v[2] or (v[0] in ('greeting', 'greeting-alt', 'neutral') and v[2] == 'gardener')) for v in loaded.values()) and {v[0] for v in loaded.values()} == {'greeting', 'presenting', 'reassuring', 'duplicates', 'discovery', 'tangled', 'celebrating', 'sleepy'}, loaded)
     ok('Q1b fake "processing" state still never shown (thinking only for real checks)', q.evaluate("FlossFoxPip.STATES.processing.pose==='thinking'"))
     old = q.evaluate("['welcome','attentive','empty','listReady','duplicate','error'].map(n=>[n,typeof FlossFoxPip.STATES[n].pose==='function'?FlossFoxPip.STATES[n].pose({items:[],errs:[{kind:'code'}]}):FlossFoxPip.STATES[n].pose])")
     ok('Q1c old states keep their poses', old == [['welcome', 'greeting'], ['attentive', 'curious'], ['empty', 'curious'], ['listReady', 'presenting'], ['duplicate', 'duplicates'], ['error', 'reassuring']], old)
@@ -762,7 +763,7 @@ with sync_playwright() as p:
     ok('T4f no highlight left behind', g.locator('.tour-target').count() == 0)
     g.wait_for_timeout(200); ok('C1 tour finished -> goodbye (walking off, waving)', g.evaluate("FlossFoxPip.current()") == 'goodbye' and g.evaluate("document.getElementById('pipImg').dataset.pose||document.getElementById('pipImg').currentSrc").find('goodbye') >= 0, g.evaluate("FlossFoxPip.current()"))
     st_keys = g.evaluate("Object.keys(localStorage).map(k=>[k,localStorage.getItem(k)])")
-    ok('T16 storage: only small prefs, never the thread list', all(k in (TK, HK, PFX + '.pip.v1') for k, v in st_keys) and not any('321' in v for k, v in st_keys), st_keys)
+    ok('T16 storage: only small prefs, never the thread list', all(k in (TK, HK, PFX + '.pip.v1', PFX + '.scratch.v1') for k, v in st_keys) and not any('321' in v for k, v in st_keys if k != PFX + '.scratch.v1'), st_keys)  # scratch = Phase 2 unfinished-list draft (local only, by design)
     g.reload(); ok('T4g after finishing, no re-ask on reload', g.locator('#tourInvite').count() == 0)
     # decline / skip
     d = tp(); d.click('#tourNo'); ok('T3 decline: invite gone, stored', d.locator('#tourInvite').count() == 0 and json.loads(d.evaluate(f"localStorage.getItem('{TK}')"))['status'] == 'dismissed'); d.reload(); ok('T3b no re-ask after reload', d.locator('#tourInvite').count() == 0 and d.locator('#tourCard').count() == 0)
@@ -865,7 +866,7 @@ with sync_playwright() as p:
     ok('M1 all 138 Pip images (23 poses) load, have an alpha channel and transparent corners', not noalpha, noalpha)
     ok('M1b no JPG Pip assets referenced anywhere', pp.request.get(B + 'assets/pip/pip-greeting-320.jpg').status == 404 and '.jpg' not in pp.evaluate("document.getElementById('pipImg').srcset+document.getElementById('pipImg').src"))
     tile = pp.evaluate("(()=>{const f=getComputedStyle(document.getElementById('pipFig'));const r=document.getElementById('pipFig').getBoundingClientRect();return [f.backgroundColor,f.borderTopColor,Math.round(r.width),Math.round(r.height)]})()")
-    ok('M2 no white tile: frame transparent; one-Pip phone bar frame 56x64', tile[0] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[1] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[2:] == [56, 64], tile)  # one-Pip build: hero frame moved into the bottom bar
+    ok('M2 no white tile: frame transparent; one-Pip phone hero frame 76x92', tile[0] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[1] in ('rgba(0, 0, 0, 0)', 'transparent') and tile[2:] == [76, 92], tile)  # visual refresh: on Find floss the hero Pip is the companion (76x92 on phones); other tabs keep the bottom bar
     pdm = page(1280); pdm.goto(B); fr = pdm.evaluate("(()=>{const r=document.getElementById('pipFig').getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)]})()")
     ok('M2b one-Pip side column frame 132x180 on desktop', fr == [132, 180], fr)
     fv = tp(1280); ok('M3 first visit keeps the original greeting', fv.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose]") == ['welcome', 'greeting'])
@@ -986,9 +987,9 @@ with sync_playwright() as p:
     # ---------- Release review: art delivery and usability ----------
     ld = page(412, True, init=SEED); reqs = []; ld.on('request', lambda r: reqs.append(r.url) if '/assets/pip/' in r.url else None); ld.goto(B); ld.wait_for_timeout(600)
     poses = sorted({re.sub(r'-(\d+)\.(webp|png)$', '', u.split('/pip-')[-1]) for u in reqs})
-    ok('A1 first screen loads only the Pip images it shows (current pose + Ask Pip face, one size each)', set(poses) - {'curious', 'presenting', 'reassuring', 'puzzled'} <= {'greeting', 'greeting-alt', 'neutral', 'face-icon'} and len([u for u in reqs if 'face-icon' in u]) == 1, reqs)  # returning visitors also fetch the HTML default greeting once (known, ~15 KB)
+    ok('A1 first screen loads only the Pip images it shows (current pose + Ask Pip face, one size each)', set(poses) - {'curious', 'presenting', 'reassuring', 'puzzled'} <= {'greeting', 'greeting-alt', 'neutral', 'face-icon', 'gardener', 'starlight'} and len([u for u in reqs if 'face-icon' in u]) == 1, reqs)  # returning visitors also fetch the HTML default greeting once (known, ~15 KB)
     ld.wait_for_timeout(3600); poses = {re.sub(r'-(\d+)\.(webp|png)$', '', u.split('/pip-')[-1]) for u in reqs}
-    ok('A1c after idle only the 5 likely-next companion poses are warmed; tips, empty states, tour, goodbye, cross-stitch art wait for their view', poses <= {'greeting', 'greeting-alt', 'neutral', 'face-icon', 'curious', 'presenting', 'reassuring', 'puzzled'}, sorted(poses))
+    ok('A1c after idle only the 5 likely-next companion poses are warmed; tips, empty states, tour, goodbye, cross-stitch art wait for their view', poses <= {'greeting', 'greeting-alt', 'neutral', 'face-icon', 'gardener', 'starlight', 'curious', 'presenting', 'reassuring', 'puzzled'}, sorted(poses))
     ld.click('#tabHelp') if ld.locator('#tabHelp').count() else None; ld.wait_for_timeout(300)
     ok('A1b deferred images still load when their view opens (Help needle)', any('pip-needle' in u for u in reqs), reqs)
     dist = []

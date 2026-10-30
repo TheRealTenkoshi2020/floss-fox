@@ -1,6 +1,7 @@
 """Pip direction A (simulated, synthetic data): FlossFoxPip.react, Pip level setting, caps, Off vs the old hide key.
 Usage: python3 tests/pip_react_e2e.py URL [SHOTDIR]"""
 import sys, os, json, csv
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1].rstrip('/') + '/'; SH = sys.argv[2] if len(sys.argv) > 2 else None; R = [0, 0]
 KEY = os.environ.get('FF_KEY', 'flossfox-dev.v1'); PFX = KEY[:-3]; PIPK = PFX + '.pip.v1'; LVK = PFX + '.pipLevel.v1'

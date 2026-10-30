@@ -1,5 +1,6 @@
 """Pattern check v2 e2e: key vs chart on SYNTHETIC PDFs (simulated, 390px). Usage: python3 tests/pattern_chart_e2e.py URL [shot.png]"""
 import sys, os
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1].rstrip('/') + '/'; SHOT = sys.argv[2] if len(sys.argv) > 2 else None
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures', 'chart-check')
@@ -13,7 +14,7 @@ with sync_playwright() as p:
     def load(name):
         g.goto(B + '?nosw'); g.wait_for_timeout(500); g.click('#convertView .pat-launch'); g.set_input_files('#patFile', os.path.join(D, name + '.pdf'))
         g.wait_for_selector('#patCheck', timeout=15000); g.wait_for_timeout(200); return g.inner_text('#patCheck')
-    box = load('match'); ok('match: no flags, chart compared note', g.get_attribute('#patCheck', 'data-flags') == '0' and 'Nothing stands out.' in box and 'We also compared the chart with the color key.' in box, box)
+    box = load('match'); ok('match: no flags, chart compared note', g.get_attribute('#patCheck', 'data-flags') == '0' and 'Nothing caught my eye.' in box and 'We also compared the chart with the color key.' in box, box)
     box = load('extra-symbol'); ok('extra symbol %: flagged', "The chart uses the symbol % (9 stitches), but the color key doesn't list it." in box, box)
     box = load('unused-color'); ok('unused color 797: flagged', 'DMC 797 (symbol =) is in the color key, but that symbol never shows up in the chart.' in box, box)
     box = load('wrong-counts'); ok('wrong count 310 flagged, 321 not', 'The key says DMC 310 has' in box and 'DMC 321 has' not in box, box)

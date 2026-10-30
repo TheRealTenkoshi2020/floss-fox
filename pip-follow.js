@@ -29,11 +29,11 @@ const P=()=>window.FlossFoxPip;
 function level(){const p=P();if(p&&p.level)return p.level();let h=null,s=null;try{h=localStorage.getItem(KEY);s=localStorage.getItem(LEVEL_KEY)}catch(e){}
  if(h==='hidden'||s==='off')return'off';return['chatty','important','quiet'].includes(s)?s:'important'}
 const wide=matchMedia('(min-width:880px)'),rm=matchMedia('(prefers-reduced-motion: reduce)');
-let comp=null,isFabric=false;
+let comp=null,isFabric=false,homeG=null,homeNext=null;
 // Build the companion. index: the hero Pip becomes it. fabric: the Ask Pip slot becomes it.
 function mount(){if(comp&&comp.isConnected)return true;
  const hero=$('pip');
- if(hero){comp=hero;const g=hero.parentElement;if(g&&g.classList.contains('herogrid'))g.classList.add('pipmoved');
+ if(hero){comp=hero;const g=hero.parentElement;if(g&&g.classList.contains('herogrid')){homeG=g;homeNext=hero.nextElementSibling;g.classList.add('pipmoved')}
   const host=document.querySelector('.wrap')||body;host.after?host.after(hero):body.append(hero)}
  else{const slot=$('ffFabricPip');if(!slot)return false;isFabric=true;comp=document.createElement('aside');comp.id='pipFollow';comp.setAttribute('aria-label','Pip');comp.append(slot);
   const fig=document.createElement('div');fig.className='pipfig';const im=slot.querySelector('picture');fig.append(im);slot.prepend(fig);
@@ -45,11 +45,25 @@ function mount(){if(comp&&comp.isConnected)return true;
  mn.onclick=()=>{comp.classList.add('pipminned');mn.setAttribute('aria-expanded','false');face.focus();pad()};face.onclick=()=>{comp.classList.remove('pipminned');mn.setAttribute('aria-expanded','true');mn.focus();pad()};
  comp.append(mn,face);
  new ResizeObserver(pad).observe(comp);observe();return true}
+// Visual refresh: on a tab that shows the hero (Find floss), the hero Pip is the companion, so it sits in the hero and there is no bar.
+// Same element, same controls (Minimize, Hide Pip, Pip level); only where it is drawn changes.
+// ci005-77: on phones the companion is an inline note at the top of the open view (never a bar over content).
+function inlineSpot(){const w=document.querySelector('.wrap');if(!w)return null;if(isFabric){const c=w.querySelector('.card');return c?[c.parentElement,c]:null}
+ const v=[...w.querySelectorAll(':scope>div[id$="View"]')].find(x=>!x.hidden);return v?[v,v.firstElementChild]:null}
+function placeInline(){if(!comp)return false;body.classList.toggle('pipc-inline',!wide.matches);if(wide.matches)return false;const sp=inlineSpot();if(!sp)return false;const [par,ref]=sp;
+ if(comp.parentElement!==par||comp.nextElementSibling!==ref){if(ref===comp)return true;const f=comp.contains(document.activeElement)?document.activeElement:null;par.insertBefore(comp,ref&&ref.parentElement===par?ref:null);if(f)f.focus({preventScroll:true})}return true}
+let viewMO=null;function watchViews(){if(viewMO)return;const w=document.querySelector('.wrap');if(!w||!window.MutationObserver)return;viewMO=new MutationObserver(()=>dock());[...w.querySelectorAll(':scope>div[id$="View"]')].forEach(v=>viewMO.observe(v,{attributes:true,attributeFilter:['hidden']}))}
+function dock(){if(!comp)return;watchViews();if(isFabric||!homeG){placeInline();return}const cv=$('convertView'),inHero=!!(cv&&!cv.hidden&&homeG.isConnected&&homeG.getClientRects().length);
+ if(inHero&&comp.parentElement!==homeG){const f=comp.contains(document.activeElement)?document.activeElement:null;homeG.insertBefore(comp,homeNext&&homeNext.parentElement===homeG?homeNext:homeG.firstChild);if(f)f.focus({preventScroll:true})}
+ else if(!inHero&&!placeInline()&&(comp.parentElement===homeG||(comp.parentElement&&comp.parentElement.closest('.wrap')))){const f=comp.contains(document.activeElement)?document.activeElement:null;(document.querySelector('.wrap')||body).after(comp);if(f)f.focus({preventScroll:true})}
+ if(!inHero)body.classList.toggle('pipc-inline',!wide.matches);else body.classList.remove('pipc-inline');
+ if(body.classList.contains('pipc-hero')!==inHero){body.classList.toggle('pipc-hero',inHero);const p=P();if(p&&p.retheme)p.retheme()}homeG.classList.toggle('pipmoved',!inHero)}
+const heroMode=()=>body.classList.contains('pipc-hero');
 // bottom padding on phones so nothing stays under the bar (last button reachable)
-function pad(){if(!comp)return;const h=wide.matches||comp.hidden||body.classList.contains('pipc-away')?0:comp.getBoundingClientRect().height;doc.style.setProperty('--pipc-h',Math.ceil(h)+'px')}
+function pad(){if(!comp)return;dock();const h=heroMode()||wide.matches||body.classList.contains('pipc-inline')||comp.hidden||body.classList.contains('pipc-away')?0:comp.getBoundingClientRect().height;doc.style.setProperty('--pipc-h',Math.ceil(h)+'px')}
 // wide: line up with the active section, but never above the tab bar / header
 let active=null;
-function place(){if(!comp)return;if(!wide.matches){comp.style.transform='';return}
+function place(){if(!comp)return;if(!wide.matches||heroMode()){comp.style.transform='';return}
  const hd=document.querySelector('.tabs')||document.querySelector('header');const minTop=hd?Math.max(16,hd.getBoundingClientRect().bottom+12):16;
  const t=active?active.getBoundingClientRect().top:minTop,h=comp.offsetHeight,max=innerHeight-h-16;
  comp.style.transform='translate3d(0,'+Math.round(Math.max(minTop,Math.min(t,max)))+'px,0)'}
@@ -82,14 +96,14 @@ function away(){const on=want();clearTimeout(backT);
  const back=()=>{if(down){backT=setTimeout(back,60);return}body.classList.toggle('pipc-away',want());pad()};
  if(down)backT=setTimeout(back,16);else back()}
 let backT=0,down=false;addEventListener('pointerdown',()=>{down=true},true);addEventListener('pointerup',()=>{setTimeout(()=>{down=false},0)},true);addEventListener('click',()=>{down=false;if(body.classList.contains('pipc-away')&&!want()){clearTimeout(backT);setTimeout(away,0)}},true);addEventListener('pointercancel',()=>{down=false},true);
-let q=0;const mo=new MutationObserver(ms=>{for(const m of ms)m.addedNodes&&m.addedNodes.forEach(onAdded);if(q)return;q=requestAnimationFrame(()=>{q=0;if(!mount())return;fabricOff();if(SECTIONS.some(([sel])=>[...document.querySelectorAll(sel)].some(e=>!e.dataset.pipSection)))observe();softSwap();away();place()})});
+let q=0;const mo=new MutationObserver(ms=>{for(const m of ms)m.addedNodes&&m.addedNodes.forEach(onAdded);if(q)return;q=requestAnimationFrame(()=>{q=0;if(!mount())return;dock();fabricOff();if(SECTIONS.some(([sel])=>[...document.querySelectorAll(sel)].some(e=>!e.dataset.pipSection)))observe();softSwap();away();place()})});
 function softSwap(){if(!comp)return;const im=comp.querySelector('.pipfig img');if(!im||im.dataset.pfw)return;im.dataset.pfw='1';
  new MutationObserver(()=>{if(rm.matches)return;im.classList.remove('pf-in');void im.offsetWidth;im.classList.add('pf-in')}).observe(im,{attributes:true,attributeFilter:['src']});
  const m=comp.querySelector('.pipbubble,.ffpipline');if(m)new MutationObserver(()=>{if(rm.matches)return;m.classList.remove('pf-bub');void m.offsetWidth;m.classList.add('pf-bub')}).observe(m,{childList:true,characterData:true,subtree:true})}
 // fabric.html has no Show Pip control of its own: at Off the companion simply is not there (index keeps its Show Pip pill)
 function fabricOff(){let so=null;try{so=localStorage.getItem(LEVEL_KEY)}catch(e){}body.classList.toggle('piplevel-off',so==='off');body.classList.toggle('piplevel-quiet',so==='quiet');pad();if(isFabric&&comp){const off=level()==='off';if(comp.hidden!==off){comp.hidden=off;pad()}}}
 addEventListener('storage',fabricOff);document.addEventListener('change',e=>{if(e.target&&e.target.name==='pipLevel')setTimeout(fabricOff,0)},true);
-function start(){mo.observe(doc,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','open']});mount();fabricOff();softSwap();away();place()}
+function start(){mo.observe(doc,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','open']});mount();dock();fabricOff();softSwap();away();place()}
 document.addEventListener('focusin',away);document.addEventListener('focusout',()=>setTimeout(away,0));
 addEventListener('scroll',()=>{if(wide.matches)requestAnimationFrame(place)},{passive:true});addEventListener('resize',()=>{pad();place()});
 (wide.addEventListener?wide.addEventListener('change',()=>{pad();place()}):0);

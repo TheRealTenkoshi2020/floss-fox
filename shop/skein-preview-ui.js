@@ -51,7 +51,7 @@
    const w=add(x.li,'div','ff-skein-inline noprint');w.dataset.dmc=row.code;
    w.setAttribute('role','group');w.setAttribute('aria-label','Store links for DMC '+row.code);
    for(const l of row.links){
-    const a=add(w,'a','ff-skein-pill',(l.exact?'View skein':'Find color')+' · '+l.storeName);
+    const a=add(w,'a','ff-skein-pill',l.exact?l.storeName:'Search '+l.storeName);
     a.href=l.url;a.target='_blank';a.rel='noopener noreferrer';a.dataset.store=l.storeId;a.dataset.match=l.type;a.dataset.kind='direct';a.dataset.tracked='false';
     a.setAttribute('aria-label',l.label+' (opens in new tab)');a.title=l.hint;
    }
@@ -62,7 +62,7 @@
   const first=items.find(x=>x&&x.li&&x.li.querySelector(':scope > .ff-skein-inline'));
   const list=first&&first.li.parentElement;
   if(list&&list.parentElement){const prev=list.previousElementSibling;
-   if(!(prev&&prev.classList.contains('ff-skein-direct'))){const p=document.createElement('p');p.className='ff-skein-direct noprint';p.textContent='These are plain store links, and Floss Fox doesn\'t earn anything from them. Before you order, double-check the color, thread type, amount and availability on the store\'s site.'+(offline?' Store pages need a connection.':'');list.parentElement.insertBefore(p,list)}}
+   if(!(prev&&(prev.classList.contains('ff-skein-direct')||prev.classList.contains('ffstore')))){const p=document.createElement('p');p.className='ff-skein-direct noprint';p.textContent='These are plain store links, and Floss Fox doesn\'t earn anything from them. Before you order, double-check the color, thread type, amount and availability on the store\'s site.'+(offline?' Store pages need a connection.':'');list.parentElement.insertBefore(p,list)}}
   return n;
  }
  root.FlossFoxSkeinPreviewUI=Object.freeze({render,inline});

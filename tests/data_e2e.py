@@ -4,6 +4,7 @@
 'Use my collection' preview + undo (collection never changes), owned-not-verified bucket, storage key separation.
 Usage: python tests/data_e2e.py [BASE_URL]   (preview: set FF_KEY / FF_PIP_KEY like regression.py)"""
 import sys, os, argparse, json, tempfile
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/'); ap.add_argument('--chrome', default='/usr/bin/google-chrome')
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'
@@ -139,16 +140,16 @@ with sync_playwright() as p:
           'decisions': {'699': {'status': 'have', 'owned': 1, 'anchor': None, 'recv': None}}}
     g = page({TKEY: json.dumps(coll), KEY: json.dumps({'schema': 2, 'projects': [pr]})}); g.click('#tabProjects')
     ok('S1 project list card shows the stitch total labelled stitches', '1,500 stitches' in g.inner_text('#projList'), g.inner_text('#projList'))
-    g.click('[data-open="u-1"]'); g.wait_for_timeout(100); box = g.inner_text('#pCmpBox')
+    g.click('[data-open="u-1"]'); g.wait_for_timeout(100); g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); box = g.inner_text('#pCmpBox')
     ok('S2 thread card shows "1,500 stitches" apart from "2 skeins needed"', '1,500 stitches' in g.inner_text('#pCards') and '2 skeins needed' in g.inner_text('#pCards'), g.inner_text('#pCards')[:300])
     ok('Q1 counts kept apart: 1 owned, 1 quantity not verified, 1 short, 1 missing', g.inner_text('#cmpOwned').startswith('✓ 1') and g.inner_text('#cmpUnver').startswith('? 1') and g.inner_text('#cmpShort').startswith('◐ 1') and g.inner_text('#cmpMissing').startswith('✗ 1'), box)
     ok('Q2 assumed + owned says "Color owned, quantity not verified", not have enough', 'quantity not verified' in box.lower(), box)
-    ok('Q3 independence note in plain words', "Each project is checked against your whole collection; floss isn't reserved between projects." in box, box)
+    ok('Q3 independence note in plain words', "Each project is checked against your whole collection, minus any skeins set aside for other projects." in box, box)
     before = proj(g)[0]['decisions']; collBefore = ls(g, TKEY)
-    g.click('#pUseColl'); g.wait_for_timeout(100); pv = g.inner_text('#pCmpPrev')
+    g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.wait_for_timeout(100); pv = g.inner_text('#pCmpPrev')
     ok('U1 preview shows a compact summary before anything is applied', 'Will mark 1 Have enough, 1 Not sure, 2 Need to buy' in pv and proj(g)[0]['decisions'] == before, pv)
     g.click('#pCancelColl'); ok('U2 Cancel leaves the project unchanged', proj(g)[0]['decisions'] == before and g.locator('#pCmpPrev').count() == 0)
-    g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(100); dec = proj(g)[0]['decisions']
+    g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.click('#pApplyColl'); g.wait_for_timeout(100); dec = proj(g)[0]['decisions']
     ok('U3 apply: owned -> Have, not verified -> Not sure, short/missing -> Need to buy', dec['310']['status'] == 'have' and dec['815']['status'] == 'check' and dec['321']['status'] == 'buy' and dec['699']['status'] == 'buy', dec)
     ok('U4 the collection itself never changes', ls(g, TKEY) == collBefore)
     g.click('#pUndoColl'); g.wait_for_timeout(100); dec = proj(g)[0]['decisions']

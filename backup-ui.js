@@ -77,5 +77,21 @@ window.addEventListener('hashchange',render);window.addEventListener('pageshow',
 load();render();
 // Recheck only while this page is open; no background/notification permission.
 setInterval(()=>{if(!document.hidden)render();},60000);
-window.FlossFoxBackupUI={exportBackup,noteInventoryChanged,refresh:()=>{load();render();},PREFKEY,STATEKEY};
+/* One-time first-backup nudge (FF-DATA-01): after the first saved real thread with a count, offer the existing exporter once.
+ * Own flag key <prefix>.backup-first.v1 {schema:1,shownAt:ms}; unreadable or unknown schema = never shown, never overwritten.
+ * Never for demo threads, zero-count rows, failed or paused saves, or once a backup file save was confirmed. */
+const FIRSTKEY=PFX+'.backup-first.v1';
+function firstFlag(){try{const raw=localStorage.getItem(FIRSTKEY);if(raw===null)return'empty';const d=JSON.parse(raw);return d&&typeof d==='object'&&!Array.isArray(d)&&d.schema===1&&Number.isSafeInteger(d.shownAt)&&d.shownAt>=0?'shown':'protected';}catch(e){return'protected';}}
+function realStash(){return Object.values(T.data().threads).some(e=>e&&(e.n>0||e.partial===true));}
+function firstCheck(){
+ if(!$('bkFirst')||!$('bkFirst').hidden||meta.lastConfirmedAt!==null||!T.canSave()||!realStash()||firstFlag()!=='empty')return;
+ try{localStorage.setItem(FIRSTKEY,JSON.stringify({schema:1,shownAt:Date.now()}));}catch(e){return;}
+ $('bkFirst').hidden=false;
+}
+if($('bkFirst')){
+ $('bkFirstExport').onclick=()=>{$('bkFirst').hidden=true;exportBackup();};
+ $('bkFirstLater').onclick=()=>{$('bkFirst').hidden=true;};
+ window.addEventListener('ff:data-saved',e=>{if(e.detail&&e.detail.area==='threads')firstCheck();});
+}
+window.FlossFoxBackupUI={FIRSTKEY,exportBackup,noteInventoryChanged,refresh:()=>{load();render();},PREFKEY,STATEKEY};
 })();

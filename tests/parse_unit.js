@@ -26,7 +26,7 @@ r=parse('310');t('no amount = 1 assumed',()=>I(r,'310').qty===1&&I(r,'310').assu
 r=parse('03\n3\n04\n09\n01');t('leading zeros kept; single digit 3 reads as 03 (DMC has no "3")',()=>codes(r)==='03 04 09 01'&&I(r,'03').src.length===2);
 r=parse('DMC 03 Tin\nDMC 30 Blueberry');t('03 and 30 stay different',()=>codes(r)==='03 30');
 // alphanumeric ids
-r=parse('B5200\nEcru\nBLANC\nwhite\nDMC blanc 300');t('B5200, Ecru, BLANC/White (merged)',()=>codes(r)==='B5200 ECRU WHITE'&&I(r,'WHITE').src.length===3&&I(r,'WHITE').stitchCount===300);
+r=parse('B5200\nEcru\nBLANC\nwhite\nDMC blanc 300');t('B5200, Ecru, BLANC and WHITE stay separate colors (ci005-82)',()=>codes(r)==='B5200 ECRU BLANC WHITE'&&I(r,'BLANC').src.length===2&&I(r,'BLANC').stitchCount===300&&I(r,'WHITE').src.length===1);
 r=parse('DMC E168\nE3821\nDMC 4010\n3880\n3895');t('E-series and 4000s are named as not in chart (not dropped); 3880/3895 ok',()=>codes(r)==='3880 3895'&&r.errs.length===3&&/Light Effects/.test(r.errs[0].why)&&/Color Variations/.test(r.errs[2].why));
 // duplicates
 r=parse('1 DMC 310 Black 100\n7 DMC 310 Black 50\n310 x2');t('duplicates merge, stitches add up, every line kept in src',()=>r.items.length===1&&I(r,'310').stitchCount===150&&I(r,'310').src.length===3&&I(r,'310').qty===4);

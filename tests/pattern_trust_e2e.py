@@ -1,6 +1,7 @@
 """Pattern trust e2e (simulated, 390px): verdicts, fix sheet, Type a number, Changed tag, undo/undo all, project-page fix.
 Usage: python3 tests/pattern_trust_e2e.py URL [shotdir]"""
 import sys, os, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1].rstrip('/') + '/'; SD = sys.argv[2] if len(sys.argv) > 2 else None
 KEY = os.environ.get('FF_KEY', 'flossfox-dev.v1'); PFX = KEY[:-3]; R = [0, 0]

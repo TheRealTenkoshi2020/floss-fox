@@ -1,5 +1,6 @@
 """CI005 integration browser check (dev keys). Usage: python3 tests/ci005_browser.py http://127.0.0.1:18930/ [shots_dir] [fixtures_dir]"""
 import json,sys,os,re
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B=sys.argv[1].rstrip('/')+'/';SH=sys.argv[2] if len(sys.argv)>2 else '/workspace/ci005-shots';FX=sys.argv[3] if len(sys.argv)>3 else '/workspace/ci005/fixtures'
 KEY='flossfox-dev.v1';TKEY='flossfox-dev.threads.v1'

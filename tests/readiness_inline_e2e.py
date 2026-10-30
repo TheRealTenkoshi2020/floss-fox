@@ -1,5 +1,6 @@
 """One in-project readiness view (2.0A). Usage: FF_KEY=flossfox-dev.v1 python3 tests/readiness_inline_e2e.py URL"""
 import sys, os, json
+import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import ff_session  # ci005-79: skip the fresh-session landing
 from playwright.sync_api import sync_playwright
 B = sys.argv[1]; KEY = os.environ.get('FF_KEY', 'flossfox-dev.v1'); PFX = KEY.replace('.v1', '')
 R = []
@@ -17,6 +18,7 @@ with sync_playwright() as p:
         ok(f'[{w}] standalone readiness panel with its own picker is gone', g.locator('#pipProjectReadiness').count() == 0 and g.locator('#ffReadinessProject').count() == 0)
         ok(f'[{w}] readiness details live inside the project, after the summary', g.evaluate("document.getElementById('pReady').previousElementSibling.id") == 'pSum' and g.locator('#pReady details').count() == 1)
         g.check('#st-310-have'); g.check('#st-321-buy'); g.check('#st-3865-buy'); g.wait_for_timeout(150)
+        g.evaluate("document.querySelector('#pReady details').open=true"); g.wait_for_timeout(100)  # flow pass: folded by default
         txt = g.inner_text('#pReady')
         grp = g.evaluate("Object.fromEntries([...document.querySelectorAll('#pReady [data-group]')].map(x=>[x.dataset.group,[...x.querySelectorAll('li')].map(l=>l.dataset.code)]))")
         ok(f'[{w}] groups: confirmed 310, buy 321+3865, not sure 699', grp == {'have': ['310'], 'buy': ['321', '3865'], 'review': ['699']}, grp)
