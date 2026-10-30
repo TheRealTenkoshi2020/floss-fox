@@ -113,7 +113,7 @@ with sync_playwright() as p:
     g.fill('#inp', LIST); g.wait_for_timeout(900); ctx.set_offline(True); g.reload(); g.wait_for_load_state('domcontentloaded'); g.wait_for_timeout(500)
     ok('390px offline reload: recovery card works from cache', g.evaluate("!!window.FlossFoxDraftUI&&!!window.FlossFoxDraftCore") and g.locator('#ffDraftRecovery').is_visible())
     g.click('#ffDraftRestore'); ok('390px offline restore gives the list back', g.input_value('#inp') == LIST)
-    ok('sw cache is ci005-83', 'ci005-83' in g.evaluate("caches.keys().then(k=>k.join(','))"))
+    ok('sw cache is ci005-84', 'ci005-84' in g.evaluate("caches.keys().then(k=>k.join(','))"))
     ctx.close(); br.close()
 ok('no page errors', not errs, errs)
 print(f"\ndraft_backup_e2e (simulated): {R['pass']} passed, {R['fail']} failed"); sys.exit(1 if R['fail'] else 0)

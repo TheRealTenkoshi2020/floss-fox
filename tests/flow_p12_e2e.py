@@ -38,7 +38,7 @@ with sync_playwright() as p:
     g.reload(); g.wait_for_timeout(400); g.click('#tabProjects'); g.click('[data-open]'); g.wait_for_timeout(300)
     ok('a6 after Undo, reopening does not silently re-apply', all(x['status'] is None for x in store(g)[0]['decisions'].values()) and not g.is_visible('#pAutoUndo'))
     # (a) never overwrite a user decision
-    now = '2026-10-21T00:00:00.000Z'
+    now = '2026-10-31T00:00:00.000Z'
     g = page(seed([{'id': 'u1', 'name': 'Mine', 'notes': '', 'buyBrand': 'dmc', 'status': 'planning', 'items': [it('310', 1), it('321', 1), it('815', 1)], 'decisions': {'310': dec('buy'), '321': dec(), '815': dec('have', 3, 'user')}, 'purchased': {}, 'created': now, 'updated': now}]))
     g.click('#tabProjects'); g.click('[data-open="u1"]'); g.wait_for_timeout(300); d = store(g)[0]['decisions']
     ok('a7 user-made choices are never overwritten (310 stays Need to buy, 815 stays Have enough 3)', d['310']['status'] == 'buy' and d['815']['status'] == 'have' and d['815']['owned'] == 3 and d['321']['status'] == 'have', d)

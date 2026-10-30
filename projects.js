@@ -283,7 +283,7 @@ function renderCmp(p){const el=$('pCmp'),T=window.FlossFoxThreadsUI;if(!el||!T)r
 /* ---- First-time flow (a): Pip checks My threads automatically. Same engine as "Use my collection" (cmpPlan); only colors with no
    decision yet are filled in (never overwrites a user's choice), and it's undoable. Projects created before AUTO_SINCE are only OFFERED. ---- */
 const FS=k=>(window.FF_STR||{})[k]||'',FC=(k,v)=>{const t=((window.FF_STR||{}).compare||{})[k];return typeof t==='function'?t(v||{}):t||''},FX=(t,v)=>typeof t==='function'?t(v||{}):t||'',fill=(t,o)=>String(t).replace(/\{(\w+)\}/g,(m,k)=>o[k]!==undefined?o[k]:m);
-const AUTO_SINCE='2026-10-21T01:15:00.000Z',autoBan={},blank=f=>f.status===null&&f.owned===null&&!f.ownedSource&&!f.ownedPartial;
+const AUTO_SINCE='2026-10-30T14:30:00.000Z',autoBan={},blank=f=>f.status===null&&f.owned===null&&!f.ownedSource&&!f.ownedPartial;
 const AUTOKEY=()=>KEY.replace(/\.v1$/,'')+'.autocmp-off.v1',autoOff=()=>{try{return JSON.parse(localStorage.getItem(AUTOKEY())||'[]')}catch(e){return[]}};
 const AUTOHID=()=>KEY.replace(/\.v1$/,'')+'.autocmp-hidden.v1',autoHid=()=>{try{return JSON.parse(localStorage.getItem(AUTOHID())||'[]')}catch(e){return[]}};
 function setAutoHid(id){try{const a=autoHid();if(!a.includes(id)){a.push(id);localStorage.setItem(AUTOHID(),JSON.stringify(a.slice(-200)))}}catch(e){}}
