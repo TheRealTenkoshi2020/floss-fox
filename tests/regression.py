@@ -931,7 +931,7 @@ with sync_playwright() as p:
     ok('B5f colors added -> saved toast with a short note', toast('#pMsg') is not None and 'Added 1 color' in sv.inner_text('#pMsg'))
     sv.fill('#pAdd', 'zzz'); sv.click('#pAddBtn'); sv.wait_for_timeout(150); ok('B5g nothing added -> no toast (only real events)', toast('#pMsg') is None)
     sv.click('#pClose'); sv.click('#backupBox summary'); sv.set_input_files('#restoreFile', {'name': 'b.json', 'mimeType': 'application/json', 'buffer': open(FIX, 'rb').read()}); sv.wait_for_timeout(300); sv.click('#rGo'); sv.wait_for_timeout(200)
-    ok('B5h backup restored (updated) -> saved toast', toast('#projStatus') is not None and 'Restore done' in sv.inner_text('#projStatus'))
+    ok('B5h backup restored (updated) -> saved toast', toast('#projStatus') is not None and 'Restore checked and saved' in sv.inner_text('#projStatus'))
     sv.click('#tabConvert'); sv.evaluate("document.getElementById('pipToggle').click()"); sv.click('#copy'); sv.wait_for_timeout(200); ok('B5i Pip hidden -> no decorative toast, status still shown', toast('#copymsg') is None and 'Copied' in sv.inner_text('#copymsg'))
     fi = sv.evaluate("(()=>{const i=document.querySelector('#askPipBtn img');return [i.naturalWidth,i.naturalHeight,/face-icon/.test(i.currentSrc)]})()")
     ok('B6 face icon avatar on Ask Pip (square, loads, even with Pip hidden)', fi[0] > 0 and fi[0] == fi[1] and fi[2], fi)

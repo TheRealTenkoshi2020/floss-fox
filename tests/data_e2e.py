@@ -50,7 +50,7 @@ with sync_playwright() as p:
     # current-format backup fixture (schema 1 projects backup) still restores
     g = page(); g.click('#tabProjects'); g.click('#backupBox summary'); g.set_input_files('#restoreFile', os.path.join(FIX, 'backup-v1.json')); g.wait_for_timeout(250)
     ok('F7 old projects-only backup is accepted and says the collection is not touched', 'projects-only' in g.inner_text('#restorePanel'), g.inner_text('#restorePanel'))
-    g.click('#rGo'); g.wait_for_timeout(150); ok('F8 projects-only backup restored', len(proj(g)) >= 1 and 'Restore done' in g.inner_text('#projStatus'), g.inner_text('#projStatus'))
+    g.click('#rGo'); g.wait_for_timeout(150); ok('F8 projects-only backup restored', len(proj(g)) >= 1 and 'Restore checked and saved' in g.inner_text('#projStatus'), g.inner_text('#projStatus'))
     g.context.close()
 
     # ---- K: full backup round trip ----

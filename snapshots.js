@@ -18,6 +18,8 @@ const STR={
  noSafety:'Floss Fox couldn\'t save a copy of your current data first (storage is full or blocked), so nothing was changed. Save a backup file, then try again.',
  failed:'Restore failed: your browser blocked the save. Nothing was changed.',
  footer:'Your browser may clear Floss Fox data if space runs low. A backup file you save keeps a copy outside the browser.',
+ notVerified:'The copy could not be saved correctly, so your data was put back how it was. Nothing was changed.',
+ notVerifiedNoBack:'The copy could not be saved correctly and we could not confirm your data was put back. Save a backup file before changing anything.',
  restoreAria:'Restore the copy from {date}',
  saveFull:'The newest automatic copy couldn\'t be saved because browser storage is full. Your data is fine. Save a backup file to keep a copy.'
 };
@@ -58,13 +60,17 @@ function restore(i){const arr=list(),s=arr[i];if(!s)return false;const when=fmt(
  const prev={};try{for(const k in s.keys)prev[k]=localStorage.getItem(k)}catch(e){status(STR.failed);return false}
  try{for(const k in s.keys){if(s.keys[k]===null)localStorage.removeItem(k);else localStorage.setItem(k,s.keys[k])}}
  catch(e){try{for(const k in prev){if(prev[k]===null)localStorage.removeItem(k);else localStorage.setItem(k,prev[k])}}catch(e2){}status(STR.failed);return false}
- setMeta({restoredAt:new Date().toISOString()});location.hash='#settings';location.reload();return true}
+ const RV=window.FlossFoxRestoreVerify,get=k=>localStorage.getItem(k);
+ if(!RV||!RV.verifyKeys(s.keys,get).ok){const back=!!RV&&RV.writeKeys(prev,(k,v)=>localStorage.setItem(k,v),k=>localStorage.removeItem(k))&&RV.verifyKeys(prev,get).ok;status(back?STR.notVerified:STR.notVerifiedNoBack);return false}
+ setMeta({restoredAt:new Date().toISOString(),restored:{at:new Date().toISOString(),from:s.at,sig:dataSig(s.keys)}});location.hash='#settings';location.reload();return true}
 function fmt(at){return new Date(at).toLocaleString([], {year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
 function status(msg){const el=$('snapStatus');if(el)el.textContent=msg}
+// Confirmation after a restore reload: only while storage still matches exactly what was restored (checked again now).
+function done(m){try{const r=m.restored,RV=window.FlossFoxRestoreVerify;if(!r||!RV||Date.now()-Date.parse(r.at)>10*60*1000)return'';const k=P.rawSnapshot().keys;if(dataSig(k)!==r.sig)return'';const c=counts(k);return RV.copyMessage({when:fmt(r.from),projects:c.projects,colors:c.colors})}catch(e){return''}}
 function render(){const box=$('snapBox');if(!box)return;const arr=list(),m=meta();
  const rows=arr.map((s,i)=>{const c=s.counts||counts(s.keys),when=esc(fmt(s.at));
   return `<li><span>${esc(fill(STR.item,{when:fmt(s.at),projects:plural(c.projects,'project'),colors:plural(c.colors,'thread color')}))} <span class="mut">(${esc(STR.reason[s.reason]||STR.reason.open)})</span></span> <button type="button" class="sec small" data-snap="${i}" aria-label="${esc(fill(STR.restoreAria,{date:fmt(s.at)}))}">${esc(STR.restoreBtn)}</button></li>`}).join('');
- box.innerHTML=`<h3>${esc(STR.heading)}</h3><p class="hint">${esc(STR.intro)}</p>${arr.length?`<ul class="snaplist" aria-label="${esc(STR.listLabel)}">${rows}</ul>`:`<p class="hint">${esc(STR.none)}</p>`}<p class=\"hint\">${esc(STR.footer)}</p>${m.lastError?`<p class="hint warn">${esc(STR.saveFull)}</p>`:''}<p class="hint" id="snapStatus" role="status" aria-live="polite"></p>`;
+ box.innerHTML=`<h3>${esc(STR.heading)}</h3><p class="hint">${esc(STR.intro)}</p>${arr.length?`<ul class="snaplist" aria-label="${esc(STR.listLabel)}">${rows}</ul>`:`<p class="hint">${esc(STR.none)}</p>`}<p class=\"hint\">${esc(STR.footer)}</p>${m.lastError?`<p class="hint warn">${esc(STR.saveFull)}</p>`:''}${done(m)?`<p class="hint" id="snapRestored">${esc(done(m))}</p>`:''}<p class="hint" id="snapStatus" role="status" aria-live="polite"></p>`;
  box.querySelectorAll('button[data-snap]').forEach(b=>b.onclick=()=>restore(+b.dataset.snap))}
 window.FlossFoxSnapshots={take,list,restore,askPersist,render,SNAPKEY,METAKEY,STR,_meta:meta};
 take('open');render();

@@ -1,9 +1,11 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v3.7.1-1';
+const CACHE = 'flossfox-v3.8-1';
 const CORE = [
   "backup-core.js",
   "backup-ui.js",
   "snapshots.js",
+  "journal.js","recent-changes.js",
+  "restore-verify.js",
   "backup-ui.css",
   "ftux-draft-core.js",
   "ftux-draft-ui.js",

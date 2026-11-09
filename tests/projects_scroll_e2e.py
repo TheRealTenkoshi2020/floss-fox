@@ -38,6 +38,8 @@ with sync_playwright() as p:
             if g.locator(s).count(): g.click(s); g.wait_for_timeout(200)
         g.evaluate("FlossFoxProjects.showView('projects')"); g.wait_for_timeout(200); g.evaluate(f"FlossFoxProjects.open({json.dumps(a)})"); g.wait_for_timeout(300)
         g.evaluate("document.getElementById('pKit').open=false"); g.wait_for_timeout(100)
+        ok(t + 'offer shown, nothing filled on its own', vis(g, '#pAutoApply'))
+        g.click('#pAutoApply'); g.wait_for_timeout(200)  # explicit Use my collection tap
         ok(t + 'Pip banner shown (Pip checked your threads)', vis(g, '#pAuto'))
         ok(t + 'Pip banner: Undo and Hide visible in the short view', vis(g, '#pAutoUndo') and vis(g, '#pAutoHide'))
         mo = g.locator('#pAutoMore')

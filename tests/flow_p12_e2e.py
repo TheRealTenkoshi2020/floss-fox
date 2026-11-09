@@ -27,8 +27,10 @@ with sync_playwright() as p:
     # (a) auto-compare on a new project, with Undo
     g = page(seed([]))
     paste_save(g, '310 x1\n321 x1\n666\n3865\n815')
-    g.click('#openSaved'); g.wait_for_timeout(400); g.click('#pAutoMore'); g.wait_for_timeout(60); a = g.inner_text('#pAuto')
-    ok('a1 new project: Pip checks My threads automatically and says so', 'Pip checked your threads: you have enough of 2 of these 5 colors.' in a, a)
+    g.click('#openSaved'); g.wait_for_timeout(400)
+    ok('a0 new project: opening it fills nothing on its own (Myke: no auto-fill, offer only)', all(x['status'] is None for x in store(g)[0]['decisions'].values()) and g.is_visible('#pAutoApply'), g.inner_text('#pAuto'))
+    g.click('#pAutoApply'); g.wait_for_timeout(200); g.click('#pAutoMore'); g.wait_for_timeout(60); a = g.inner_text('#pAuto')
+    ok('a1 after the explicit tap, Pip checks My threads and says so', 'Pip checked your threads: you have enough of 2 of these 5 colors.' in a, a)
     ok('a2 banner explains Not sure and Need to buy with exact plurals', "1 color you own needs an amount check, so it's marked Not sure." in a and '2 colors are short or missing, so they went on Need to buy.' in a, a)
     d = store(g)[0]['decisions']; ok('a3 auto-compare used the existing engine result (310/321 Have enough, 666 Not sure, 3865/815 Need to buy)', [d[c]['status'] for c in ['310', '321', '666', '3865', '815']] == ['have', 'have', 'check', 'buy', 'buy'], d)
     g.click('#tabThreads'); g.click('#tabProjects'); g.wait_for_timeout(200)
@@ -40,7 +42,9 @@ with sync_playwright() as p:
     # (a) never overwrite a user decision
     now = '2026-10-31T00:00:00.000Z'
     g = page(seed([{'id': 'u1', 'name': 'Mine', 'notes': '', 'buyBrand': 'dmc', 'status': 'planning', 'items': [it('310', 1), it('321', 1), it('815', 1)], 'decisions': {'310': dec('buy'), '321': dec(), '815': dec('have', 3, 'user')}, 'purchased': {}, 'created': now, 'updated': now}]))
-    g.click('#tabProjects'); g.click('[data-open="u1"]'); g.wait_for_timeout(300); d = store(g)[0]['decisions']
+    raw_u = g.evaluate(f"localStorage.getItem('{KEY}')"); g.click('#tabProjects'); g.click('[data-open="u1"]'); g.wait_for_timeout(300)
+    ok('a7a recent project with user choices: opening writes nothing', g.evaluate(f"localStorage.getItem('{KEY}')") == raw_u)
+    g.click('#pAutoApply'); g.wait_for_timeout(200); d = store(g)[0]['decisions']
     ok('a7 user-made choices are never overwritten (310 stays Need to buy, 815 stays Have enough 3)', d['310']['status'] == 'buy' and d['815']['status'] == 'have' and d['815']['owned'] == 3 and d['321']['status'] == 'have', d)
     # (a) old projects: offered, not altered
     old = '2026-10-01T00:00:00.000Z'
@@ -169,7 +173,7 @@ with sync_playwright() as p:
     ok('j4 reduced motion: strip has no animation', g.evaluate("getComputedStyle(document.getElementById('pipStrip')).animationName") == 'none')
     ok('j5 strip is decorative only (no new tap targets, hidden from screen readers; Ask Pip stays the entry)', g.locator('#pipStrip button, #pipStrip a').count() == 0 and g.get_attribute('#pipStrip', 'aria-hidden') == 'true')
     # Pixel batch 2
-    g = page(seed([])); paste_save(g, '310 x1\n321 x1\n815'); g.click('#openSaved'); g.wait_for_timeout(300); g.click('#pAutoMore'); g.wait_for_timeout(60)
+    g = page(seed([])); paste_save(g, '310 x1\n321 x1\n815'); g.click('#openSaved'); g.wait_for_timeout(300); g.click('#pAutoApply'); g.wait_for_timeout(200); g.click('#pAutoMore'); g.wait_for_timeout(60)
     ok('k1 banner says how many colors Pip filled in (n wired)', "Pip filled in 3 colors you hadn't decided yet." in g.inner_text('#pAuto'), g.inner_text('#pAuto'))
     g.reload(); g.wait_for_timeout(300); g.click('#tabProjects'); g.click('[data-open]') if g.is_visible('[data-open]') else None; g.wait_for_timeout(300)
     ok('k2 reload: nothing-to-fill banner shown once', 'nothing to fill in' in g.inner_text('#pAuto'), g.inner_text('#pAuto'))

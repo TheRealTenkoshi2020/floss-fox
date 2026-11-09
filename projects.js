@@ -54,7 +54,7 @@ function normProject(p){if(!p||typeof p!=='object'||typeof p.id!=='string'||!p.i
   }else items.push(it)}
  items.forEach(it=>dec[it.code]=normDecision(it.code,p.decisions&&p.decisions[it.code]));
  const purchased={};if(p.purchased&&typeof p.purchased==='object')for(const k of Object.keys(p.purchased))if(p.purchased[k]===true&&k.length<40)purchased[k]=true;
- return{id:p.id,name:str(p.name,100).trim()||'Untitled project',notes:str(p.notes,2000),buyBrand:BRAND[p.buyBrand]?p.buyBrand:'dmc',
+ return{id:p.id,name:str(p.name,100).trim()||'Untitled project',notes:str(p.notes,2000),...(typeof p.leftOff==='string'&&p.leftOff.trim()?{leftOff:p.leftOff.slice(0,500)}:{}),buyBrand:BRAND[p.buyBrand]?p.buyBrand:'dmc',
   items,decisions:dec,purchased,status:PSTAT.some(x=>x[0]===p.status)?p.status:'planning',...(p.skeinEstimator!==undefined?{skeinEstimator:SK.normalize(p.skeinEstimator)}:{}),...(p.demo===true?{demo:true}:{}),...(()=>{/* optional, additive (dev pattern trust): only present when a pattern check left something to fix or undo */const T=window.FlossFoxPatternTrust,pc=p.pcheck&&typeof p.pcheck==='object'?(T?T.normPcheck(p.pcheck):JSON.parse(JSON.stringify(p.pcheck))):undefined;return pc?{pcheck:pc}:{}})(),created:str(p.created,40)||nowISO(),updated:str(p.updated,40)||nowISO()}}
 function migrate(d){ // returns {data, skipped} or null if not Floss Fox data
  if(!d||typeof d!=='object'||!Array.isArray(d.projects))return null;
@@ -295,8 +295,9 @@ function autoCmp(p){if(window.FF_NO_AUTOCMP)return; /* test-only hook for legacy
  if(!T.count({demo:!!p.demo})){if(fresh&&!p.demo&&!autoHid().includes(p.id)){autoBan[p.id]={kind:'empty'};setTimeout(()=>window.FlossFoxPip&&FlossFoxPip.react&&FlossFoxPip.react('pipA.cmp.empty',{},'#pAuto',{siteAnnounces:true}),0)}return}
  const a=autoPlan(p);if(!a)return;
  if(!a.safe.length){if(fresh&&!autoHid().includes(p.id)){autoBan[p.id]={kind:'nothing'};setTimeout(()=>window.FlossFoxPip&&FlossFoxPip.react&&FlossFoxPip.react('pipA.cmp.nothing',{},'#pAuto',{id:p.id,siteAnnounces:true}),0)}else delete autoBan[p.id];return}
- if(!fresh){autoBan[p.id]=Object.assign({kind:'offer'},a);return}
- applyAuto(p,a)}
+ // Myke's rule: opening a project or Shop never fills colors on its own, whatever the project's date. Only offer;
+ // applyAuto runs only from the explicit "Use my collection" tap (pAutoApply), with Undo.
+ autoBan[p.id]=Object.assign({kind:'offer'},a)}
 function applyAuto(p,a){a.safe.forEach(x=>Object.assign(p.decisions[x.code],x.to));undoBy[p.id]=(undoBy[p.id]||[]).concat(a.safe);autoBan[p.id]=Object.assign({kind:'done'},a);touch(p);setTimeout(()=>window.FlossFoxPip&&FlossFoxPip.react&&FlossFoxPip.react('pipA.cmp.done',{have:a.have,total:a.total,u:a.u},'#pAuto',{id:p.id,siteAnnounces:true}),0)}
 function autoHead(b){return b.total===1?FC(b.have?'oneHave':'oneNot'):b.have?FC('many',b):FC('none',b)}
 var autoMore={};   // in-memory only, like openSec
@@ -396,6 +397,7 @@ function renderEditor(){if(mode==='shop')return renderShop();const y=window.scro
  const unchecked=p.items.filter(it=>!p.decisions[it.code].status).length;
  E.innerHTML=`<div class="noprint"><div class="ptitle"><button type="button" class="ghost" id="pClose">← All projects</button><button type="button" class="pri" id="pShop"><span aria-hidden="true">🛒</span> Shop my list</button></div><p class="ffsaved" id="pSaved">${canSave?esc(FX(FS('savedBadge'),{time:new Date(p.updated).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})})):''}</p>
  <h2 class="ptname" id="pTitle">${esc(p.name)}</h2><nav class="pflow" id="pFlow" aria-label="Project steps"></nav><div class="ffbanner" id="pAuto" role="status" hidden></div></div><div id="pSum"></div><div id="pReady" class="noprint"></div><div id="pTrust" class="noprint"></div>
+ <div class="fld noprint pleftoff"><label for="pLeftOff">Where I left off <small class="mut">(optional)</small></label><textarea id="pLeftOff" maxlength="500" rows="2" style="width:100%;min-height:56px;font-family:var(--font)" placeholder="e.g. Finished page 2; next is the border." aria-describedby="pLeftOffHint">${esc(p.leftOff||'')}</textarea><p class="hint" id="pLeftOffHint">A quick reminder for next time. Saved on this device when you leave the box.</p></div>
  <div class="noprint"><details class="pmore" id="pDetails"${secOpen('pDetails',!String(p.name||'').trim()||(document.activeElement&&!!document.activeElement.closest&&!!document.activeElement.closest('#pDetails')))}><summary>Project details</summary><div class="fldrow" style="margin-top:var(--s3)"><div class="fld" style="flex:2 1 220px"><label for="pName">Project name</label><input type="text" id="pName" maxlength="100" value="${esc(p.name)}" style="width:100%"></div>
  <div class="fld" style="flex:1 1 160px"><label for="pStatus">Status</label><select id="pStatus" style="width:100%">${PSTAT.map(([k,l])=>`<option value="${k}"${(p.status||'planning')===k?' selected':''}>${l}</option>`).join('')}</select></div>
  <div class="fld" style="flex:1 1 180px"><label for="pDest">Brand to buy</label><select id="pDest" style="width:100%">${['dmc','sullivans','anchor'].map(k=>`<option value="${k}"${p.buyBrand===k?' selected':''}>${k==='dmc'?'DMC (same as pattern)':BRAND[k]}</option>`).join('')}</select></div></div>
@@ -512,6 +514,7 @@ function renderShop(){const p=proj(openId),E=$('projEdit');if(!p){E.hidden=true;
 function bindEditor(p){const E=$('projEdit'),re=()=>{edited(p);touch(p);renderEditor();renderList()};
  $('pClose').onclick=closeProject;$('pShop').onclick=()=>showView('shop');$('pDelete').onclick=()=>delProject(p.id);
  $('pName').onchange=()=>{p.name=$('pName').value.trim().slice(0,100)||'Untitled project';touch(p);renderList();renderPlan(p)};
+ $('pLeftOff').onchange=()=>{const v=$('pLeftOff').value.slice(0,500);if(!v.trim()){if(!('leftOff'in p))return;delete p.leftOff}else{if(p.leftOff===v)return;p.leftOff=v}touch(p)};
  $('pNotes').onchange=()=>{p.notes=$('pNotes').value.slice(0,2000);touch(p);renderPlan(p)};
  $('pDest').onchange=()=>{p.buyBrand=$('pDest').value;re()};
  $('pStatus').onchange=()=>{p.status=$('pStatus').value;touch(p);renderList();pstatus(`Status: ${$('pStatus').selectedOptions[0].textContent}.`)};
@@ -558,7 +561,7 @@ const PREF_KEYS={pip:PFX+'.pip.v1',hints:PFX+'.hints.v1',tips:PFX+'.tips.v1',fab
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const TUI=()=>window.FlossFoxThreadsUI;
 function fullBackup(){const T=TUI(),prefs={};for(const k in PREF_KEYS){const v=lsGet(PREF_KEYS[k]);if(v!==null)prefs[k]=v}
- return{app:'floss-fox',kind:'full-backup',version:BK_VERSION,schema:SCHEMA,exported:nowISO(),projects:store.projects.filter(p=>!p.demo),threads:T?T.exportData():{schema:1,threads:{}},prefs,...((S=>S&&S.writable()?{allocations:S.read()}:{})(ALS()))}}
+ return{app:'floss-fox',kind:'full-backup',version:BK_VERSION,schema:SCHEMA,exported:nowISO(),projects:store.projects.filter(p=>!p.demo),threads:T?T.exportData():{schema:1,threads:{}},prefs,...((S=>S&&S.writable()?{allocations:S.read()}:{})(ALS())),...((J=>{/* optional, additive (dev event journal phase 1); older backups have none */try{const e=J?J.exportEvents():[];return e.length?{journal:e}:{}}catch(x){return{}}})(window.FlossFoxJournal))}}
 function backup(){const d=fullBackup(),nt=Object.keys(d.threads.threads).length;download(JSON.stringify(d,null,2),'floss-fox-backup-'+nowISO().slice(0,10)+'.json','application/json');
  pstatus(`Backup downloaded with ${plural(d.projects.length,'project')} and ${plural(nt,'thread color')}. Keep the file somewhere safe, the way you'd keep a favorite pattern.`)}
 const PREF_OK={backup:v=>!!(window.FlossFoxBackupCore&&FlossFoxBackupCore.validPrefsString(v)),pip:v=>v==='shown'||v==='hidden',hints:v=>v==='on'||v==='off',tips:v=>{try{const a=JSON.parse(v);return Array.isArray(a)&&a.every(x=>typeof x==='string')}catch(e){return false}},fabric:v=>{try{const o=JSON.parse(v);return!!o&&typeof o==='object'&&!Array.isArray(o)}catch(e){return false}}};
@@ -570,7 +573,7 @@ function checkBackup(d){if(!d||typeof d!=='object'||d.app!=='floss-fox')return{e
  if(full){const T=TUI();if(!T)return{err:'bad'};const tm=T.core.migrate(d.threads);if(!tm)return{err:'bad'};if(tm.tooNew)return{err:'new'};threads=tm.data.threads;tsk=tm.skipped;
   if(d.prefs&&typeof d.prefs==='object')for(const k in PREF_KEYS)if(typeof d.prefs[k]==='string'&&PREF_OK[k](d.prefs[k]))prefs[k]=d.prefs[k]}
  let allocations=null;if(full&&d.allocations!==undefined){if(!AL())return{err:'bad'};const v=AL().validate(d.allocations);if(!v.ok)return{err:v.reason==='future-schema'?'new':'bad'};const ids=new Set(m.data.projects.map(x=>x.id));if(v.data.allocations.some(r=>!ids.has(r.projectId)))return{err:'bad'};allocations=v.data}
- return{projects:m.data.projects,threads,prefs,skipped:m.skipped+tsk,full,allocations}}
+ return{projects:m.data.projects,threads,prefs,skipped:m.skipped+tsk,full,allocations,journal:Array.isArray(d.journal)?d.journal:null}}
 function snapshot(){const keys=[KEY,ALKEY,TUI()?TUI().KEY:PFX+'.threads.v1',...Object.values(PREF_KEYS)],o={};keys.forEach(k=>{o[k]=lsGet(k)});return{at:nowISO(),keys:o}}
 function undoImportRow(){const el=$('undoImport');if(!el)return;let s=null;try{s=JSON.parse(lsGet(PREKEY)||'null')}catch(e){}
  if(!s||!s.keys){el.hidden=true;el.innerHTML='';return}el.hidden=false;
@@ -600,19 +603,33 @@ function restoreFile(file){const R=$('restorePanel');if(!file)return;$('backupBo
     if(JSON.stringify(pr.data)!==JSON.stringify(cur)){if(!S.writable()){pstatus('We stopped the restore because your set-aside list is read-only here. Nothing was changed.');return}alNext=pr.data}}
    if(window.FlossFoxSnapshots)FlossFoxSnapshots.take('import',{force:true});
    try{localStorage.setItem(PREKEY,JSON.stringify(snapshot()))}catch(e){if(!confirm('A safety copy of your current data couldn\'t be saved in this browser (storage full or blocked), so this import can\'t be undone. Import anyway?'))return}
-   let add=0,rep=0,skip=0,cp=0,ta=0;
+   const pre=snapshot(); // in-memory copy of every affected key, taken right before the first write
+   let add=0,rep=0,skip=0,cp=0,ta=0;const JN=window.FlossFoxJournal,jIn=c.journal;if(JN)JN.hold(); // an import is a re-base, not a run of history events
+   let tok=true,saved=false,thrown=false;try{ // an unexpected error anywhere below is treated as a failed save (put back), never as success
    if(im==='replace'){store.projects=store.projects.filter(p=>p.demo).concat(pendingRestore);rep=pendingRestore.length}
    else{const modeEl=document.querySelector('input[name=rmode]:checked'),mode=modeEl?modeEl.value:'replace';
     pendingRestore.forEach(p=>{const i=store.projects.findIndex(x=>x.id===p.id);if(i<0){store.projects.push(p);add++}else if(mode==='replace'){store.projects[i]=p;rep++}else if(mode==='skip')skip++;else{store.projects.push({...p,id:copyMap[p.id]||newId(),name:(p.name+' (restored copy)').slice(0,100)});cp++}})}
-   let tok=true;
    if(c.full&&T){if(im==='replace'){tok=T.replaceAll({threads:c.threads});ta=nt}else{const merged=Object.assign({},c.threads,mine);ta=Object.keys(c.threads).filter(k=>!mine[k]).length;tok=T.replaceAll({threads:merged})}
     if(im==='replace')for(const k in c.prefs){try{localStorage.setItem(PREF_KEYS[k],c.prefs[k])}catch(e){}}}
    let aok=true;if(alNext){const r=S.replace(alNext);aok=r.ok;if(!aok){let s0=null;try{s0=JSON.parse(lsGet(PREKEY)||'null')}catch(e){}try{if(s0&&s0.keys)for(const k in s0.keys){if(s0.keys[k]===null)localStorage.removeItem(k);else localStorage.setItem(k,s0.keys[k])}}catch(e){}pstatus('The restore failed while saving set-aside threads, so everything was put back how it was.');setTimeout(()=>{location.hash='#projects';location.reload()},1500);return}}
-   pendingRestore=null;R.hidden=true;const ok=save()&&tok;renderList();if(openId&&proj(openId))renderEditor();undoImportRow();if(window.FlossFoxBackupUI)FlossFoxBackupUI.refresh();
-   pstatus(`Restore ${ok?'done':'applied but NOT saved'} (${im}): ${add} added, ${rep} replaced, ${skip} skipped, ${cp} copied${c.full?`; ${ta} thread color${ta===1?'':'s'} ${im==='replace'?'restored':'added'}`:''}.`);if(ok&&window.FlossFoxPip)FlossFoxPip.saved($('projStatus'))}})
+   saved=save()}catch(e){thrown=true}
+   pendingRestore=null;const sok=!thrown&&saved&&tok,RV=window.FlossFoxRestoreVerify,exp={};
+   // Read back exactly what was meant to be saved; only a verified save is reported as done.
+   try{exp[KEY]=JSON.stringify(store);if(c.full&&T)exp[T.KEY]=JSON.stringify(T.data());if(im==='replace'&&c.full)for(const k in c.prefs)exp[PREF_KEYS[k]]=c.prefs[k]}catch(e){}
+   const ver=sok&&RV?RV.verifyKeys(exp,lsGet):{ok:false};
+   if(!ver.ok){const back=!!RV&&RV.writeKeys(pre.keys,(k,v)=>localStorage.setItem(k,v),k=>localStorage.removeItem(k))&&RV.verifyKeys(pre.keys,lsGet).ok;
+    const fm=RV?RV.failMessage(back):'The restore could not be checked. Before changing anything, use Undo last import, or import your backup again.';
+    canSave=false; // stop any later save of the in-memory import from overwriting what is in storage now
+    let carried=false;try{sessionStorage.setItem(PFX+'.restoremsg',fm);carried=sessionStorage.getItem(PFX+'.restoremsg')===fm}catch(e){}R.hidden=false;R.textContent=fm;pstatus(fm);
+    // reload so the screen matches storage; at once when the message survives the reload, otherwise after it can be read
+    setTimeout(()=>{location.hash='#projects';location.reload()},carried?0:6000);return}
+   if(JN)JN.rebase(jIn);renderList();if(openId&&proj(openId))renderEditor();undoImportRow();if(window.FlossFoxBackupUI)FlossFoxBackupUI.refresh();
+   const dm=RV.importMessage({mode:im,full:c.full,add,rep,skip,cp,ta,projects:store.projects.filter(p=>!p.demo).length,colors:T?Object.keys(T.data().threads||{}).length:0});
+   R.hidden=false;R.textContent='';const dp=document.createElement('p');dp.id='restoreDone';dp.setAttribute('role','status');dp.textContent=dm;R.append(dp);pstatus('Restore checked and saved.');if(window.FlossFoxPip)FlossFoxPip.saved($('projStatus'))}})
   .catch(()=>{R.hidden=false;R.innerHTML='<b class="warn">Couldn\'t read that file. Nothing was changed.</b>'})}
 
 // ---- Wiring ----
+try{const rm=sessionStorage.getItem(PFX+'.restoremsg');if(rm){sessionStorage.removeItem(PFX+'.restoremsg');setTimeout(()=>{pstatus(rm);const bb=$('backupBox');if(bb)bb.open=true},0)}}catch(e){} // one-time result of a restore that had to be put back
 let pipFirstPending=false;function pipFirstTry(){const P=window.FlossFoxPip;if(!pipFirstPending||!P||!P.firstProject)return;let seen=false;try{seen=!!localStorage.getItem(P.FIRST_KEY)}catch(e){seen=true}if(seen||P.firstProject($('projList')||$('projectsView')))pipFirstPending=false}
 function showView(v,fromHash){if(v==='projects'&&pipFirstPending)setTimeout(pipFirstTry,350);{const pc=$('planCard');if(pc&&!pc.hidden){pc.hidden=true;pc.innerHTML=''}}if(!fromHash&&location.hash!=='#'+v)history.pushState(null,'','#'+v);const V={convert:['convertView','tabConvert'],threads:['threadsView','tabThreads'],projects:['projectsView','tabProjects'],help:['helpView','tabHelp'],shop:['shopView','tabShop'],settings:['settingsView','tabSettings']};
  const T=window.FlossFoxThreadsUI;if(T&&!$('threadsView').hidden&&v!=='threads')T.leaveView();if(T&&!$('projectsView').hidden&&v!=='projects')T.tipDone('compare');

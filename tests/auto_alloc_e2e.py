@@ -15,7 +15,7 @@ with sync_playwright() as p:
     g = c.new_page(); g.on('pageerror', lambda e: errs.append(str(e))); g.on('dialog', lambda d: d.accept())
     g.goto(B + '?nosw'); g.evaluate('localStorage.clear()'); g.reload(); g.wait_for_timeout(500)
     S = lambda: json.loads(g.evaluate(f"localStorage.getItem({json.dumps(KEY)})"))
-    TH = lambda: g.evaluate(f"localStorage.getItem({json.dumps(KEY + '.threads.v1')})")
+    TH = lambda: g.evaluate(f"localStorage.getItem({json.dumps(KEY[:-3] + '.threads.v1')})")
     PJ = lambda i: [x for x in S()['projects'] if x['id'] == i][0]
     g.locator('#tabThreads').tap(); g.wait_for_timeout(300); g.locator('#thAdd').tap(); g.keyboard.type('310 x3, 434 x2'); g.locator('#thAddBtn').tap(); g.wait_for_timeout(400)
     def mkproj(txt, name):
@@ -23,9 +23,11 @@ with sync_playwright() as p:
         if g.locator('#exitExample').is_visible(): g.locator('#exitExample').tap()
         g.fill('#inp', txt); g.locator('#go').tap(); g.wait_for_selector('#saveProj:not([disabled])', state='visible'); g.wait_for_timeout(150)
         g.fill('#newProjName', name); g.locator('#saveProj').scroll_into_view_if_needed(); g.locator('#saveProj').tap(); g.wait_for_timeout(500)
-        i = g.evaluate("FlossFoxProjects.lastProject().id"); g.evaluate(f"FlossFoxProjects.open({json.dumps(i)})"); g.wait_for_timeout(400); return i
+        i = g.evaluate("FlossFoxProjects.lastProject().id"); raw = g.evaluate(f"localStorage.getItem({json.dumps(KEY)})"); g.evaluate(f"FlossFoxProjects.open({json.dumps(i)})"); g.wait_for_timeout(400)
+        ok(f'{name}: opening fills nothing on its own (offer only)', g.evaluate(f"localStorage.getItem({json.dumps(KEY)})") == raw and g.locator('#pAutoApply').count() == 1)
+        g.locator('#pAutoApply').tap(); g.wait_for_timeout(300); return i  # explicit "Use my collection" tap
     a = mkproj('310 x3', 'Project A')
-    ok('A: 310 marked Have enough from My threads (existing auto-apply)', PJ(a)['decisions']['310']['status'] == 'have', PJ(a)['decisions'])
+    ok('A: 310 marked Have enough from My threads (explicit Use my collection tap)', PJ(a)['decisions']['310']['status'] == 'have', PJ(a)['decisions'])
     g.evaluate("FlossFoxProjects.showView('shop')"); g.wait_for_timeout(300); g.locator('#pKit').evaluate('e=>e.open=true'); g.wait_for_timeout(150)
     g.locator('#pKit [data-kadd="310"]').scroll_into_view_if_needed(); g.locator('#pKit [data-kadd="310"]').tap(); g.wait_for_timeout(400)
     al = g.evaluate("JSON.parse(localStorage.getItem('flossfox-dev.allocations.v1')||'{\"allocations\":[]}').allocations")

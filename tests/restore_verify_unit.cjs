@@ -1,0 +1,22 @@
+// Restore verification core (Node). Results are simulated (synthetic data, no browser).
+const V=require('../restore-verify.js');let pass=0,fail=0;
+const ok=(n,c,i='')=>{c?pass++:fail++;console.log((c?'PASS ':'FAIL ')+n+(c?'':'  -> '+JSON.stringify(i)))};
+const mem={a:'1',b:'2'},get=k=>k in mem?mem[k]:null;
+ok('VK-1 matching keys verify',V.verifyKeys({a:'1',b:'2',c:null},get).ok);
+const r=V.verifyKeys({a:'1',b:'X'},get);ok('VK-2 mismatch reported',!r.ok&&r.mismatched.join()==='b',r);
+ok('VK-3 throwing getter is a failure, not a pass',!V.verifyKeys({a:'1'},()=>{throw new Error('x')}).ok);
+ok('VK-4 empty expectation is not a pass',!V.verifyKeys({},get).ok);
+const st={};const w=V.writeKeys({x:'1',y:null},(k,v)=>{st[k]=v},k=>{st[k]='DEL'});ok('WK-1 writes and removes',w&&st.x==='1'&&st.y==='DEL');
+ok('WK-2 write failure returns false',V.writeKeys({x:'1'},()=>{throw new Error('q')},()=>{})===false);
+const m1=V.importMessage({mode:'merge',full:true,add:1,rep:0,skip:1,cp:0,ta:2,projects:3,colors:5});
+ok('MSG-merge',m1==='Restore checked and saved (Merge). Projects: 1 added, 0 replaced, 1 skipped, 0 kept as copies. Thread colors: 2 added; colors you already had kept their counts. You now have 3 projects and 5 thread colors.',m1);
+const m2=V.importMessage({mode:'replace',full:true,add:0,rep:2,skip:0,cp:0,ta:4,projects:2,colors:4});
+ok('MSG-replace',m2==='Restore checked and saved (Replace). Your projects and thread collection now match the backup: 2 projects and 4 thread colors.',m2);
+const m3=V.importMessage({mode:'merge',full:false,add:1,rep:0,skip:0,cp:0,ta:0,projects:1,colors:7});
+ok('MSG-old',m3==='Restore checked and saved (Merge). Projects: 1 added, 0 replaced, 0 skipped, 0 kept as copies. This older backup has projects only, so your thread collection was not changed. You now have 1 project.',m3);
+const m4=V.importMessage({mode:'replace',full:false,add:0,rep:1,skip:0,cp:0,ta:0,projects:1,colors:0});
+ok('MSG-old-replace',m4==='Restore checked and saved (Replace). Your projects now match the backup: 1 project. This older backup has projects only, so your thread collection was not changed.',m4);
+ok('MSG-fail',V.failMessage(true)==='The restore could not be saved, so your data was put back how it was. Nothing was changed.'&&/could not confirm/.test(V.failMessage(false)));
+const c=V.copyMessage({when:'Nov 8',projects:1,colors:2});ok('MSG-copy',c==='Restored the copy from Nov 8 and checked it: 1 project and 2 thread colors are saved on this device.',c);
+ok('NO em dash',!/\u2014/.test([m1,m2,m3,m4,c,V.failMessage(true),V.failMessage(false)].join()));
+console.log(`\n${pass} passed, ${fail} failed (simulated)`);process.exit(fail?1:0);

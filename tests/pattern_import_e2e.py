@@ -39,7 +39,9 @@ with sync_playwright() as p:
     for t in h.locator('#patRows input[type=checkbox]').all(): t.check()
     if h.locator('#patAll').count() and not h.locator('#patAll').is_checked(): h.check('#patAll')  # flow pass: tick is in the pinned bar
     h.click('#patImport'); h.wait_for_timeout(400)
-    ok('I2 after import Pip checks the collection automatically (banner shown)', 'Pip checked your threads' in h.inner_text('#pAuto'), h.inner_text('#pAuto'))
+    ok('I2a after import nothing is filled on its own; Pip offers the check', h.is_visible('#pAutoApply') and all(d.get('status') is None for d in h.evaluate("FlossFoxProjects.lastProject().decisions").values()), h.inner_text('#pAuto'))
+    h.click('#pAutoApply'); h.wait_for_timeout(300)
+    ok('I2 after the explicit tap Pip checks the collection (banner shown)', 'Pip checked your threads' in h.inner_text('#pAuto'), h.inner_text('#pAuto'))
     h.click('#pFlow [data-flow=cmp]'); h.wait_for_timeout(200)
     cmp = h.inner_text('#pCmp')
     ok('I2b comparison uses the existing engine: 310 owned, others short/missing', 'Compared with my thread collection' in cmp and '1 owned' in cmp.replace('\n', ' ').replace('✓ ', ''), cmp[:300])
