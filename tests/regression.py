@@ -205,6 +205,10 @@ with sync_playwright() as p:
     m.click('#rb-dmc_310'); m.click('#rc-dmc_310'); ok('T2b empty receipt amount rejected', 'Nothing changed' in m.inner_text('#pMsg') and summ(m)['sAw'] == '1')
     m.fill('#rq-dmc_310', '1'); m.click('#rc-dmc_310')
     ok('T3 ready after receipt covering outstanding', ready(m) and 'received 1' in m.inner_text('#pPlan'), (summ(m), m.inner_text('#pMsg')))
+    # Stage C: a confirmed check-in also adds those skeins to My threads. T3 just checked in DMC 310, which would
+    # otherwise auto-apply onto this new project and change the leftover amount. Clear My threads so T4 still
+    # measures a partial receipt on its own (same checks as on main 1115742).
+    m.evaluate("localStorage.removeItem('"+KEY.replace('.v1', '.threads.v1')+"')")
     newproj(m, '310 x3', 'Partial'); m.check('#st-310-buy'); m.check('#pb-dmc\\:310'); m.click('#rb-dmc_310'); m.fill('#rq-dmc_310', '1'); m.click('#rc-dmc_310'); pl = m.inner_text('#pPlan')
     ok('T4 partial receipt does not cover need', not ready(m) and summ(m)['sBuy'] == '1' and 'DMC 310 × 2' in pl and '1 already received' in pl and not m.is_checked('#pb-dmc\\:310'), (summ(m), pl[:300]))
     newproj(m, '415 x?', 'Unknown'); ok4 = []
@@ -229,6 +233,7 @@ with sync_playwright() as p:
     mg2 = page(); mg2.goto(B); mg2.click('#tabProjects'); mg2.set_input_files('#restoreFile', FIX); mg2.wait_for_timeout(200); mg2.click('#rGo')
     ok('T8d v1 backup file restores', '1 added' in mg2.inner_text('#projStatus') and 'V1 fixture' in mg2.inner_text('#projList'), mg2.inner_text('#projStatus'))
     # T9/T10 cards
+    m.evaluate("localStorage.removeItem('"+KEY.replace('.v1', '.threads.v1')+"')")
     newproj(m, '310 x2, 321', 'Cards')
     ok('T9 cards start collapsed, details hidden', m.get_attribute('#x-310', 'aria-expanded') == 'false' and m.locator('#det-310').is_hidden())
     m.click('#x-310'); ok('T9b expand shows details + aria-expanded true', m.get_attribute('#x-310', 'aria-expanded') == 'true' and m.locator('#o-310').is_visible() and 'Hide details' in m.inner_text('#x-310'))
@@ -741,7 +746,9 @@ with sync_playwright() as p:
     def nxt(g): g.click('#tourCard [data-t=next]'); g.wait_for_timeout(80)
     g = tp()
     ok('T1 first visit: inline invite with the exact words and two choices', g.locator('#tourInvite').is_visible() and "New here? I can show you around in five quick steps." in g.inner_text('#tourInvite') and g.inner_text('#tourYes') == 'Show me around' and g.inner_text('#tourNo') == "I'll explore on my own")
-    ok('T1b invite is not a modal (no dialog, page stays usable) and Add my colors stays on the first screen', g.locator('[role=dialog],dialog[open]').count() == 0 and g.evaluate("document.getElementById('go').getBoundingClientRect().bottom") <= 860)
+    # The Stage B search panel is a hidden non-modal dialog (role=dialog, hidden until opened). It must not
+    # count as a blocking modal on first visit; only a visible dialog would fail this check.
+    ok('T1b invite is not a modal (no dialog, page stays usable) and Add my colors stays on the first screen', g.locator('[role=dialog]:visible, dialog[open]').count() == 0 and g.evaluate("document.getElementById('go').getBoundingClientRect().bottom") <= 860)
     ok('T1c invite carries greeting Pip', 'pip-greeting-160' in g.evaluate("document.querySelector('#tourInvite img').currentSrc"))
     g.click('#tourYes')
     ok('T2 start: step 1 of 5, heading focused, real input highlighted', step(g) == 0 and 'Step 1 of 5' in g.inner_text('#tourCard') and g.evaluate("document.activeElement.id") == 'tourH' and g.evaluate("document.getElementById('inp').classList.contains('tour-target')") and g.locator('#tourInvite').count() == 0)

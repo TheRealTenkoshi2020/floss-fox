@@ -19,3 +19,35 @@ if os.environ.get('FF_COMPAT_ALL') == '1':
         Browser.new_page = new_page
     except Exception:
         pass
+# Guided UX (3.9, ci005-104): Shopping, Fabric, Help and Settings live under the "More tools" menu in the main nav.
+# Legacy suites click those tab buttons directly; open the menu first, exactly as a person would, then click.
+# Tool reachability through the menu itself is tested by tests/guided_ux_real_e2e.py (which does not rely on this).
+try:
+    import re as _re
+    from playwright.sync_api._generated import Page as _Page, Locator as _Locator
+    _SEC = _re.compile(r'^\s*(nav\.tabs\s+)?#tab(Shop|Help|Settings|Fabric)\s*$')
+    _OPEN = "(()=>{const m=document.getElementById('ffuxNavMore');if(m&&!m.open&&!document.documentElement.classList.contains('ff-landing'))m.open=true})()"
+    _pc = _Page.click
+    def _page_click(self, selector, *a, **k):
+        if isinstance(selector, str) and _SEC.match(selector):
+            try: self.evaluate(_OPEN)
+            except Exception: pass
+        return _pc(self, selector, *a, **k)
+    _Page.click = _page_click
+    _lc = _Locator.click
+    def _loc_click(self, *a, **k):
+        try:
+            sel = self._impl_obj._selector
+            if _SEC.match(sel): self.page.evaluate(_OPEN)
+        except Exception: pass
+        return _lc(self, *a, **k)
+    _Locator.click = _loc_click
+    _lt = _Locator.tap
+    def _loc_tap(self, *a, **k):
+        try:
+            if _SEC.match(self._impl_obj._selector): self.page.evaluate(_OPEN)
+        except Exception: pass
+        return _lt(self, *a, **k)
+    _Locator.tap = _loc_tap
+except Exception:
+    pass

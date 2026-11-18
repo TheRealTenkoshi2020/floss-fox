@@ -48,10 +48,10 @@ with sync_playwright() as p:
   for _ in range(80):
    g.keyboard.press('Tab');a=g.evaluate("(()=>{const e=document.activeElement;const s=getComputedStyle(e);return{id:e.id,pill:e.classList.contains('ff-skein-pill'),h:e.href||'',ring:s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0||s.boxShadow!=='none'}})()")
    order.append(a)
-   if a['pill'] or a['id']=='tabShop':ring&=a['ring']
+   if a['pill'] or a['id'] in ('tabShop','ffuxNavSummary'):ring&=a['ring']
    if a['pill'] and len([o for o in order if o['pill']])==6:break
   ids=[o['id'] for o in order];ph=[o['h'] for o in order if o['pill']]
-  ok(t+'Tab reaches Shopping tab',ids.index('tabShop')>=0 if 'tabShop' in ids else False,ids[:10])
+  ok(t+'Tab reaches Shopping tab (or the More tools menu that holds it, guided UX)',('tabShop' in ids) or ('ffuxNavSummary' in ids and g.locator('#ffuxNavMore #tabShop').count()==1),ids[:10])
   ok(t+'Tab reaches each pill in order',ph==EXP['310']+EXP['321']+EXP['666'],ph)
   ok(t+'visible focus ring on Shopping tab and pills',ring,order)
   with c.expect_page() as pi:g.keyboard.press('Enter')

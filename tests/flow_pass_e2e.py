@@ -100,15 +100,15 @@ with sync_playwright() as p:
     # ---- Item 1: one row of phone tabs that scrolls, Settings included, smaller Ask Pip
     for w in (390, 440):
         g = page(w)
-        r = g.evaluate("""(()=>{const n=document.querySelector('nav.tabs'),k=[...n.children].filter(e=>e.offsetParent);return {tops:[...new Set(k.map(e=>Math.round(e.getBoundingClientRect().top)))].length,h:n.getBoundingClientRect().height,set:!!document.getElementById('tabSettings').offsetParent,small:k.every(e=>e.getBoundingClientRect().height>=44),sw:document.documentElement.scrollWidth,ask:document.getElementById('askPipBtn').getBoundingClientRect().height}})()""")
-        ok(f'F1a {w}: all tabs sit in one row, Settings included', r['tops'] == 1 and r['set'] and r['h'] < 70, r)
+        r = g.evaluate("""(()=>{const n=document.querySelector('nav.tabs'),k=[...n.children].filter(e=>e.offsetParent);return {tops:[...new Set(k.map(e=>Math.round(e.getBoundingClientRect().top)))].length,h:n.getBoundingClientRect().height,set:!!document.getElementById('tabSettings').offsetParent||!!document.querySelector('#ffuxNavMore #tabSettings')&&!!document.getElementById('ffuxNavMore').offsetParent,small:k.every(e=>e.getBoundingClientRect().height>=44),sw:document.documentElement.scrollWidth,ask:document.getElementById('askPipBtn').getBoundingClientRect().height}})()""")
+        ok(f'F1a {w}: all tabs sit in one row, Settings included (directly or under More tools, guided UX)', r['tops'] == 1 and r['set'] and r['h'] < 70, r)
         ok(f'F1b {w}: tabs stay easy to tap (44px) and the page does not scroll sideways', r['small'] and r['sw'] <= w, r)
         ok(f'F1c {w}: Ask Pip is smaller (under 50px tall)', r['ask'] < 50, r)
         g.click('#tabSettings'); g.wait_for_timeout(200)
         ok(f'F1d {w}: Settings opens from the tab row and stays in view', g.locator('#tabSettings[aria-pressed=true]').count() == 1 and g.evaluate("(()=>{const a=document.getElementById('tabSettings').getBoundingClientRect(),n=document.querySelector('nav.tabs').getBoundingClientRect();return a.left>=n.left-1&&a.right<=n.right+1})()"))
         g.context.close()
     g = page(1280)
-    ok('F1e desktop tabs unchanged (wrap allowed, Settings shown)', g.evaluate("getComputedStyle(document.querySelector('nav.tabs')).flexWrap") == 'wrap' and g.locator('#tabSettings').is_visible())
+    ok('F1e desktop tabs wrap allowed, Settings reachable (More tools, guided UX)', g.evaluate("getComputedStyle(document.querySelector('nav.tabs')).flexWrap") == 'wrap' and (g.locator('#tabSettings').is_visible() or g.locator('#ffuxNavMore #tabSettings').count() == 1 and g.locator('#ffuxNavSummary').is_visible()))
     g.context.close()
 
     # ---- Item 6: Shopping opens the last-used project, store note is a fold, store chips side by side

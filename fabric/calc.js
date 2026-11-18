@@ -31,6 +31,16 @@ function others(w,h){return AIDA.map(c=>{const e=EVEN.find(x=>x/2===c)||c*2;retu
 const fmt=(x,d)=>{const r=Math.round(x*Math.pow(10,d))/Math.pow(10,d);return String(+r.toFixed(d))};
 function fmtIn(x){const q=Math.round(x*4)/4;return Math.abs(q-x)<1e-9?fracIn(q):fmt(x,2)}
 function fracIn(q){const w=Math.floor(q),f=Math.round((q-w)*4);const F=['','¼','½','¾'][f];return (w||!F?String(w):'')+F}
-const api={CM,LIMITS,AIDA,EVEN,PRESETS,parseWhole,parseNum,effective,designIn,ceilQuarter,toCm,fromCm,compute,others,fmt,fmtIn};
+function diagramBoxes(r,W,H,pad){
+ // Geometry for the cutting-table drawing, taken only from compute(). No invented sizes.
+ if(!r||!r.cut||!r.design)return null;
+ const cutW=r.cut.w,cutH=r.cut.h,dW=r.design.w,dH=r.design.h;
+ if(!(cutW>0&&cutH>0&&dW>=0&&dH>=0))return null;
+ const boxW=W||240,boxH=H||160,p=pad==null?12:pad;
+ const scale=Math.min((boxW-2*p)/cutW,(boxH-2*p)/cutH);
+ const ow=cutW*scale,oh=cutH*scale,iw=dW*scale,ih=dH*scale;
+ const ox=(boxW-ow)/2,oy=(boxH-oh)/2,ix=ox+(ow-iw)/2,iy=oy+(oh-ih)/2;
+ return{W:boxW,H:boxH,scale,cut:{x:ox,y:oy,w:ow,h:oh},design:{x:ix,y:iy,w:iw,h:ih},cutSize:{w:cutW,h:cutH},designSize:{w:dW,h:dH},marginIn:r.marginIn}}
+const api={CM,LIMITS,AIDA,EVEN,PRESETS,parseWhole,parseNum,effective,designIn,ceilQuarter,toCm,fromCm,compute,others,fmt,fmtIn,diagramBoxes};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FlossFoxFabric=api;
 })(typeof window!=='undefined'?window:this);

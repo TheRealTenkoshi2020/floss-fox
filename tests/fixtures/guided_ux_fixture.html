@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Fixture: Floss Fox Guided UX</title>
+<style>
+:root{--surface:#fffaf2;--text:#3b2f28;--text-muted:#6f6257;--chip-border:#d8cdb8;--line:#d8cdb8;--chip-bg:#f3ebe0;--brand-accent:#638260}
+*{box-sizing:border-box}html{background:#f7f1e6;color:#3b2f28}body{font:16px/1.45 Arial,sans-serif;margin:0;padding:0 12px}.land{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding:16px}.choices{display:flex;flex-direction:column;gap:10px}.ch{display:flex;align-items:center;gap:12px;border:1px solid #d8cdb8;border-radius:14px;padding:12px;color:#333;text-decoration:none;background:#fff}.ch b{display:block}.ch small{display:block}.ic{font-size:24px}.say{text-align:center}.quiet,.ltour{text-align:center}.tabs{display:flex;gap:7px;padding:10px;max-width:980px;margin:auto;border-radius:12px;background:#fff}.tabs button{min-height:44px;border:1px solid #ddd;border-radius:12px;padding:6px;background:#eee}.tabs a{display:flex;align-items:center}main.app{max-width:980px;margin:auto}#projEdit{padding:12px;background:white}
+</style>
+
+<script>
+// Reproduces only the existing app's public surfaces needed for isolated presentation tests.
+window.__fixture={opened:[],views:[],stores:{schema:2,projects:[]}};
+window.FlossFoxProjects={_store:()=>window.__fixture.stores,open:id=>{window.__fixture.opened.push(id);const x=document.getElementById('projEdit');x.hidden=false;document.documentElement.classList.remove('ff-landing');document.getElementById('tabProjects').click()},showView:v=>{window.__fixture.views.push(v)},lastProject:()=>null};
+const params=new URLSearchParams(location.search);
+if(params.has('saved'))window.__fixture.stores.projects=[{id:'finished',status:'done',name:'Already done',updated:'2026-10-11'},{id:'active',status:'progress',name:params.has('unsafe')?'<img src=x onerror=alert(1)>':'Forest Sampler',updated:'2026-11-15'}];
+if(params.has('finished'))window.__fixture.stores.projects=[{id:'finished',status:'done',name:'Already done',updated:'2026-10-11'}];
+</script>
+</head><body>
+<main id="ffLanding" class="land"><div class="lpip"><span aria-label="Pip's original artwork is not part of this fixture">[Pip existing artwork]</span></div>
+<h1 class="say" id="ffLandSay">Hi! I'm Pip. What are we stitching up today?</h1>
+<nav class="choices" aria-label="Choose where to go">
+<a href="#convert" data-tab="tabConvert" class="ch"><span class="ic" aria-hidden="true">🎨</span><span><b>Find floss</b><small>Turn a DMC color list into Anchor and more</small></span></a>
+<a href="#threads" data-tab="tabThreads" class="ch"><span class="ic" aria-hidden="true">🧰</span><span><b>My threads</b><small>Open your keepsake box of threads</small></span></a>
+<a href="#projects" data-tab="tabProjects" class="ch"><span class="ic" aria-hidden="true">🪡</span><span><b>Projects</b><small>Pick up a project you're working on</small></span></a>
+<a href="#shop" data-tab="tabShop" class="ch"><span class="ic" aria-hidden="true">🧺</span><span><b>Shop</b><small>Gather the floss you still need</small></span></a>
+<a href="fabric.html" data-tab="tabFabric" class="ch"><span class="ic" aria-hidden="true">📏</span><span><b>Fabric</b><small>Measure how much fabric to cut</small></span></a>
+</nav>
+<p class="ltour"><button type="button" id="ffLandTour">Take the tour with Pip</button></p>
+<p class="quiet"><a href="#help" data-tab="tabHelp">Help</a> · <a href="#settings" data-tab="tabSettings">Settings</a></p>
+</main>
+<nav class="tabs" aria-label="Main"><button id="tabConvert" type="button" aria-pressed="true">Find floss</button><button id="tabThreads" type="button" aria-pressed="false">My threads</button><button id="tabProjects" type="button" aria-pressed="false">Projects</button><button id="tabShop" type="button" aria-pressed="false">Shopping</button><a id="tabFabric" href="fabric.html">Fabric</a><button id="tabHelp" type="button" aria-pressed="false">Help</button><button id="tabSettings" type="button" aria-pressed="false">Settings</button></nav>
+<main class="app"><div id="projEdit" hidden><h2>Editing project</h2></div><p id="viewStatus" role="status"></p></main>
+<script>
+// Matches landing.js delegation and project tab click behavior without loading full FlossFox.
+for(const id of ['tabConvert','tabThreads','tabProjects','tabShop','tabHelp','tabSettings'])document.getElementById(id).addEventListener('click',()=>{for(const t of document.querySelectorAll('nav.tabs button[aria-pressed]'))t.setAttribute('aria-pressed',String(t.id===id));document.getElementById('viewStatus').textContent=id;location.hash=id.replace('tab','').toLowerCase()});
+document.getElementById('ffLanding').addEventListener('click',e=>{const a=e.target.closest('a[data-tab]');if(!a)return;const b=document.getElementById(a.dataset.tab);if(!b||b.tagName==='A')return;e.preventDefault();document.documentElement.classList.remove('ff-landing');b.click()});
+</script>
+
+</body></html>

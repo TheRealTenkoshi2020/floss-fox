@@ -1,0 +1,62 @@
+/* Floss Fox 3.9 Guided Experience. No display changes without JS enhancement. */
+#ffLanding.ffux-landing .choices{gap:10px}
+#ffLanding .ffux-choice-hint{font-size:.9rem;line-height:1.4;color:var(--text-muted,var(--ink-2,#5b625a));margin:0 0 4px;text-align:center}
+#ffLanding .ffux-resume{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:3px;width:100%;min-height:58px;padding:12px 16px;background:var(--surface-2,var(--card,#fff));color:var(--text,var(--ink,#3b2f28));border:2px solid var(--brand-accent,var(--sage-ink,#46624a));border-radius:18px;cursor:pointer;overflow-wrap:anywhere}
+#ffLanding .ffux-resume-kicker{font-size:.8rem;font-weight:600;opacity:.85}
+#ffLanding .ffux-resume-name{font-size:1rem;line-height:1.35}
+#ffLanding .ffux-resume:focus-visible{outline:3px solid var(--brand-accent,var(--sage-ink,#46624a));outline-offset:3px}
+#ffLanding .ffux-landing-tools{width:100%;border:1.5px solid var(--chip-border,var(--line,#aaa));border-radius:16px;background:var(--surface,var(--card,#fff));color:var(--text,var(--ink,#333))}
+#ffLanding .ffux-landing-tools>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;font-weight:700;list-style:none}
+#ffLanding .ffux-landing-tools>summary::-webkit-details-marker{display:none}
+#ffLanding .ffux-landing-tools>summary::after{content:'⌄';font-size:1.2rem;line-height:1}
+#ffLanding .ffux-landing-tools[open]>summary::after{content:'⌃'}
+#ffLanding .ffux-landing-tools>summary:focus-visible{outline:3px solid var(--brand-accent,var(--sage-ink,#46624a));outline-offset:3px;border-radius:14px}
+#ffLanding .ffux-landing-more{display:grid;gap:8px;padding:0 8px 8px}
+#ffLanding .ffux-landing-more .ch{box-shadow:none;min-height:52px;border-radius:12px}
+nav.tabs.ffux-tabs{align-items:center;overflow:visible;position:relative}
+nav.tabs .ffux-nav-more{position:relative;flex:0 0 auto;align-self:stretch;z-index:10}
+nav.tabs .ffux-nav-summary{box-sizing:border-box;display:flex;justify-content:center;align-items:center;min-height:44px;padding:0 12px;border:1.5px solid var(--line-2,var(--line,#bbb));border-radius:var(--pill,999px);background:var(--surface,var(--card,#fff));color:var(--text,var(--ink,#333));font-weight:700;cursor:pointer;list-style:none;white-space:nowrap}
+nav.tabs .ffux-nav-summary::-webkit-details-marker{display:none}
+nav.tabs .ffux-nav-summary::after{content:'⌄';padding-left:6px}
+nav.tabs .ffux-nav-more[open] .ffux-nav-summary::after{content:'⌃'}
+nav.tabs .ffux-nav-summary:focus-visible{outline:3px solid var(--focus,var(--sage-ink,#456));outline-offset:2px}
+nav.tabs .ffux-nav-list{box-sizing:border-box;position:absolute;z-index:15;right:0;top:calc(100% + 5px);min-width:min(230px,calc(100vw - 24px));padding:8px;background:var(--surface,var(--card,#fff));border:1.5px solid var(--line-2,var(--line,#bbb));border-radius:14px;box-shadow:0 12px 30px #0002;display:flex;flex-direction:column;gap:4px}
+nav.tabs .ffux-nav-list>button,nav.tabs .ffux-nav-list>a{box-sizing:border-box;display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:44px;padding:8px 12px;border-radius:9px;white-space:normal;color:var(--text,var(--ink,#333));font:inherit;font-weight:650;text-decoration:none}
+nav.tabs .ffux-nav-list>button[aria-pressed=true]{background:var(--chip-bg,var(--surface-2,#e6ebe5));border-color:var(--brand-accent,var(--sage-ink,#456));color:var(--text,var(--ink,#333))}
+nav.tabs .ffux-nav-list .lg,nav.tabs .ffux-nav-list .sm{display:inline}
+nav.tabs .ffux-nav-list .sm{display:none}
+nav.tabs .ffux-nav-list>button:focus-visible,nav.tabs .ffux-nav-list>a:focus-visible{outline:3px solid var(--focus,var(--sage-ink,#456));outline-offset:1px}
+@media(max-width:720px){
+  nav.tabs.ffux-tabs{gap:4px;flex-wrap:nowrap;justify-content:flex-start;overflow:visible}
+  nav.tabs.ffux-tabs>button{flex:1 1 0;min-width:0;padding:0 5px;font-size:.78rem;line-height:1.1;white-space:normal}
+  nav.tabs.ffux-tabs .ffux-nav-summary{font-size:.8rem;padding:0 8px;white-space:normal;line-height:1.1;text-align:center}
+  nav.tabs.ffux-tabs .ffux-nav-list>button{flex:0 0 auto;font-size:.95rem;white-space:normal;text-align:left}
+  nav.tabs.ffux-tabs .ffux-nav-list>a{font-size:.95rem}
+}
+@media(max-width:410px){nav.tabs.ffux-tabs>button{font-size:.72rem;padding:0 3px}nav.tabs.ffux-tabs .ffux-nav-summary{font-size:.74rem;padding:0 4px}}
+@media(prefers-reduced-motion:reduce){#ffLanding .ffux-resume,nav.tabs.ffux-tabs *{transition:none!important;animation:none!important}}
+@media print{#ffLanding .ffux-landing-tools,nav.tabs .ffux-nav-more{display:none!important}}
+/* Explicit closed state: author display rules must not defeat native details hiding. */
+#ffLanding .ffux-landing-tools:not([open]) > .ffux-landing-more,
+nav.tabs .ffux-nav-more:not([open]) > .ffux-nav-list{display:none!important}
+/* 3.9 integration fix: flow-pass.css forces a horizontally scrolling tab strip with !important rules on narrow
+   screens. With More tools grouping, that strip would push More off-screen, so let the remaining tabs share the row. */
+@media(max-width:720px){
+  nav.tabs.ffux-tabs{overflow:visible!important;padding-left:4px!important;padding-right:4px!important;gap:4px!important}
+  nav.tabs.ffux-tabs::before,nav.tabs.ffux-tabs::after{display:none!important}
+  nav.tabs.ffux-tabs>button,nav.tabs.ffux-tabs>.ffux-nav-more{flex:1 1 0!important;min-width:0!important;padding:0 4px!important;white-space:normal!important;font-size:.76rem!important;line-height:1.15}
+  nav.tabs.ffux-tabs>.ffux-nav-more{padding:0!important}
+  nav.tabs.ffux-tabs .ffux-nav-summary{width:100%;height:100%}
+}
+/* The app's generic summary marker would add a second arrow next to these menus. */
+nav.tabs .ffux-nav-summary::before,#ffLanding .ffux-landing-tools>summary::before{content:none!important;display:none!important}
+/* ci005-105: at 360px with Workbasket shown, "More: Shopping" was a few px too wide and nudged the page sideways. */
+@media(max-width:410px){
+  nav.tabs.ffux-tabs>button,nav.tabs.ffux-tabs .ffux-nav-summary{font-size:.7rem!important;overflow-wrap:anywhere}
+  nav.tabs.ffux-tabs .ffux-nav-summary{padding:0 2px!important;font-size:.64rem!important}
+  nav.tabs.ffux-tabs .ffux-nav-summary::after{content:none!important}
+  nav.tabs.ffux-tabs{overflow-x:clip!important}
+}
+/* 3.9 V4: optional Pip's Den link for returning visitors, quieter than Continue */
+#ffLanding .ffux-den-link{box-sizing:border-box;display:block;width:100%;min-height:44px;padding:8px 12px;background:transparent;border:0;color:var(--brand-accent,var(--sage-ink,#46624a));text-decoration:underline;text-underline-offset:3px;font:inherit;cursor:pointer;overflow-wrap:anywhere;text-align:center}
+#ffLanding .ffux-den-link:focus-visible{outline:3px solid var(--focus,#2f6fb5);outline-offset:2px}

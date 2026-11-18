@@ -45,19 +45,34 @@ input[aria-invalid=true]{border-color:#a3361b;background:#fff6f3}.err{color:#a33
 .seg input{width:18px;height:18px;accent-color:var(--pink);margin:0}.seg label:has(input:checked){border-color:var(--pink);background:#eef2ea}.seg label:has(input:focus-visible){outline:3px solid #e9a77f;outline-offset:2px}
 .note{background:#eef2ea;border-radius:10px;padding:8px 12px;font-size:.92rem;margin:8px 0 0}
 .fcres .big{background:#fff;border:2px solid var(--lime);border-radius:14px;padding:12px 14px;margin:0 0 12px}
-.fcres h2{font-size:1.05rem;margin:0 0 4px}.fcres h2::before{content:''}.fcres .num{font-size:1.9rem;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}.fcres .sub{color:var(--mut);font-size:.95rem;font-variant-numeric:tabular-nums}
+.fcres h2{font-size:1.05rem;margin:0 0 4px}.fcres h2::before{content:''}.fcres .num{font-size:1.9rem;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums;background:none;color:inherit}.fcres .sub{color:var(--mut);font-size:.95rem;font-variant-numeric:tabular-nums}
 .fcres .design{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:0 0 12px}.fcres .design .num{font-size:1.4rem}
 details.others summary,details.tips summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:650}
 .otab td,.otab th{font-variant-numeric:tabular-nums;padding:6px}.tip{display:flex;gap:10px;align-items:flex-start;margin:8px 0}.tip img{width:56px;height:auto;flex:none;object-fit:contain}
 .unitsw{display:flex;justify-content:flex-end;margin:0 0 8px}
 @media(max-width:640px){.otab thead{display:table-header-group}.otab tr{display:table-row}.otab td{display:table-cell;border-bottom:1px solid var(--line)}}
 @media print{.fcin,.unitsw,details.tips,.row,.fcnav{display:none!important}details.others{display:block}.fcres .big{border-color:#000}}
+
+#fcDiagram{margin:0 0 12px;padding:8px;background:var(--card,#fff);border:1px solid var(--line);border-radius:14px}
+#fcDiagram svg{display:block;width:100%;max-width:280px;height:auto;margin:0 auto}
+#fcDiagram .fc-cut{fill:var(--bg,#f7f1e6);stroke:var(--lime);stroke-width:2}
+#fcDiagram .fc-stitched{fill:var(--blush,#e8f0e6);stroke:var(--pink);stroke-width:1.5}
+.fc-diag-cap{margin:6px 0 0;font-size:.85rem;color:var(--mut);text-align:center}
+#fcDiagNote{margin:0 0 12px}
+#fcPresets{margin:8px 0 0}
+#fcPresets .fc-preset-ul{list-style:none;margin:8px 0 0;padding:0}
+#fcPresets li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+#fcPresets button{min-height:44px}
+#fcPresetName{width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:15px system-ui,sans-serif;background:var(--input-bg,#fff);color:var(--txt)}
+@media print{#fcDiagram{border-color:#000;background:#fff;break-inside:avoid}#fcDiagram .fc-cut{fill:#fff;stroke:#000}#fcDiagram .fc-stitched{fill:#e6e6e6;stroke:#000}#fcDiagram .fc-cut,#fcDiagram .fc-stitched{-webkit-print-color-adjust:exact;print-color-adjust:exact}body,h1,h2,h3{color:#000;background:#fff}#fcPresets,#fcDiagNote{display:none!important}.fcres .big, #fcDesign, #fcDiagram{display:block!important}.fcres .num{background:none;color:inherit}}
+@media (prefers-reduced-motion:reduce){#fcDiagram,#fcDiagram svg, #fcDiagram .fc-cut, #fcDiagram .fc-stitched{transition:none;animation:none}}
+
 .fc button{min-height:44px}.brand span{color:var(--lime)}
 .fcnav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.fcnav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:var(--txt);text-decoration:none;font-weight:650;border:1.5px solid var(--line);background:var(--card)}.fcnav a[aria-current=page]{background:var(--pink);color:#fff;border-color:var(--pink)}
 .ffask{min-height:44px;margin:8px 0}.ffpipbox{background:#fff8e8;border-radius:10px;padding:8px 12px;margin:8px 0}.ffpipbox button,.fftopic summary{min-height:44px}.ffterm{min-width:44px;min-height:44px;border:0;background:transparent;font-weight:800;color:#7a3a22;text-decoration:underline dotted}.fftermpop{display:block;background:#fff8e8;border:1px solid #c8642f;border-radius:10px;padding:8px 12px;margin:4px 0;font-weight:400}.fftermpop button{min-height:44px}
 .ffaskrow{display:flex;align-items:center;gap:8px;margin:8px 0}.ffpipslot{display:flex;align-items:center;gap:8px;flex:1}.ffpipslot img{width:56px;height:auto}.ffpipline{margin:0;background:#fff8e8;border-radius:10px;padding:6px 10px;font-size:.95rem}
-</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f7f1e6"><link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png"><link rel="stylesheet" href="assets/nav.css"><script src="analytics.js" defer></script>
-<link rel="stylesheet" href="pip-follow.css"><link rel="stylesheet" href="theme-pair.css">
+</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f7f1e6"><script>(function(){var t="system";try{var k=["flossfox-dev.atelier.v1","flossfox.atelier.v1"];if(localStorage.getItem("flossfox-dev.v1")!=null)k=["flossfox-dev.atelier.v1"];else if(localStorage.getItem("flossfox.v1")!=null)k=["flossfox.atelier.v1"];for(var i=0;i<k.length;i++){var r=localStorage.getItem(k[i]);if(!r)continue;var d=JSON.parse(r);if(d&&(d.theme==="morning"||d.theme==="forest"||d.theme==="moon"||d.theme==="system")){t=d.theme;break}}}catch(e){}var s=t==="morning"?"light":(t==="forest"||t==="moon")?"dark":(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";var h=document.documentElement;h.setAttribute("data-atelier-theme",t);h.setAttribute("data-atelier-scheme",s);var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="moon"?"#141a2e":s==="dark"?"#10201b":"#faf6ee";})();</script><link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png"><link rel="stylesheet" href="assets/nav.css"><script src="analytics.js" defer></script>
+<link rel="stylesheet" href="pip-follow.css"><link rel="stylesheet" href="theme-pair.css"><link rel="stylesheet" href="atelier/themes.css">
 <style>/* ci005-77: Fabric uses the refreshed header (root cause: the one-row tab strip and Ask Pip chip lived only in index's flow-pass.css, and fabric.html hand-copies its header). */
 @media(max-width:560px){.fcnav.tabsrow{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px!important;padding:4px 0}
  .fcnav.tabsrow::-webkit-scrollbar{display:none}
@@ -96,8 +111,16 @@ details.others summary,details.tips summary{cursor:pointer;min-height:44px;displ
 <div class="big" id="fcCut"><h2>Fabric to cut</h2><p class="num" id="fcCutNum" aria-live="polite">–</p><p class="sub" id="fcCutSub"></p>
 <p class="hint">This size includes extra fabric around your stitching, so you'll have room to finish your project.</p></div>
 <div class="design" id="fcDesign"><h2>Your finished design</h2><p class="num" id="fcDesNum">–</p><p class="sub" id="fcDesSub">Stitched area only, without extra fabric.</p></div>
+<figure id="fcDiagram" hidden></figure>
+<p class="hint" id="fcDiagNote"></p>
 <p class="err" id="fcFix" role="status"></p>
-<div class="row noprint"><button type="button" class="sec" id="fcCopy">Copy results</button><button type="button" class="sec" id="fcPrint">Print</button></div><p class="hint" id="fcMsg" role="status" aria-live="polite"></p>
+<div class="row noprint"><button type="button" class="sec" id="fcCopy">Copy results</button><button type="button" class="sec" id="fcPrint">Print cutting slip</button></div><p class="hint" id="fcMsg" role="status" aria-live="polite"></p>
+<div class="fc-presets noprint" id="fcPresets">
+<label class="f" for="fcPresetName" id="fcPresetNameL">Preset name</label>
+<input type="text" id="fcPresetName" maxlength="40" autocomplete="off">
+<div class="row"><button type="button" class="sec" id="fcPresetSave">Save as preset</button></div>
+<div id="fcPresetList"></div>
+</div>
 <details class="others card" id="fcOthers"><summary>See other fabric sizes</summary><p class="hint">Finished design size (no extra fabric) for your pattern on common counts. Aida is over one; evenweave is over two, so 28-count evenweave gives the same size as 14-count Aida.</p><div id="fcOtherTab"></div></details>
 <details class="tips card noprint" id="fcTips"><summary>Pip's tips</summary>
 <div class="tip"><img src="assets/pip/pip-needle-160.png" width="160" height="250" alt="" loading="lazy" decoding="async"><p><b>Where are the stitch counts?</b> Look on the pattern cover, the info sheet or the first chart page for something like "Stitches: 140 w × 100 h".</p></div>
@@ -108,4 +131,4 @@ details.others summary,details.tips summary{cursor:pointer;min-height:44px;displ
 <section class="card"><details class="fchow" id="fcHow"><summary><h2>How this calculator works</h2></summary><p>Divide the number of stitches by the stitches per inch of your fabric. On Aida, stitches per inch equals the count; on evenweave or linen stitched over two threads, it's half the count (28-count over two = 14 stitches per inch). Then add the extra fabric twice, once for each side, to get the fabric to cut. Floss Fox rounds the fabric to cut up to the next ¼ inch, so rounding never leaves you short, and works out centimeters from that rounded inch value. Everything runs in your browser; nothing is sent anywhere.</p></details></section>
 </main>
 <footer><p><a href="index.html">Find My Floss</a> · <a href="fabric.html">Fabric calculator</a> · <a href="about.html">About</a> · <a href="privacy.html">Privacy</a><span class="ffsettingslink"> · <a href="index.html#settings">Backup and settings</a></span> · Works offline in this page; nothing is sent anywhere.</p></footer></div>
-<script src="flow-strings.js"></script><script src="pip-help.js" defer></script><script src="pip-b2.js" defer></script><script src="pip-follow.js" defer></script><script src="fabric/calc.js"></script><script src="fabric/ui.js"></script><script>if("serviceWorker"in navigator&&/[?&]nosw\b/.test(location.search)){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});if(self.caches)caches.keys().then(ks=>ks.forEach(k=>/^flossfox/.test(k)&&caches.delete(k))).catch(()=>{})}else if("serviceWorker"in navigator&&!/[?&]nosw\b/.test(location.search))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script></body></html>
+<script src="flow-strings.js"></script><script src="pip-help.js" defer></script><script src="pip-b2.js" defer></script><script src="pip-follow.js" defer></script><script src="atelier/atelier-copy.js"></script><script src="fabric/calc.js"></script><script src="fabric/ui.js"></script><script>if("serviceWorker"in navigator&&/[?&]nosw\b/.test(location.search)){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});if(self.caches)caches.keys().then(ks=>ks.forEach(k=>/^flossfox/.test(k)&&caches.delete(k))).catch(()=>{})}else if("serviceWorker"in navigator&&!/[?&]nosw\b/.test(location.search))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script><script src="atelier/atelier-theme.js"></script></body></html>

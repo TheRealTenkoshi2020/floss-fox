@@ -101,3 +101,8 @@ summary{min-height:44px;box-sizing:border-box;padding-top:10px;padding-bottom:10
 /* ci005-78 (Pixel compact-2): Edit chip keeps its slim look but gets a 44px hit area; one Pip hides the skein panel art, so drop its empty frame */
 .th .thedit{position:relative;white-space:nowrap}.th .thedit::after{content:'';position:absolute;left:-6px;right:-6px;top:50%;height:44px;transform:translateY(-50%)}
 body.pipone .skein-summary-mark{display:none}
+/* ci005-105: long user text (e.g. a project named after a PDF file with no spaces) wraps instead of widening the page.
+   break-word only breaks a word that would overflow its line; "anywhere" is used where the name sits in a flex/grid row
+   so the row can shrink. Presentation only: names are never changed. */
+.wrap,#ffLanding,.card{overflow-wrap:break-word}
+#pTitle,.pname,#projList li>span,#ffuxResume,#ffLanding .ffux-resume-name,.ffa-wb h3,.ffa-active,.ffa-note p,.ffsm-store,.ffsm-txt,#shopPickRow,#shopPickRow *,.pcmp summary,#pCmp b,.ffa-side,.tour-card,.pipbub{overflow-wrap:anywhere;min-width:0}

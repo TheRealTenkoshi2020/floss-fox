@@ -25,8 +25,8 @@ with sync_playwright() as p:
     fe = g.evaluate("document.activeElement&&document.activeElement.outerHTML.slice(0,80)")
     ok('no auto-focus ring on load', 'class="ch"' not in (fe or ''), fe)
     g.keyboard.press('Tab'); ok('first Tab reaches Find floss', g.evaluate("document.activeElement.dataset.tab")=='tabConvert')
-    hs = g.evaluate("[...document.querySelectorAll('#ffLanding .ch')].map(e=>Math.round(e.getBoundingClientRect().height))")
-    ok('five 58px buttons', hs == [58] * 5, hs)
+    hs = g.evaluate("[...document.querySelectorAll('#ffLanding nav.choices > .ch')].map(e=>Math.round(e.getBoundingClientRect().height))")
+    ok('three primary buttons >=58px (guided UX); Shop/Fabric under All tools', len(hs) == 3 and all(v >= 58 for v in hs) and g.locator('#ffuxLandingTools .ch').count() == 2 and g.evaluate("document.querySelector('#ffuxLandingTools>summary').getBoundingClientRect().height") >= 44, hs)
     ok('Help/Settings tap targets >=44px tall and wide',all(v>=44 for v in g.evaluate("[...document.querySelectorAll('#ffLanding .quiet a')].flatMap(e=>{const r=e.getBoundingClientRect();return [r.width,r.height]})")));     ok('Help/Settings 44px quiet links', g.evaluate("[...document.querySelectorAll('#ffLanding .quiet a')].map(e=>Math.round(e.getBoundingClientRect().height))") == [44, 44])
     ok('no underline under the lantern', g.evaluate("getComputedStyle(document.querySelector('.lan')).textDecorationLine==='none'&&getComputedStyle(document.querySelector('.quiet a')).textDecorationLine==='none'&&getComputedStyle(document.querySelector('.quiet a .tx')).textDecorationLine==='underline'"))
     ok('app data still loaded under it (appname set)', g.evaluate("document.getElementById('appname').textContent.length>0"))
@@ -41,6 +41,7 @@ with sync_playwright() as p:
     for name, tid in TABS:
         if not g.evaluate(ON): g.evaluate("ffShowLanding()")
         sel = f'#ffLanding .quiet a[data-tab={tid}]' if tid in ('tabHelp', 'tabSettings') else f'#ffLanding .ch[data-tab={tid}]'
+        if tid == 'tabShop': g.evaluate("document.getElementById('ffuxLandingTools').open=true")
         g.click(sel); g.wait_for_timeout(120)
         ok(f'{name} opens its tab', not g.evaluate(ON) and g.get_attribute('#' + tid, 'aria-pressed') == 'true')
     g.evaluate("ffShowLanding()"); tb = g.locator('#ffLanding #ffLandTour')
@@ -55,7 +56,7 @@ with sync_playwright() as p:
     g.evaluate("ffShowLanding()"); g.keyboard.press('Tab'); g.keyboard.press('Enter'); g.wait_for_timeout(100)
     ok('keyboard Enter on focused first button opens Find floss', g.get_attribute('#tabConvert', 'aria-pressed') == 'true' and not g.evaluate(ON))
     g.click('#tabConvert'); g.focus('#appname'); g.keyboard.press('Enter'); g.wait_for_timeout(100); ok('wordmark works by keyboard', g.evaluate(ON))
-    g.click('#ffLanding .ch[data-tab=tabFabric]'); g.wait_for_load_state('networkidle')
+    g.evaluate("document.getElementById('ffuxLandingTools').open=true"); g.click('#ffLanding .ch[data-tab=tabFabric]'); g.wait_for_load_state('networkidle')
     ok('Fabric opens the fabric page', 'fabric' in g.url)
     g.go_back(); g.wait_for_load_state('networkidle'); g.wait_for_timeout(200)
     ok('back navigation skips it', not g.evaluate(ON))

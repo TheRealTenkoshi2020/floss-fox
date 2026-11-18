@@ -46,10 +46,20 @@ async function exportBackup(options={}){
  busy=true;pending=null;$('bkConfirmSave').hidden=true;render();
  let snapshot;
  try{
-  const data=P.fullBackup(),text=JSON.stringify(data,null,2);snapshot={revision:C.revision(data),savingPaused:!P.canSave()||!T.canSave()};
+  const data=P.fullBackupWithMedia?await P.fullBackupWithMedia():P.fullBackup();
+  const missing=P.mediaMissing?P.mediaMissing():[];
+  if(missing.length){
+    const body=((P.backupPhotoNote?P.backupPhotoNote(data,missing):'')||'').trim();
+    let go=true;
+    if(window.FlossFoxConfirm&&FlossFoxConfirm.ask)go=await FlossFoxConfirm.ask({pose:'thinking',title:"This backup can't include every cover photo",body:body,go:'Download anyway',keep:'Cancel'});
+    else go=window.confirm(body+'\n\nDownload anyway?');
+    if(!go){feedback('Backup was not saved. Your data and previous backup history are unchanged.');return{status:'canceled'}}
+  }
+  const text=JSON.stringify(data,null,2);snapshot={revision:C.revision(data),savingPaused:!P.canSave()||!T.canSave()};
+  const photoNote=(P.backupPhotoNote?P.backupPhotoNote(data,missing):'')||'';
   const result=await C.writeFile(text,{mode:options.mode==='save'?'save':'download',picker:typeof window.showSaveFilePicker==='function'?window.showSaveFilePicker.bind(window):null,download:P.downloadBackupText,filename:'floss-fox-backup-'+data.exported.slice(0,10)+'.json'});
-  if(result.status==='file-written')confirmed(snapshot);
-  else if(result.status==='download-started'){pending=snapshot;feedback('Download started. Check that the JSON file was saved, then confirm below. A download starting does not confirm the file was saved.',true);}
+  if(result.status==='file-written'){confirmed(snapshot);if(photoNote)feedback(('Backup saved.'+photoNote).trim(),false);}
+  else if(result.status==='download-started'){pending=snapshot;feedback(('Download started. Check that the JSON file was saved, then confirm below. A download starting does not confirm the file was saved.'+photoNote).trim(),true);}
   else if(result.status==='canceled')feedback('Backup was not saved. Your data and previous backup history are unchanged.');
   else{feedback('The backup file could not be saved. Your data and previous backup history are unchanged.');$('bkDownloadInstead').hidden=false;}
   return result;

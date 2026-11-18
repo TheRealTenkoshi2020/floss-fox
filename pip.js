@@ -10,7 +10,7 @@ const ART={greeting:'greeting',curious:'curious',puzzled:'puzzled',duplicates:'d
  reassuring:'reassuring',presenting:'presenting',discovery:'discovery',saved:'saved','face-icon':'face-icon',
  needle:'needle','needle-alt':'needle-alt',organizing:'organizing',goodbye:'goodbye','cross-stitch':'cross-stitch',
  // new-15 (Pixel's placement plan): only these 11 are placed; wink, skeptical, determined, rainbow-hoop are held
- magnifier:'magnifier',phew:'phew','dropped-bobbin':'dropped-bobbin','floss-box':'floss-box','proud-finish':'proud-finish',explorer:'explorer',meditating:'meditating','shy-heart':'shy-heart','grumpy-knot':'grumpy-knot',worried:'worried',surprised:'surprised'};
+ magnifier:'magnifier',phew:'phew','dropped-bobbin':'dropped-bobbin','floss-box':'floss-box','proud-finish':'proud-finish',explorer:'explorer',meditating:'meditating','shy-heart':'shy-heart','grumpy-knot':'grumpy-knot',worried:'worried',surprised:'surprised','pattern-reader':'pattern-reader'};
 const FUTURE={proud:'greeting',teaching:'curious'};
 const poseArt=p=>ART[p]||ART[FUTURE[p]]||'greeting';
 const short=t=>{t=String(t).replace(/\s+/g,' ').trim();return t.length>24?t.slice(0,23)+'…':t};
@@ -66,10 +66,17 @@ let greeted=false,touring=false,cur=null,base='welcome',lastR={items:[],errs:[]}
 const T={toast:3500,celebrate:4000,tangle:2600,tangleGap:60000,idle:90000,minSleep:4000,throttle:1000};
 const set=(a,ext)=>SIZES.map(w=>`assets/pip/pip-${a}-${w}.${ext} ${w}w`).join(', ');
 let screenK=null,screenT='',screenPose=null,secPose=null,secText='',evPose=null,evText='';
-function paint(a){// Visual refresh: in the hero (Find floss), Pip's resting poses show the theme art: gardener (light), starlight (dark). Other poses unchanged.
- const th=REST.includes(a)&&!!el.closest('.herogrid'),la=th?'gardener':a,key=th?'theme':a;
- if(img.dataset.art!==a||img.dataset.show!==key){src.srcset=set(la,'webp');img.srcset=set(la,'png');img.src=`assets/pip/pip-${la}-320.png`;img.dataset.art=a;img.dataset.show=key;
-  if(dk){dk.media=th?'(prefers-color-scheme: dark)':'not all'}}}
+function paint(a){// Visual refresh: in the hero (Find floss), Pip's resting poses show the theme art: gardener (light), starlight (dark). Other poses unchanged. Seasonal art may replace resting hero art only when the image exists; event poses are never swapped; missing or failed seasonal files fall back to gardener/starlight (no broken image).
+ const liveEvent=over==='event';
+ const th=REST.includes(a)&&!!el.closest('.herogrid')&&!liveEvent;
+ let seasonal=null;
+ if(th&&window.FlossFoxAtelierSeasonal&&typeof FlossFoxAtelierSeasonal.restingChoice==='function'){try{seasonal=FlossFoxAtelierSeasonal.restingChoice()}catch(e){seasonal=null}}
+ const useSeason=!!(seasonal&&seasonal.key);
+ const la=useSeason?(window.FlossFoxAtelierSeasonal.base?FlossFoxAtelierSeasonal.base(seasonal.key):('greeting-'+seasonal.key)):(th?'gardener':a);
+ const key=useSeason?('seasonal:'+seasonal.key):(th?'theme':a);
+ if(img.dataset.art!==a||img.dataset.show!==key){img.onerror=null;src.srcset=set(la,'webp');img.srcset=set(la,'png');img.src=`assets/pip/pip-${la}-320.png`;img.dataset.art=a;img.dataset.show=key;
+  if(dk){const dark=document.documentElement.getAttribute('data-atelier-scheme')==='dark';dk.media=(th&&!useSeason)?(dark?'all':'not all'):'not all'}
+  if(useSeason){img.onerror=function(){img.onerror=null;src.srcset=set('gardener','webp');img.srcset=set('gardener','png');img.src='assets/pip/pip-gardener-320.png';img.dataset.show='theme-fallback';if(dk){const dark=document.documentElement.getAttribute('data-atelier-scheme')==='dark';dk.media=dark?'all':'not all'}}}}}
 function show(name,r,anim=true){if(screenK&&name===base)name='screen';const S=STATES[name];if(!S)return;if(r)lastR=r;const text=S.msg(lastR);const pz=typeof S.pose==='function'?S.pose(lastR):S.pose;
  if(cur===name&&msg.textContent===text&&el.dataset.pose===poseArt(pz))return; // nothing meaningful changed
  const a=poseArt(pz);cur=name;el.dataset.state=name;el.dataset.pose=a;
@@ -122,7 +129,7 @@ const api={result,show,stateFor,STATES,ART,FUTURE,current:()=>cur,base:()=>base,
  errPose,
  screen:(k,t,pose)=>{if(!k){if(!screenK)return;screenK=null;if(cur==='screen')show(base,null,false);return}if(k!==screenK){secPose=null;secText=''}screenK=k;screenT=String(t||'');screenPose=pose||null;if(over!=='event')clearOver();if(over!=='event')show('screen')},screenKey:()=>screenK,
  isHidden:()=>fig.hidden,
- retheme:()=>{if(el.dataset.pose)paint(el.dataset.pose)},
+ retheme:()=>{if(el.dataset.pose){img.dataset.show='';paint(el.dataset.pose)}},
  // one-Pip (pip-follow.js): the active section sets pose (and optionally a line) on the single companion; events briefly take over.
  section:(pose,text)=>{secPose=pose||null;secText=String(text||'');if(!over&&(cur==='screen'||screenK))show(screenK?'screen':base,null,false);else if(!over&&!screenK&&pose){/* Find floss keeps its own state machine */}},
  event:(pose,ms,text)=>{if(fig.hidden||!pose)return false;if(STATES[base].pri>STATES.event.pri)return false;evPose=pose;evText=String(text||'');overlay('event',ms||4000);return true},
@@ -163,19 +170,34 @@ const AS={ // GENERATED from /workspace/pip-art/m-involved/a-strings.csv (Pixel)
  'pipA.pcheck.fake.one':v=>`1 number isn't a DMC color I know. See Pattern check. I haven't changed anything.`,
  'pipA.pcheck.red':v=>`A few things need a look before you stitch. See Pattern check. I haven't changed anything.`,
  'pipA.pcheck.other':v=>`A few things are worth a second look. See Pattern check. I haven't changed anything.`,
- 'pipA.checkin.full':v=>`Checked in. That thread now counts as yours for this project.`,
- 'pipA.checkin.part':v=>`Got part of it. I've kept the rest on your shopping list.`,
+ 'pipA.checkin.full':v=>{const X=window.FlossFoxAtelierCopy,fb=v.n?`Checked in ${v.n} skein${v.n===1?'':'s'} of ${v.brand||'DMC'} ${v.code} for this project.`:'Checked in. That thread now counts as yours for this project.';return X&&X.has&&X.has('pip.receipt.project')?X.t('pip.receipt.project',{n:v.n,brand:v.brand||'DMC',code:v.code},v.n):fb},
+ 'pipA.checkin.part':v=>{const X=window.FlossFoxAtelierCopy,fb=Number.isInteger(v.q)?`Got ${v.n} of ${v.q} skeins of ${v.brand||'DMC'} ${v.code}. The rest stays on your shopping list.`:`Got part of it. I've kept the rest on your shopping list.`;return X&&X.has&&X.has('pip.receipt.part')&&Number.isInteger(v.q)?X.t('pip.receipt.part',{n:v.n,q:v.q,brand:v.brand||'DMC',code:v.code}):fb},
+ // 3.9 (Pixel pip.receipt.a, starred): only when the confirmed check-in really changed My threads (read back OK).
+ 'pipA.checkin.threads':v=>{const X=window.FlossFoxAtelierCopy,n=v.n,f=n===1?`Checked in 1 skein of ${v.brand} ${v.code}. It's in My threads now.`:`Checked in ${n} skeins of ${v.brand} ${v.code}. They're in My threads now.`;return X&&X.has&&X.has('pip.receipt.a')?X.t('pip.receipt.a',{n,brand:v.brand,code:v.code},n):f},
  'pipA.ready':v=>`Every color is covered and checked. Ready to stitch!`};
 const AL={label:"How much should Pip chat?",chatty:"Chatty: every helpful moment",important:"Just the important ones (recommended)",quiet:"Quiet: only when I ask",off:"Off: hide Pip",saved:"Pip setting saved on this device.",dismiss:"Dismiss Pip's message",settings:'Pip settings'};
 // event -> pose, levels, cap. gapFree: direct result of the user's tap (Undo, Ready), so no 20 s gap.
 const EV={save:{pose:'saved',lv:['chatty'],cap:'session'},cmp:{lv:['chatty','important'],cap:'project'},empty:{pose:'floss-box',lv:['chatty'],cap:'session'},
  nothing:{pose:'dropped-bobbin',lv:['chatty'],cap:'project'},undo:{pose:'phew',lv:['chatty','important'],cap:'none',gapFree:true},
- pcheck:{lv:['chatty','important'],cap:'file'},checkin:{pose:'floss-box',lv:['chatty'],cap:'checkin'},ready:{pose:'proud-finish',lv:['chatty','important'],cap:'none',gapFree:true},
+ pcheck:{lv:['chatty','important'],cap:'file'},checkin:{pose:'floss-box',lv:['chatty','important'],cap:'checkin'},ready:{pose:'proud-finish',lv:['chatty','important'],cap:'none',gapFree:true},importEv:{pose:'pattern-reader',lv:['chatty','important'],cap:'file'},covers:{lv:['chatty','important'],cap:'none',gapFree:true},returnEv:{pose:'greeting-alt',lv:['chatty','important'],cap:'project'},finishEv:{pose:'proud-finish',lv:['chatty','important'],cap:'none',gapFree:true},timerEv:{pose:'cross-stitch',lv:['chatty','important'],cap:'session'},
  first:{pose:'shy-heart',lv:['chatty','important'],cap:'none',gapFree:true}}; // first: one-time first-project moment (see firstProject)
-const POSE={'pipA.cmp.done.many':'presenting','pipA.cmp.done.one':'presenting','pipA.cmp.done.none':'thinking','pipA.cmp.unsure':'magnifier','pipA.cmp.unsure.one':'magnifier','pipA.pcheck.fake':'puzzled','pipA.pcheck.fake.one':'puzzled','pipA.pcheck.other':'magnifier','pipA.pcheck.red':'magnifier'};
-const EVOF={'pipA.save.ok':'save','pipA.cmp.done':'cmp','pipA.cmp.empty':'empty','pipA.cmp.nothing':'nothing','pipA.cmp.undo':'undo','pipA.pcheck.fake':'pcheck','pipA.pcheck.other':'pcheck','pipA.pcheck.red':'pcheck','pipA.checkin':'checkin','pipA.ready':'ready','pipA.save.first':'first'};
+const POSE={'pip.covers':'cross-stitch','pip.covers.a':'cross-stitch','pip.covers.est':'thinking','pip.import':'pattern-reader','pip.import.a':'pattern-reader','pipA.cmp.done.many':'presenting','pipA.cmp.done.one':'presenting','pipA.cmp.done.none':'thinking','pipA.cmp.unsure':'magnifier','pipA.cmp.unsure.one':'magnifier','pipA.pcheck.fake':'puzzled','pipA.pcheck.fake.one':'puzzled','pipA.pcheck.other':'magnifier','pipA.pcheck.red':'magnifier'};
+const EVOF={'pipA.save.ok':'save','pipA.cmp.done':'cmp','pipA.cmp.empty':'empty','pipA.cmp.nothing':'nothing','pipA.cmp.undo':'undo','pipA.pcheck.fake':'pcheck','pipA.pcheck.other':'pcheck','pipA.pcheck.red':'pcheck','pipA.checkin':'checkin','pipA.checkin.full':'checkin','pipA.checkin.part':'checkin','pipA.checkin.threads':'checkin','pipA.ready':'ready','pipA.save.first':'first','pip.import':'importEv','pip.import.a':'importEv','pip.covers':'covers','pip.covers.a':'covers','pip.covers.est':'covers','pip.return':'returnEv','pip.return.a':'returnEv','pip.finish':'finishEv','pip.finish.a':'finishEv','pip.timer':'timerEv','pip.timer.a':'timerEv'};
 /* Approved by Pixel (review of 6377560; not in a-strings.csv yet): first project saved, shown once per device. */
 AS['pipA.save.first']=v=>`Your first project is saved! Next, let's check it against your threads.`;
+function ACt(k,v,n,fb){const X=window.FlossFoxAtelierCopy;if(X&&X.has&&X.has(k))return X.t(k,v,n);return fb}
+function Aell(s,n){s=String(s||'').trim();return s.length<=n?s:s.slice(0,Math.max(0,n-1))+'…'}
+AS['pip.import']=v=>ACt('pip.import.a',{n:v.n},v.n,v.n===1?'I found 1 color in your pattern. Give it a quick look against your key.':`I found ${v.n} colors in your pattern. Give each a quick look against your key.`);
+AS['pip.import.a']=AS['pip.import'];
+AS['pip.covers']=v=>ACt('pip.covers.a',{n:v.n},v.n,v.n===1?'Your collection covers the 1 color in this pattern. Time to thread a needle!':`Your collection covers all ${v.n} colors in this pattern. Time to thread a needle!`);
+AS['pip.covers.a']=AS['pip.covers'];
+AS['pip.covers.est']=v=>ACt('pip.covers.est',v,undefined,'Your collection covers every color, based on my skein estimates. Check the amounts.');
+AS['pip.return']=v=>ACt('pip.return.a',{note:Aell(v.note,44)},undefined,`Welcome back! Your note says: “${Aell(v.note,44)}”`);
+AS['pip.return.a']=AS['pip.return'];
+AS['pip.finish']=v=>ACt('pip.finish.a',{name:Aell(v.name,28)},undefined,`You finished ${Aell(v.name,28)}! That's something to be proud of.`);
+AS['pip.finish.a']=AS['pip.finish'];
+AS['pip.timer']=v=>ACt('pip.timer.a',{time:v.time},undefined,`${v.time} with your needle. One stitch at a time adds up.`);
+AS['pip.timer.a']=AS['pip.timer'];
 // One-time flag: a UI preference key only (same prefix as pipLevel), never part of the saved data or backups.
 const FIRST_KEY=PIP_KEY.replace(/\.pip\.v1$/,'.pipFirstProject.v1');
 function firstProject(anchor){try{if(localStorage.getItem(FIRST_KEY))return false}catch(e){return false}
@@ -187,7 +209,7 @@ function variant(key,v){v=v||{};
  if(key==='pipA.cmp.done'){if(v.u>=1)return v.u===1?'pipA.cmp.unsure.one':'pipA.cmp.unsure';return v.total===1?'pipA.cmp.done.one':v.have===0?'pipA.cmp.done.none':'pipA.cmp.done.many'}
  if(key==='pipA.cmp.undo')return v.n===1?'pipA.cmp.undo.one':key;
  if(key==='pipA.pcheck.fake')return v.n===1?'pipA.pcheck.fake.one':key;
- if(key==='pipA.checkin')return v.full?'pipA.checkin.full':'pipA.checkin.part';
+ if(key==='pipA.checkin'){if(v.threads&&Number.isInteger(v.n)&&v.code){if(v.full===false&&Number.isInteger(v.q)&&v.n<v.q)return 'pipA.checkin.part';return 'pipA.checkin.threads'}return v.full?'pipA.checkin.full':'pipA.checkin.part'}
  return key}
 function level(){if(fig.hidden)return'off';let s=null;try{s=localStorage.getItem(LEVEL_KEY)}catch(e){}return s&&LEVELS.includes(s)&&s!=='off'?s:LEVEL_DEFAULT}
 // Off stays in sync with the existing hide key: hidden there = Off here (old hidden users stay hidden). Nothing else is touched.
@@ -210,6 +232,7 @@ function react(key,vars,anchor,opts){opts=opts||{};vars=vars||{};if(key==='pipA.
  b.innerHTML=`<picture aria-hidden="true"><source type="image/webp" srcset="assets/pip/pip-${pose}-160.webp"><img src="assets/pip/pip-${pose}-160.png" alt="" aria-hidden="true" width="48" height="71" decoding="async"></picture><p class="pipA-text"></p><button type="button" class="pipA-x" aria-label="${AL.dismiss}">✕</button><a href="#pipSettings" class="pipA-set">${AL.settings}</a>`;
  b.querySelector('.pipA-text').textContent=text;b.querySelector('.pipA-x').onclick=closeBubble;
  b.querySelector('.pipA-set').onclick=e=>{e.preventDefault();closeBubble();const t=document.getElementById('tabHelp');if(t)t.click();setTimeout(()=>{const s=document.getElementById('pipSettings');if(s)s.scrollIntoView({block:'start'})},50)};
+ if(opts.action&&opts.action.label){const go=document.createElement('button');go.type='button';go.className='pipA-act sec';go.textContent=opts.action.label;go.onclick=()=>{closeBubble();if(typeof opts.action.go==='function')opts.action.go()};b.appendChild(go)}
  b.addEventListener('keydown',e=>{if(e.key==='Escape')closeBubble()});['mouseenter','focusin'].forEach(x=>b.addEventListener(x,()=>clearTimeout(bubT)));['mouseleave','focusout'].forEach(x=>b.addEventListener(x,()=>setTimeout(armFade,0)));
  el.appendChild(b);bub=b;armFade();evPose=pose;evText='';clearOver();over='event';show('event');// one-Pip: the bubble lives in the single companion, which takes the event pose
  // One polite announcement: if the site already announces this event (opts.siteAnnounces), Pip's line is visual only.

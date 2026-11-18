@@ -19,7 +19,7 @@ def mk(g, name, text):
 TXT = '\n'.join(f'{c} x{q}' for c, q in [('310',2),('321',1),('498',1),('666',1),('700',2),('725',1),('796',1),('820',1),('898',1),('3799',2),('3865',1),('B5200',1),('415',1),('762',1),('801',1)])
 LS = "JSON.stringify(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]))"
 HT = "Math.max(document.documentElement.scrollHeight,document.body.scrollHeight)"
-LIMIT = {390: 5900, 344: 6700}   # before: 9050 / 10608 (kit open); after ~5400 / ~6070
+LIMIT = {390: 5900, 344: 7000}   # before: 9050 / 10608 (kit open); after ~5400 / ~6070; Stage D 344 was 6671; Stage E progress card adds ~160px
 def vis(g, s): return g.evaluate(f"(()=>{{const e=document.querySelector({json.dumps(s)});return !!e&&e.checkVisibility()}})()")
 with sync_playwright() as p:
     br = p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
