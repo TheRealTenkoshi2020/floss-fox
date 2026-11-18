@@ -1,0 +1,24 @@
+/* Floss Fox optional support links (dev, 3.9). Only renders when owner-verified URLs are configured.
+   Uses the app's theme tokens (theme-pair.css) so it follows light, dark and later 3.9 themes.
+   Restrained on purpose: outline buttons, no animation, no color-only meaning. */
+.ff-support{margin:20px 0 8px;padding:16px;border:1px solid var(--surface-border,var(--line,#ddd4c4));border-radius:var(--r3,18px);background:var(--surface-2,transparent);color:var(--text,var(--ink,#343b39))}
+.ff-support h3{margin:0 0 8px;color:var(--text-strong,var(--ink,#24302a));font-size:1.05rem;line-height:1.3}
+.ff-support p{margin:8px 0;line-height:1.5;max-width:65ch;overflow-wrap:anywhere}
+.ff-support-links{display:flex;flex-wrap:wrap;gap:12px 16px;margin:12px 0 4px;align-items:flex-start}
+.ff-support-item{flex:0 1 auto;max-width:100%}
+.ff-support .ff-support-detail{margin:6px 0 0;font-size:.85rem;color:var(--text-muted,var(--ink-2,#535b58));max-width:34ch}
+.ff-support a.ff-support-link.is-offline{border-style:dashed;cursor:not-allowed}
+.ff-support a.ff-support-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;box-sizing:border-box;padding:8px 16px;border-radius:var(--radius-ctl,999px);border:2px solid var(--sec-border,var(--sage-ink,#3f6b4a));background:var(--sec-bg,var(--surface,#fff));color:var(--sec-text,var(--sage-ink,#3f6b4a));font-weight:700;line-height:1.3;text-align:center;text-decoration:none;max-width:100%}
+.ff-support a.ff-support-link:hover{background:var(--sage-50,var(--surface-2,#eef5e8))}
+.ff-support a.ff-support-link:focus-visible,#ffSupportFooter a:focus-visible{outline:3px solid var(--focus,#1e5fa8);outline-offset:3px}
+.ff-support .ff-support-external{font-weight:600;font-size:.9rem}
+.ff-support .ff-support-offline:empty{display:none}
+.ff-support .ff-support-offline{font-size:.9rem;font-weight:600;color:var(--text-strong,inherit)}
+.ff-support .ff-support-note{font-size:.85rem;color:var(--text-muted,var(--ink-2,#535b58))}
+.ff-support .ff-support-ptitle{margin:14px 0 4px;font-size:.95rem;color:var(--text-strong,inherit)}
+.ff-support .ff-support-privacy{margin:4px 0 0;padding-left:1.2em;font-size:.85rem;color:var(--text-muted,var(--ink-2,#535b58))}
+.ff-support .ff-support-privacy li{margin:4px 0;max-width:65ch}
+@media (max-width:420px){.ff-support-links{flex-direction:column;align-items:stretch}.ff-support-item{width:100%}.ff-support a.ff-support-link{width:100%}.ff-support .ff-support-detail{max-width:none}}
+@media (prefers-reduced-motion:reduce){.ff-support,.ff-support *{transition:none!important;animation:none!important}}
+@media (forced-colors:active){.ff-support a.ff-support-link{border-color:LinkText}}
+@media print{.ff-support,#ffSupportFooter{display:none!important}}

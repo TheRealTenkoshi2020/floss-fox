@@ -1,0 +1,54 @@
+/* The Threadwood: quiet, mobile-first, no custom artwork replacing Pip. */
+.tw-nav{min-height:44px;white-space:normal;line-height:1.15;border-radius:12px;padding:.3rem .65rem;border:1px solid var(--line,#d9d0c2);background:var(--surface,#fffaf3);color:var(--ink,#303831);font:inherit;font-weight:700;cursor:pointer}
+.tw-nav[aria-current=page]{border-color:var(--sage-ink,#547458);box-shadow:inset 0 0 0 1px var(--sage-ink,#547458)}
+.threadwood{max-width:1100px;margin:auto;color:var(--ink,#303831);padding:12px 0 36px;display:grid;gap:16px}
+.threadwood[hidden]{display:none!important}
+.threadwood :where(button,select,textarea,input){font:inherit;max-width:100%;min-width:0}
+.threadwood button{min-height:44px}
+.threadwood :where(button,summary,input,textarea,select):focus-visible{outline:3px solid #ba884d;outline-offset:3px}
+.tw-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:clamp(16px,3vw,32px);background:var(--surface-2,#f2eee4);border:1px solid var(--line,#dad3c4);border-radius:20px}
+.tw-hero h1{font-family:Georgia,serif;letter-spacing:-.025em;font-size:clamp(1.6rem,4vw,2.5rem);line-height:1.13;margin:.2rem 0 .7rem;overflow-wrap:anywhere}
+.tw-eyebrow{font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--sage-ink,#486e53);margin:0 0 .4rem}
+.tw-lead{font-size:clamp(.95rem,2vw,1.12rem);line-height:1.5;margin:.1rem 0 1rem;max-width:38rem}
+.tw-pip img{display:block;width:clamp(76px,14vw,150px);height:auto;object-fit:contain}
+.tw-actions,.tw-choices{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.5rem 0}
+.tw-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.tw-tile{border:1px solid var(--line,#c9c8b9);background:var(--surface,#fff);color:var(--ink,#222);border-radius:13px;padding:12px 6px;cursor:pointer;font-weight:700}
+.tw-tile:hover,.tw-nav:hover{box-shadow:0 2px 8px rgba(20,45,20,.12)}
+.tw-panel{background:var(--surface,#fff);border:1px solid var(--line,#dad3c4);border-radius:15px;min-width:0;overflow:hidden}
+.tw-panel>summary{cursor:pointer;font-size:1.1rem;font-weight:750;line-height:1.35;padding:14px 18px;min-height:50px;display:list-item;list-style-position:inside}
+.tw-panel>summary:hover{background:var(--surface-2,#f6f1e7)}
+.tw-panel[open]>summary{border-bottom:1px solid var(--line,#dad3c4)}
+.tw-inside{padding:14px 18px;display:grid;gap:11px}
+.tw-muted,.tw-fine{color:var(--ink-2,#515b53);line-height:1.45;margin:.15rem 0}
+.tw-fine{font-size:.83rem}
+.tw-speech{background:var(--surface-2,#f1f5ec);border-left:4px solid var(--sage-ink,#517451);border-radius:8px;padding:14px;line-height:1.5;margin:0}
+.tw-choices button{font-size:.92rem}
+.tw-treasure{border-radius:12px;border:1px solid var(--line,#d7d8ca);background:var(--surface-2,#f3f3eb);padding:15px}
+.tw-treasure h3{margin:.2rem 0 .5rem;font-family:Georgia,serif;font-size:1.2rem}
+.tw-treasure p:last-child{margin:0;line-height:1.6}
+.tw-saved-tips,.tw-small-list,.tw-memories{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.tw-saved-tips li{padding:8px 0;border-bottom:1px solid var(--line,#e2e1d8);line-height:1.5}
+.tw-small-list li{display:flex;gap:8px;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line,#ddd);padding:5px 0}
+.tw-small-list button{flex-shrink:0}
+.tw-field{display:flex;flex-direction:column;gap:5px;font-size:.92rem;font-weight:650;max-width:100%}
+.tw-field :where(select,textarea,input[type=file]){display:block;width:100%;box-sizing:border-box;min-height:44px;padding:9px;border-radius:8px;border:1px solid var(--line,#bfbfb0);background:var(--surface,#fff);color:var(--ink,#222)}
+.tw-field textarea{line-height:1.5;min-height:85px;resize:vertical}
+.tw-timer{font-variant-numeric:tabular-nums;font-size:clamp(1.5rem,4vw,2rem);font-weight:700;margin:5px 0;color:var(--ink,#334)}
+.tw-preview{max-width:min(100%,270px);max-height:200px;object-fit:contain;border-radius:9px;border:1px solid var(--line,#ddd)}
+.tw-preview[hidden]{display:none}
+.tw-memory{display:grid;grid-template-columns:minmax(0,130px) minmax(0,1fr);gap:12px;padding:12px;border:1px solid var(--line,#d2d3c4);border-radius:12px;align-items:start}
+.tw-memory:not(:has(.tw-memory-photo)){grid-template-columns:minmax(0,1fr)}
+.tw-memory-photo{width:130px;height:130px;max-width:100%;object-fit:cover;border-radius:8px}
+.tw-memory-text{min-width:0;overflow-wrap:anywhere}
+.tw-memory-text p{margin:.2rem 0 .5rem;line-height:1.5}
+.tw-memory-text textarea{width:100%;box-sizing:border-box;min-height:90px}
+.tw-backup{border-top:1px solid var(--line,#ddd);padding-top:14px}
+.tw-status{min-height:1.4em;font-weight:650;color:var(--ink,#333);margin:0}
+.tw-undo{justify-self:start}
+@media(max-width:600px){.tw-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}.tw-hero{gap:6px;padding:15px}.tw-pip img{width:78px}.tw-memory{grid-template-columns:90px minmax(0,1fr)}.tw-memory-photo{width:90px;height:90px}.tw-inside{padding:12px}.tw-hero h1{font-size:1.6rem}}
+@media(max-width:340px){.tw-hero{grid-template-columns:1fr}.tw-pip{grid-row:1;justify-self:end}.tw-pip img{width:56px}.tw-shortcuts{gap:5px}.tw-tile{font-size:.87rem}.tw-panel>summary{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){.threadwood *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+@media print{.tw-nav,.threadwood .tw-actions,.threadwood button{display:none!important}}
+/* 3.9 dev integration: inside Pip's Den, Pip is already on the page (hero + Talk with Pip), so the floating companion steps aside instead of covering the hero. */
+html:has(#threadwoodView:not([hidden])) #pip.pipc{display:none!important}

@@ -27,4 +27,10 @@ t('others: equal effective counts give identical sizes',()=>F.others(140,100).ev
 t('others: 14 Aida pairs with 28 evenweave, 16 with 32, 18 with 36, 11 with 22',()=>JSON.stringify(F.others(1,1).map(o=>[o.aida,o.evenweave]))==='[[11,22],[14,28],[16,32],[18,36]]');
 t('fmtIn shows quarters as fractions',()=>F.fmtIn(13.25)==='13¼'&&F.fmtIn(16)==='16'&&F.fmtIn(0.5)==='½'&&F.fmtIn(100/14)==='7.14');
 t('calc code has no DOM/storage/network',()=>{const s=require('fs').readFileSync(__dirname+'/../fabric/calc.js','utf8').replace(/\/\*[\s\S]*?\*\//g,'');return !/document|localStorage|fetch|XMLHttpRequest|sendBeacon|innerHTML/.test(s)});
+
+const D=F.diagramBoxes(A,240,160,12);
+t('diagram: boxes come only from compute() cut and design',()=>D.cutSize.w===A.cut.w&&D.cutSize.h===A.cut.h&&D.designSize.w===A.design.w&&D.designSize.h===A.design.h&&D.marginIn===A.marginIn);
+t('diagram: stitched area is centered inside the cut rectangle',()=>Math.abs((D.design.x-D.cut.x)-(D.cut.x+D.cut.w-D.design.x-D.design.w))<1e-9&&Math.abs((D.design.y-D.cut.y)-(D.cut.y+D.cut.h-D.design.y-D.design.h))<1e-9);
+t('diagram: aspect of the cut box matches compute() cut',()=>Math.abs((D.cut.w/D.cut.h)-(A.cut.w/A.cut.h))<1e-9);
+t('diagram: invalid or empty result is null',()=>F.diagramBoxes(null)===null&&F.diagramBoxes({cut:{w:0,h:1},design:{w:0,h:0}})===null);
 console.log(`\nfabric_unit: ${pass} passed, ${fail} failed`);process.exit(fail?1:0);

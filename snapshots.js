@@ -8,7 +8,7 @@
 // ---- User-facing strings (heading, body, footer and Restore aria-label approved by Pixel; all wording lives here) ----
 const STR={
  heading:'Automatic copies on this device',
- intro:'We keep up to 3 recent copies of your projects and thread collection in this browser. We save one when you open the app after changes, and before an import or restore. These copies are deleted if you clear this site\'s data, so keep saving backup files too.',
+ intro:'We keep up to 3 recent copies of your projects and thread collection in this browser. We save one when you open the app after changes, and before an import or restore. These copies are deleted if you clear this site\'s data, so keep saving backup files too. Automatic copies on this device don\'t include cover photos. A downloaded backup file does.',
  none:'No automatic copies yet. One is made the next time you open Floss Fox after making changes.',
  listLabel:'Saved copies',
  item:'{when} · {projects}, {colors}',

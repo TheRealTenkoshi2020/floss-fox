@@ -1,0 +1,264 @@
+/* Floss Fox 3.9 Atelier, Stage B: Workbasket + search + Settings additions.
+   PROVISIONAL styling after Pixel's mockups (/workspace/pip-art/atelier39/mockups), using existing theme tokens only.
+   Everything is scoped to .ffa-* / #ffSearch* / #workbasketView so it can be restyled or removed in one place.
+   Stage D tokens live in atelier/themes.css (loaded after theme-pair.css). */
+.ffa-wbview{margin:0 0 16px}
+.ffa-wbgrid{display:grid;gap:16px;min-width:0}
+@media(min-width:900px){.ffa-wbgrid{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start}}
+.ffa-wb,.ffa-side{min-width:0;overflow-wrap:anywhere}
+.ffa-wb{background:var(--hero-surface,var(--psurface));background-color:var(--psurface)}
+.ffa-eyebrow{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--eyebrow,var(--text-muted));margin:0 0 4px}
+.ffa-wb h2{margin:0;font-family:var(--font-head)}
+.ffa-lead{color:var(--text-muted);margin:6px 0 14px}
+.ffa-active{border:1px solid var(--hair,var(--surface-border));border-radius:16px;padding:14px;background:var(--psurface)}
+.ffa-active h3{margin:2px 0 2px;font-family:var(--font-head);font-size:21px}
+.ffa-label{font-size:14px;font-weight:800;color:var(--text-muted);margin:0}
+.ffa-meta{font-size:14px;color:var(--text-muted);margin:0 0 10px}
+.ffa-mut{color:var(--text-muted)}.ffa-small{font-size:14px}
+.ffa-note{border-left:4px solid var(--sage,var(--sec-border));background:var(--surface-2,var(--psurface));border-radius:0 14px 14px 0;padding:10px 14px;margin:12px 0}
+.ffa-note b{display:block;font-size:14px;color:var(--text-muted)}
+.ffa-note p{margin:2px 0 0;white-space:pre-line}
+.ffa-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:0 0 12px}
+.ffa-stat{background:var(--surface-2,var(--psurface));border:1px solid var(--hair,var(--surface-border));border-radius:14px;padding:8px 12px;min-width:0}
+.ffa-stat b{display:block;font:700 24px/1.1 var(--font-head);color:var(--text-strong);font-variant-numeric:tabular-nums}
+.ffa-stat span{font-size:14px;color:var(--text-muted)}
+.ffa-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ffa-row button,.ffa-empty button{min-height:44px}
+.ffa-empty h3{font-family:var(--font-head);margin:0 0 4px}
+.ffa-empty p{color:var(--text-muted);margin:0 0 12px}
+.ffa-owned{margin:0 0 12px}.ffa-owned b{color:var(--text-strong)}
+.ffa-quick h3{font-size:17px;margin:0 0 8px;font-family:var(--font-head)}
+.ffa-quickgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ffa-qbtn{display:flex;align-items:center;min-height:56px;padding:8px 14px;border-radius:16px;border:1.5px solid var(--chip-border);background:var(--chip-bg);color:var(--chip-text);font:inherit;font-weight:800;text-align:left;text-decoration:none;cursor:pointer;min-width:0}
+.ffa-qbtn:hover{background:var(--hover-tint,var(--chip-bg))}
+/* palette strip + floss swatch (approximate color; the code is always in text nearby or in the accessible name) */
+.ffa-strip{display:flex;flex-wrap:wrap;align-items:center;gap:6px;list-style:none;margin:6px 0 4px;padding:0}
+.ffa-floss{--c:#9a9a9a;display:inline-block;width:30px;height:26px;flex:none;border-radius:7px;border:1.5px solid transparent;
+ background:repeating-linear-gradient(100deg,var(--fiber-hi,rgba(255,255,255,.35)) 0 1.5px,transparent 1.5px 4px,var(--fiber-lo,rgba(0,0,0,.16)) 4px 5px,transparent 5px 7px),var(--c)}
+.ffa-floss.edge{border-color:var(--swatch-edge,var(--input-border))}
+.ffa-floss.none{background:repeating-linear-gradient(135deg,var(--surface-2,#eee) 0 5px,var(--psurface) 5px 10px);border:1.5px dashed var(--swatch-edge,var(--input-border))}
+.ffa-more{font-weight:800;font-size:14px;color:var(--text-muted);padding:0 4px}
+/* tab + search trigger */
+.ffa-searchbtn{display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;margin-left:auto;margin-right:8px;border-radius:999px;border:1.5px solid var(--input-border);background:var(--input-bg);color:var(--text-muted);font:inherit;font-weight:700;cursor:pointer;flex:none}
+.ffa-searchbtn svg{width:20px;height:20px;stroke:currentColor;flex:none}
+@media(max-width:700px){.ffa-searchbtn .ffa-lbl{display:none}.ffa-searchbtn{padding:0;width:44px;justify-content:center}}
+.ffa-search{max-width:720px;margin:8px auto 16px;position:relative;z-index:31} /* above the floating Pip card (pip-follow.css z 30), below confirm (80) */
+.ffa-shead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ffa-sh{font-size:20px;margin:0;font-family:var(--font-head)}
+.ffa-x{width:44px;height:44px;border-radius:999px;border:1.5px solid var(--input-border);background:var(--input-bg);color:var(--text-strong);font:800 22px/1 var(--font-body);cursor:pointer}
+.ffa-sfield{margin:10px 0 6px}
+.ffa-sfield input{width:100%;box-sizing:border-box;min-height:52px;font-size:18px;border-radius:14px;border:2px solid var(--input-border);background:var(--input-bg);color:var(--text-strong);padding:0 14px}
+.ffa-sfield input::placeholder{color:var(--placeholder);opacity:1}
+.ffa-hint,.ffa-keys{font-size:14px;color:var(--text-muted);margin:4px 0}
+.ffa-results{margin-top:6px}
+.ffa-sgroup{margin-top:12px}
+.ffa-sgroup h3{font:800 13px/1.2 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin:0 0 8px}
+.ffa-res{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 12px;border-radius:14px;border:1.5px solid var(--hair,var(--surface-border));background:var(--psurface);color:var(--text);margin-bottom:8px;cursor:pointer;min-width:0}
+.ffa-res[aria-selected=true]{border-color:var(--focus);outline:3px solid var(--focus);outline-offset:1px}
+.ffa-rmeta{flex:1;min-width:0;overflow-wrap:anywhere}.ffa-rmeta b{display:block;color:var(--text-strong)}.ffa-rmeta span{display:block;font-size:14px;color:var(--text-muted)}
+.ffa-none{padding:8px 4px}.ffa-nonet{font-weight:800;color:var(--text-strong);margin:0 0 4px}
+.ffa-detail{margin-top:10px;border:1.5px solid var(--hair,var(--surface-border));border-radius:14px;padding:10px 14px;background:var(--surface-2,var(--psurface))}
+.ffa-detail h3{margin:0 0 4px;font-family:var(--font-head)}.ffa-detail p{margin:2px 0}
+/* Settings */
+.ffa-prefs{border-top:1px solid var(--surface-border);margin-top:16px;padding-top:12px}
+.ffa-check{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:700}
+.ffa-check input{width:22px;height:22px}
+.ffa-prefs button{min-height:44px}
+.ffa-missing{margin:0 0 8px}
+#thList li.ffa-found{outline:3px solid var(--focus);outline-offset:2px}
+@media(prefers-reduced-motion:no-preference){.ffa-res,.ffa-qbtn{transition:background-color .12s ease,border-color .12s ease}}
+@media print{.ffa-searchbtn,.ffa-search,#tabWorkbasket{display:none!important}}
+
+/* Stage C fix: search never covers Pip's greeting. Wide: the panel sits beside the Pip column like the views do; any width: the
+   greeting text is hidden while search is open (the figure and controls stay). */
+body.ffa-searching .pipc .pipbubble,body.ffa-searching .pipc .ffpipline,body.ffa-searching .pipc .pipA-bubble{visibility:hidden}
+@media(min-width:880px){body.pipone .ffa-search{margin-left:0;margin-right:220px;max-width:none}}
+.ffa-sibnote{display:block;font-size:.85rem;color:var(--ink-2,#535B58);font-weight:600}
+/* Pixel Stage B review (REVIEW-39-stageB.md): S2-S5, N1-N4 */
+@media(min-width:880px){body.pipone #workbasketView{margin-right:200px}}
+@media(min-width:880px){.pipc{right:max(16px,calc((100vw - 1040px)/2 + 16px))}body.pipone .pipc{border-radius:16px}}
+.ffa-floss{border:1.5px solid var(--swatch-edge,var(--input-border))}
+#ffSearchIn::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
+.ffa-owned .ffa-mut{display:block;margin-top:2px}
+#workbasketView .ffa-eyebrow{display:none}
+#ffWbH{font-size:clamp(1.75rem,1.3rem + 1.6vw,2.25rem);line-height:1.15}
+@media(min-width:880px){.ffa-quickgrid{grid-template-columns:1fr}}
+@media (hover:none) and (pointer:coarse){.ffa-keys{display:none}}
+/* ---------- Stage C: in-store checklist (Store mode), provisional, existing tokens ---------- */
+.ffsm-check{display:inline-flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;font-weight:700}
+.ffsm-cb{-webkit-appearance:none;appearance:none;width:44px;height:44px;margin:0;flex:0 0 44px;border:2px solid var(--input-border,#8a8f86);border-radius:10px;background:var(--surface,#fffdf8);display:inline-grid;place-content:center;cursor:pointer}
+.ffsm-cb::before{content:"";width:22px;height:12px;border-left:4px solid transparent;border-bottom:4px solid transparent;transform:rotate(-45deg) translate(2px,-3px)}
+.ffsm-cb:checked{background:var(--tab-on-bg);border-color:var(--tab-on-bg)}
+.ffsm-cb:checked::before{border-color:var(--tab-on-text)}
+.ffsm-cb:focus-visible{outline:3px solid var(--focus,#2f6fb2);outline-offset:2px}
+.ffsm-row{min-height:72px}
+.ffsm-notin,.ffsm-also{display:block}
+.ffsm-views{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px}
+.ffsm-views button{min-height:44px}.ffsm-views button[aria-pressed=true],.ffa-seg button[aria-pressed=true],#ffLowOnly[aria-pressed=true]{background:var(--tab-on-bg);color:var(--tab-on-text);border-color:var(--tab-on-bg)}
+.ffsm-views select{min-height:44px}
+.ffsm-store{font-size:1rem;margin:12px 0 4px}
+.ffsm-home,.ffsm-take{border:1px solid var(--line,#DDD4C4);border-radius:var(--r3,16px);padding:12px 14px;margin:12px 0;background:var(--surface,#fffdf8)}
+.ffsm-home h4,.ffsm-take h4{margin:0 0 6px}.ffsm-home button,.ffsm-take button{min-height:44px}
+@media print{html.ffsm-printing body *{visibility:hidden!important}
+ html.ffsm-printing #pStore,html.ffsm-printing #pStore *{visibility:visible!important}
+ html.ffsm-printing #pStore{display:block!important;position:absolute;left:0;top:0;width:100%}
+ html.ffsm-printing #pStore .ffsm-tools,html.ffsm-printing #pStore .ffsm-views,html.ffsm-printing #pStore .ffsm-take,html.ffsm-printing #pStore .ffsm-home,html.ffsm-printing #pStore .ffsm-buy,html.ffsm-printing #pStore [data-smbuy],html.ffsm-printing #pStore #smBuyNote{display:none!important}
+ html.ffsm-printing .pipc{display:none!important}}
+/* Stage C: My threads tools, views, suggestions, restock (provisional) */
+.ffa-libtools{margin:8px 0}.ffa-librow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.ffa-libtools button,.ffa-libtools select,.ffa-libtools input{min-height:44px}.ffa-libtools input.qbox{width:4.5rem}
+.ffa-seg{display:inline-flex;gap:6px;flex-wrap:wrap}
+#thList .ffa-lowhide{display:none!important}
+#thList.ffa-view-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
+#thList.ffa-view-shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:8px}
+#thList.ffa-view-shelf .thtop{flex-wrap:wrap}
+#thList.ffa-view-shelf .thtop>:first-child{flex:0 0 auto}
+#thList.ffa-view-shelf .thname{flex:1 1 0;min-width:0}
+#thList.ffa-view-shelf .stepper{flex:1 0 100%}
+#thList .thname b,.ffsm-code{white-space:nowrap}
+#thList.ffa-view-shelf .thtop small.mut{display:none}
+#thList.ffa-view-grid>.demohead,#thList.ffa-view-shelf>.demohead{grid-column:1/-1}
+#thList .ffa-low{box-shadow:inset 4px 0 0 var(--wait-line)}
+.ffa-suggest{display:grid;gap:10px;margin:8px 0}
+.ffa-sug{border:1px solid var(--line,#DDD4C4);border-radius:var(--r3,16px);padding:10px 14px;background:var(--surface,#fffdf8)}
+.ffa-sug h3{margin:2px 0 4px;font-size:1rem}.ffa-sug p{margin:0 0 6px}.ffa-acts{display:flex;flex-wrap:wrap;gap:8px}.ffa-acts button{min-height:44px}
+.ffa-tag{display:inline-block;font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--eyebrow,var(--text-muted))}
+.ffa-restock h2{margin:0 0 4px}.ffa-restocklist{list-style:none;padding:0;margin:8px 0 0}
+.ffa-restocklist li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#DDD4C4);min-height:56px}
+.ffa-restocklist .ffa-rmeta{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}.ffa-restocklist button{min-height:44px}
+.ffsm-check .ffsm-cb{width:44px!important;height:44px!important;min-width:44px;min-height:44px}
+@media(max-width:520px){.ffsm-check{flex-direction:column;gap:2px;font-size:.75rem}.ffsm-check>span{position:static;width:auto;height:auto;overflow:visible;clip:auto}}
+.ffsm-row .bigsw{border:1.5px solid var(--swatch-edge,var(--input-border));box-sizing:border-box}
+.ghost.small[id$="Undo"],#kUndo{min-height:44px;min-width:44px;padding:0 12px}
+.ffsm-home .pri{margin-top:12px}
+.ffa-prefs .hint{margin:2px 0 12px}
+#ffPrefReset{margin-top:12px}
+.ffa-prefs .ffa-small{margin-bottom:12px}
+#ffLowOnly.sec[aria-pressed=true]{background:var(--tab-on-bg);color:var(--tab-on-text);border-color:var(--tab-on-bg)}
+
+/* Appearance radios (Display settings) */
+.ffa-theme{border:0;margin:12px 0 16px;padding:0;min-width:0}
+.ffa-theme legend{font-family:var(--font-head);font-weight:600;color:var(--text-strong);padding:0;margin:0 0 8px}
+.ffa-theme-opt{display:flex;align-items:flex-start;gap:10px;min-height:44px;margin:0;padding:4px 0;cursor:pointer}
+.ffa-theme-opt input{flex:none;width:20px;height:20px;margin:12px 0 0;accent-color:var(--pri-bg)}
+.ffa-theme-txt{display:flex;flex-direction:column;justify-content:center;min-height:44px;min-width:0}
+.ffa-theme-name{font-weight:700;color:var(--text-strong)}
+.ffa-theme-opt .hint{margin:0}
+.ffa-theme-opt input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.ffa-theme-opt, .ffa-floss{transition:none}}
+
+/* Stage D: gallery cards + color-studio compare (reduced-motion safe) */
+#ffaViewBar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 10px;align-items:center}
+#ffaViewBar .ffa-viewbtn{min-height:44px;min-width:44px;padding:8px 14px}
+.ffa-viewrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}.ffa-viewrow h2{margin:0}
+#projList.ffa-gallery{display:grid;grid-template-columns:1fr;gap:14px;list-style:none;padding:0;margin:8px 0}
+@media(min-width:880px){#projList.ffa-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1280px){#projList.ffa-gallery{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
+#projList.ffa-gallery>li.storeline,#projList.ffa-gallery>li.empty{grid-column:1/-1}
+#projList.ffa-gallery>li.ffa-gcard{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;border:1px solid var(--line,var(--surface-border));border-radius:16px;padding:12px;background:var(--psurface,#fff);min-width:0;text-align:left}
+#projList.ffa-gallery>li.ffa-gcard>.row{margin:0;flex-wrap:wrap}
+.ffa-cover{position:relative;display:block;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--hero-surface,var(--psurface,#f4efe6));border:1px solid var(--line,var(--surface-border))}
+.ffa-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.ffa-cover .ffa-strip{list-style:none;margin:0;padding:10px;display:grid;grid-auto-flow:column;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;align-items:stretch;height:100%;box-sizing:border-box}
+.ffa-cover .ffa-strip li{min-width:0;height:100%;border-radius:8px;overflow:hidden}
+.ffa-cover .ffa-strip .ffa-floss,.ffa-cover .ffa-strip span.ffa-chip{display:block;width:100%;height:100%;border-radius:8px;background:var(--c,#ccc)}
+.ffa-cover .ffa-more{position:absolute;right:8px;bottom:8px;background:var(--psurface,#fff);color:var(--text-strong,#222);border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700;border:1px solid var(--line)}
+#projList.ffa-gallery>li.ffa-gcard>span>small.mut{display:none}
+.ffa-gcard .pname{font-weight:800}.ffa-gmeta{margin:0;color:var(--text-muted)}.ffa-gmeta b{color:var(--text-strong)}.ffa-gcodes,.ffa-gnote{margin:0;font-size:.85rem;color:var(--text-muted)}.ffa-gnote b{display:block;color:var(--text-strong)}
+.ffa-cmp,.ffa-whites,.ffa-pcc,.ffa-studio{margin:14px 0}
+.ffa-studio-head h2,.ffa-cmp-h,.ffa-whites h3,.ffa-pcc h3{margin:0 0 6px;font-size:1.15rem;color:var(--text-strong)}
+.ffa-cmp{border:1px solid var(--line,var(--surface-border));border-radius:16px;padding:14px;background:var(--psurface)}
+.ffa-cmp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:10px;align-items:start}
+.ffa-cmpcol{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ffa-cmp-floss,.ffa-wcard .ffa-floss{width:64px;height:64px;border-radius:50%;display:block;background:var(--c,#ccc);border:1.5px solid var(--swatch-edge);box-sizing:border-box}
+.ffa-cmp-floss.is-empty{background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(127,127,127,.25) 6px,rgba(127,127,127,.25) 7px)}
+.ffa-cover .ffa-chip,.ffa-wcard .ffa-floss{border:1.5px solid var(--swatch-edge);box-sizing:border-box}
+.ffa-ccode{font-weight:800;color:var(--text-strong)}
+.ffa-cname{font-size:.85rem;color:var(--text-muted)}
+.ffa-kind{display:inline-block;align-self:flex-start;font-size:.75rem;font-weight:800;letter-spacing:.02em;border-radius:999px;padding:2px 8px;border:1px solid var(--line)}
+.ffa-kind-exact{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-line)}
+.ffa-kind-close{background:var(--wait-bg);color:var(--wait-ink);border-color:var(--wait-line)}
+.ffa-kind-estimated{background:var(--att-bg);color:var(--att-ink);border-color:var(--att-line)}
+.ffa-wgrid{display:flex;flex-wrap:wrap;gap:12px}
+.ffa-wcard{display:flex;flex-direction:column;gap:4px;min-width:88px}
+.ffa-pcc-list{list-style:none;margin:0;padding:0}
+.ffa-pcc-row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line)}
+.ffa-gcard,.ffa-cmp,.ffa-cover,.ffa-kind,.ffa-viewbtn,.ffa-cmp-floss{
+  transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease
+}
+@media (hover:hover) and (pointer:fine){
+  #projList.ffa-gallery>li.ffa-gcard:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+}
+@media (prefers-reduced-motion:reduce){
+  .ffa-gcard,.ffa-cmp,.ffa-cover,.ffa-kind,.ffa-viewbtn,.ffa-cmp-floss,.ffa-theme-opt,.ffa-floss{transition:none;animation:none}
+  #projList.ffa-gallery>li.ffa-gcard:hover{transform:none;box-shadow:none}
+}
+
+.ffa-cmp-fs{border:0;margin:0;padding:0;min-width:0}
+.ffa-choose{display:flex;align-items:center;gap:8px;min-height:44px;margin:4px 0 0;cursor:pointer}
+.ffa-choose input{width:20px;height:20px;flex:none}
+.ffa-recent{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.ffa-recent a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--text-strong)}
+.ffa-recent .ffa-floss{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--swatch-edge);background:var(--c,#ccc);flex:none}
+
+/* Stage E: progress ring + stitch session timer */
+.ffa-progress,.ffa-session{margin:14px 0;padding:14px;border:1px solid var(--line,var(--surface-border));border-radius:16px;background:var(--psurface)}
+.ffa-progress h3,.ffa-session h3{margin:0 0 8px;font-size:1.1rem;color:var(--text-strong)}
+.ffa-ring{display:inline-flex;flex-direction:column;align-items:center;gap:4px;width:88px}
+.ffa-ring svg{width:88px;height:88px;display:block}
+.ffa-ring-trk{stroke:var(--line,var(--surface-border))}
+.ffa-ring-val{stroke:var(--lime,#b4532a);stroke-linecap:round}
+.ffa-ring text{font-size:16px;font-weight:800;fill:var(--text-strong,#3b2f28)}
+.ffa-ring-cap{font-size:.75rem;color:var(--text-muted)}
+.ffa-ring-sm{width:64px;margin-left:auto}
+.ffa-ring-sm svg{width:64px;height:64px}
+.ffa-prog-num{font-weight:700;margin:6px 0}
+.ffa-prog-edit input[type=number]{width:6rem;min-height:44px;font-size:1rem}
+.ffa-clock{font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums;margin:0;color:var(--text-strong)}
+.ffa-badge{display:inline-block;font-size:.8rem;font-weight:800;border-radius:999px;padding:2px 8px;border:1px solid var(--line)}
+.ffa-session .ffa-badge{align-self:center}
+.ffa-badge.ok{background:var(--ok-bg,#e7f3e4);color:var(--ok-ink,#215c2a)}
+.ffa-badge.wait{background:var(--wait-bg,#f7eed8);color:var(--wait-ink,#6a4b10)}
+#ffTimer{min-width:20px;min-height:20px}
+@media (prefers-reduced-motion:reduce){
+  .ffa-ring-val,.ffa-ring svg,.ffa-clock,.ffa-session,.ffa-progress{transition:none;animation:none}
+}
+
+/* Stage F: Stitch Session focus mode (FF39-16). Hides the full editor while the reduced panel is open. */
+#projEdit.ffa-focus-on > *:not(#ffaFocus){display:none !important}
+#ffaFocus{display:none;margin:0;padding:16px 0 32px}
+#projEdit.ffa-focus-on #ffaFocus{display:block}
+.ffa-focus-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.ffa-focus-head h2{margin:0;font-size:1.4rem;color:var(--text-strong)}
+#ffaSessionStart,#ffaSessionExit,#ffaFocusShop,#ffaFocusThreads,.pipA-act{min-height:44px;min-width:44px}
+.ffa-focus-note,.ffa-focus-colors{margin:14px 0;padding:14px;border:1px solid var(--line,var(--surface-border));border-radius:16px;background:var(--psurface)}
+.ffa-focus-note h3,.ffa-focus-colors h3{margin:0 0 8px;font-size:1.1rem;color:var(--text-strong)}
+.ffa-colors{list-style:none;margin:0;padding:0}
+.ffa-colors li{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:44px;padding:6px 0;border-bottom:1px solid var(--line,var(--surface-border))}
+.ffa-colors li:last-child{border-bottom:0}
+.ffa-colors .ffa-floss{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--swatch-edge,#ccc);background:var(--c,#ccc);flex:none}
+.ffa-colors .ffa-loc{color:var(--text-muted);font-size:.95rem}
+.ffa-focus-block{margin:12px 0;font-weight:700}
+.ffa-focus-links{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+@media (prefers-reduced-motion:reduce){
+  .ffa-focus,.ffa-focus-head,#ffaFocus{transition:none;animation:none}
+}
+
+/* Stage G cover-photo editor (FF39-13). Gallery cards already have .ffa-cover. */
+.ffa-cover-edit{margin:12px 0}
+.ffa-cover-edit .ffa-cover-preview{margin:8px 0}
+.ffa-cover-edit .ffa-cover{max-width:320px}
+.ffa-cover-edit .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+
+.ffa-cmp-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.ffa-cmp-actions button{min-height:44px;min-width:44px}
+.ffa-cmp-actions [data-add-msg]{flex:1 1 100%;margin:0}
+.ffa-add-dlg{border:1px solid var(--line,var(--surface-border));border-radius:16px;padding:16px;max-width:min(420px,92vw);background:var(--psurface,var(--bg,#fff));color:var(--text)}
+.ffa-add-dlg::backdrop{background:rgba(0,0,0,.35)}
+.ffa-add-form{display:flex;flex-direction:column;gap:10px}
+.ffa-add-form h2{margin:0;font-size:1.1rem}
+.ffa-add-form .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ffa-add-form input,.ffa-add-form select{min-height:44px;max-width:100%}
+@media (prefers-reduced-motion:reduce){
+  .ffa-add-dlg{transition:none;animation:none}
+}

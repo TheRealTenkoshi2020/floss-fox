@@ -1,0 +1,7 @@
+{
+  "inventory": [
+    {"brand": "DMC", "code": "310", "quantity": 5},
+    {"brand": "DMC", "code": "321", "quantity": 2},
+    {"brand": "DMC", "code": "B5200", "quantity": 1}
+  ]
+}

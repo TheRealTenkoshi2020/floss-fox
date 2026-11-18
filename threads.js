@@ -69,6 +69,44 @@ function load(){let raw=null;try{raw=localStorage.getItem(KEY)}catch(e){canSave=
 function backupChanged(){window.dispatchEvent(new CustomEvent('ff:data-saved',{detail:{area:'threads'}}));}
 function save(){bulkStorageUndoState=null;if(!canSave){if(!mem)say('Not saved: saving is paused (see the note above).');return false}
  try{localStorage.setItem(KEY,JSON.stringify(data));backupChanged();return true}catch(e){say(e&&(e.name==='QuotaExceededError'||e.code===22)?'Not saved: browser storage is full.':'Not saved: your browser blocked the save.');return false}}
+/* 3.9 Atelier (FF39-10): +/- skein steps are read back after saving. If the browser didn't keep the change, the count is put
+   back and the page says so plainly (never a "saved" message). The latest step offers Undo, which is saved and checked the same way.
+   In session-only mode (storage unavailable, banner shown) the existing in-memory behavior is unchanged. */
+const AC=(k,v,n,f)=>{const X=window.FlossFoxAtelierCopy;const r=X&&X.has&&X.has(k)?X.t(k,v,n):'';return r||f};
+function savedOk(){if(!save())return false;try{return localStorage.getItem(KEY)===JSON.stringify(data)}catch(e){return false}}
+let stepUndo=null;
+function stepMsg(text,undo){const s=$('thStatus');if(!s)return;s.textContent=text;let u=$('thStepUndo');
+ if(undo){if(!u){u=document.createElement('button');u.type='button';u.id='thStepUndo';u.className='ghost small';s.insertAdjacentElement('afterend',u);u.onclick=undoStep}u.textContent=AC('common.undo',{},undefined,'Undo');u.hidden=false}else if(u)u.hidden=true}
+function stepNow(b){const c=b.dataset.c,demo=b.dataset.m==='d',M=MM(b),id=b.id;if(!M[c])return;if(+b.dataset.step>0&&!okCap(c,M[c].n+1,M))return;
+ const before=JSON.stringify(M[c]);C.step(data,c,+b.dataset.step,{demo});const after=JSON.stringify(M[c]);
+ if(mem){render();keepFocus(id);say(`DMC ${lab(c)}: ${M[c].n} full skein${M[c].n===1?'':'s'}.`);return}
+ if(!savedOk()){M[c]=JSON.parse(before);resync();render();keepFocus(id);
+  const n=M[c].n;stepUndo=null;stepMsg(AC('lib.notSaved',{brand:'DMC',code:lab(c),n},n,`Not saved: your browser blocked the save. DMC ${lab(c)} is still ${n} full skein${n===1?'':'s'}.`),false);return}
+ stepUndo={c,demo,before,after};render();keepFocus(id);const n=M[c].n;stepMsg(AC('lib.saved',{brand:'DMC',code:lab(c),n},n,`DMC ${lab(c)}: ${n} full skein${n===1?'':'s'}.`),true)}
+function undoStep(){const u=stepUndo;stepUndo=null;if(!u){stepMsg('',false);return}const M=u.demo?data.demo||{}:data.threads;
+ if(!M[u.c]||JSON.stringify(M[u.c])!==u.after){stepMsg('',false);return} // changed since: never undo over a newer edit
+ M[u.c]=JSON.parse(u.before);if(!savedOk()){M[u.c]=JSON.parse(u.after);render();const n=M[u.c].n;stepMsg(AC('lib.notSaved',{brand:'DMC',code:lab(u.c),n},n,`Not saved: your browser blocked the save. DMC ${lab(u.c)} is still ${n} full skein${n===1?'':'s'}.`),false);return}
+ render();const n=M[u.c].n;stepMsg(AC('lib.saved',{brand:'DMC',code:lab(u.c),n},n,`DMC ${lab(u.c)}: ${n} full skein${n===1?'':'s'}.`),false);const f=$('tn-'+(u.demo?'d_':'')+u.c.replace(/[^\w]/g,'_'));if(f)f.focus()}
+/* 3.9 Atelier (FF39-19, decision 7): a CONFIRMED "I received it" adds full skeins to My threads. Called only by the project
+   check-in after the user entered the amount (never by Mark bought). Increments an existing color or creates it; the write is read
+   back and rolled back if the browser didn't keep it. Returns a token for one Undo, which only applies if the entry is unchanged since. */
+function resync(){try{if(canSave&&localStorage.getItem(KEY)!==JSON.stringify(data))localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
+ try{if(window.FlossFoxJournal&&FlossFoxJournal.rebase)FlossFoxJournal.rebase()}catch(e){}} // the journal saw the change that was rolled back: re-base, no event
+function receiveFull(code,n){const c=String(code||'').toUpperCase();if(!DMC[c]||!Number.isInteger(n)||n<1||n>999)return{ok:false,reason:'invalid'};
+ if(!canSave||mem)return{ok:false,reason:'paused'};const M=data.threads,had=!!M[c],before=had?JSON.stringify(M[c]):null;
+ if(had&&M[c].n+n>999)return{ok:false,reason:'cap'};
+ if(had){M[c].n+=n;M[c].updated=new Date().toISOString()}else M[c]={n,partial:false,restock:false,updated:new Date().toISOString(),confirmed:true};
+ const after=JSON.stringify(M[c]);
+ if(!savedOk()){if(had)M[c]=JSON.parse(before);else delete M[c];resync();render();return{ok:false,reason:'not-saved'}}
+ render();return{ok:true,code:c,n:M[c].n,created:!had,token:{c,before,after}}}
+function undoReceive(tk){if(!tk||!tk.c)return{ok:false,reason:'invalid'};const M=data.threads,cur=M[tk.c]?JSON.stringify(M[tk.c]):null;
+ if(cur!==tk.after)return{ok:false,reason:'changed'};if(!canSave||mem)return{ok:false,reason:'paused'};
+ if(tk.before===null)delete M[tk.c];else M[tk.c]=JSON.parse(tk.before);
+ if(!savedOk()){M[tk.c]=JSON.parse(tk.after);resync();render();return{ok:false,reason:'not-saved'}}render();return{ok:true}}
+// Explicit restock flag (decision 6: "Add to shopping list" from a low-stock suggestion, or Remove in Shop). Verified, rolled back on failure.
+function setRestock(code,on){const c=String(code||'').toUpperCase(),M=data.threads;if(!M[c])return{ok:false,reason:'missing'};if(!canSave||mem)return{ok:false,reason:'paused'};
+ if(M[c].restock===!!on)return{ok:true,unchanged:true};const before=JSON.stringify(M[c]);M[c].restock=!!on;M[c].updated=new Date().toISOString();
+ if(!savedOk()){M[c]=JSON.parse(before);resync();render();return{ok:false,reason:'not-saved'}}render();return{ok:true}}
 const nm=c=>DMC[c].name.replace(/\b(vy|dk|lt|md|ul)\b/gi,m=>({vy:'very',dk:'dark',lt:'light',md:'medium',ul:'ultra'}[m.toLowerCase()]));
 const ST={stock:'In stock',partial:'Partial skein only',out:'Out of stock'};
 const thOpen=new Set();
@@ -106,7 +144,7 @@ function bind(){const L=$('thList');
  L.querySelectorAll('[data-n]').forEach(i=>i.onchange=()=>{const c=i.dataset.n,M=MM(i),v=i.value.trim(),e=M[c];
   if(!/^\d+$/.test(v)){say(`"${v}" isn't a whole number of skeins (0 or more), so nothing changed.`);i.value=e.n;return}
   const k=Math.min(999,+v);if(!okCap(c,k,M)){i.value=e.n;return}e.n=k;e.confirmed=true;stamp(e);save();render();keepFocus(i.id);say(`DMC ${lab(c)}: ${k} full skein${k===1?'':'s'}.`)});
- L.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const c=b.dataset.c,M=MM(b),id=b.id;if(+b.dataset.step>0&&!okCap(c,M[c].n+1,M))return;C.step(data,c,+b.dataset.step,{demo:b.dataset.m==='d'});save();render();keepFocus(id);say(`DMC ${lab(c)}: ${M[c].n} full skein${M[c].n===1?'':'s'}.`)});
+ L.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>stepNow(b));
  L.querySelectorAll('[data-part]').forEach(x=>x.onchange=()=>{const c=x.dataset.part,e=MM(x)[c];e.partial=x.checked;stamp(e);save();render();keepFocus(x.id)});
  L.querySelectorAll('[data-rs]').forEach(x=>x.onchange=()=>{const c=x.dataset.rs,e=MM(x)[c];e.restock=x.checked;stamp(e);save();render();keepFocus(x.id)});
  L.querySelectorAll('[data-verify]').forEach(b=>b.onclick=()=>{const c=b.dataset.verify,e=MM(b)[c];e.confirmed=true;stamp(e);save();render();keepFocus('tn-'+(b.dataset.m==='d'?'d_':'')+c.replace(/[^\w]/g,'_'));say(`Confirmed ${e.n} full skein${e.n===1?'':'s'} of DMC ${lab(c)}.`)});
@@ -203,7 +241,7 @@ function addFromProjects(ids){const P=window.FlossFoxProjects&&FlossFoxProjects.
  const codes=Object.keys(added);if(codes.length){fromUndo=added;save();render()}return{added:codes}}
 function undoFromProjects(){if(!fromUndo)return 0;let n=0;for(const [c,snap] of Object.entries(fromUndo))if(data.threads[c]&&JSON.stringify(data.threads[c])===snap){delete data.threads[c];n++}fromUndo=null;save();render();return n}
 function fromProjectsCount(ids){const P=window.FlossFoxProjects&&FlossFoxProjects._store();if(!P)return 0;const s=new Set();P.projects.filter(p=>!p.demo&&(!ids||ids.includes(p.id))).forEach(p=>haveNew(p).forEach(it=>s.add(it.code)));return s.size}
-Object.assign(window.FlossFoxThreadsUI,{addFromProjects,undoFromProjects,fromProjectsCount,canUndoFrom:()=>!!fromUndo});
+Object.assign(window.FlossFoxThreadsUI,{addFromProjects,undoFromProjects,fromProjectsCount,canUndoFrom:()=>!!fromUndo,receiveFull,undoReceive,setRestock,isMem:()=>mem});
 $('thImport').onclick=()=>{const r=addFromProjects(null),a=r.added.length;
  say(a?`Added ${a} color${a===1?'':'s'} you marked Have enough (or received) in your projects. Colors already in your collection were left alone.`:'Nothing new to add from your projects.');if(window.FlossFoxFlow)FlossFoxFlow.offerUndo(a)};
 const bk=$('thBackup');if(bk)bk.onclick=()=>{const P=window.FlossFoxProjects;if(P&&P.backup){P.backup();say('Backup downloaded (projects and thread collection).')}};

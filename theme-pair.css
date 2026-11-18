@@ -28,8 +28,8 @@
 --fox:#a8441f;--fox-ink:#94401d;--coral:#c77868;--ink:var(--text);--ink-2:var(--text-muted);--line:var(--surface-border);--line-2:var(--input-border);--focus:#1e5fa8;
 --font:var(--font-body);
 --bg:var(--canvas);--card:var(--surface);--txt:var(--ink);--mut:var(--ink-2);--lime:var(--sage-ink);--pink:var(--sage-ink);--blush:var(--sage-100);
---shadow:var(--card-shadow);--on-accent:#ffffff;--paper:#ffffff}
-@media (prefers-color-scheme:dark){:root{
+--shadow:var(--card-shadow);--on-accent:#ffffff;--paper:#ffffff;--disabled-bg:#efe9dd;--disabled-text:#676b64;--disabled-line:#c9bfae;--swatch-edge:#8f7d62;--fiber-hi:rgba(255,255,255,.38);--fiber-lo:rgba(0,0,0,.16);--demo-bg:#ece8f6;--demo-ink:#4a3d80;--hover-tint:#f5eee0}
+@media (prefers-color-scheme:dark){:root:not([data-atelier-scheme]){
 --pbg:#0f1d1a;--bg-art:radial-gradient(ellipse at 70% -10%,rgba(240,170,70,.24),transparent 55%),radial-gradient(ellipse at 0% 100%,rgba(70,110,90,.32),transparent 60%);
 --text:#f3ead8;--text-strong:#fff4dc;--text-muted:#d3cab6;--brand-accent:#f2b357;
 --psurface:#182924;--surface-border:#3a4d43;--card-shadow:0 18px 40px #0008;
@@ -64,7 +64,7 @@ code{background:var(--surface-2);color:var(--text)}
 .hero h1{font-family:var(--font-head);font-weight:600;line-height:1.12;padding-right:40px}
 .hero .steps li{background:var(--chip-bg);border:1px solid var(--chip-border);color:var(--chip-text);font-weight:700}
 .hero .steps li:nth-child(1) .num{background:var(--step1)}.hero .steps li:nth-child(2) .num{background:var(--step2)}.hero .steps li:nth-child(3) .num{background:var(--step3)}
-.num{background:var(--step2);color:var(--step-text)}
+.hero .num{background:var(--step2);color:var(--step-text)}
 .hero .steps::after{content:none}
 .hero .steps{position:relative}
 .herogrid{position:relative}
@@ -114,7 +114,8 @@ body.pipc-hero .pipc.pipminned{grid-template-areas:"min";justify-content:end}
  body.pipc-hero .pipc .pipbubble::before{left:50%;top:-7px;transform:translateX(-50%) rotate(135deg)}
  body.pipc-hero .herogrid::before{grid-column:1/-1}}
 /* dark: the lantern halo may pulse very slowly; nothing else moves */
-@media (prefers-color-scheme:dark) and (prefers-reduced-motion:no-preference){body.pipc-hero .pipc .pipfig::before{animation:ff-lantern 9s ease-in-out infinite}}
+@media (prefers-reduced-motion:no-preference){html[data-atelier-scheme=dark] body.pipc-hero .pipc .pipfig::before{animation:ff-lantern 9s ease-in-out infinite}}
+@media (prefers-color-scheme:dark) and (prefers-reduced-motion:no-preference){html:not([data-atelier-scheme]) body.pipc-hero .pipc .pipfig::before{animation:ff-lantern 9s ease-in-out infinite}}
 @keyframes ff-lantern{50%{opacity:.6}}
 /* shared nav (assets/nav.css) and link colors, both themes */
 html .fcnav a,html nav.tabs>button,html nav.tabs>a{background:var(--chip-bg);border-color:var(--chip-border);color:var(--chip-text)}
@@ -125,32 +126,68 @@ html footer a,html .summary a,html .pipA-set,html .jump a{color:var(--link)}
 html .ffterm,html .tag{color:var(--link)}
 html .artcredit{color:var(--text-muted)!important}
 :root{--link:#94401d;--hero-pip-h:92px}
+html[data-atelier-scheme=dark]{--link:var(--fox-ink);--tint-warm:var(--wait-bg);--tint-green:var(--ok-bg);--tint-rose:var(--att-bg);--hair:var(--surface-border)}
+html[data-atelier-scheme=dark] body{background:var(--bg-art),var(--pbg)}
+html[data-atelier-scheme=dark] .pri:hover,html[data-atelier-scheme=dark] .btnlink.pri:hover{background:var(--pri-bg-hover)}
+html[data-atelier-scheme=dark] .sec:hover{background:var(--hover-tint)}
+/* Stage E polish: pressed List/Grid/Shelf and List/Gallery stay tab-on even while hovered (dark .sec:hover must not win). */
+html .ffa-seg button[aria-pressed=true],html .ffa-seg button[aria-pressed=true]:hover,
+html #ffaViewBar .ffa-viewbtn[aria-pressed=true],html #ffaViewBar .ffa-viewbtn[aria-pressed=true]:hover{background:var(--tab-on-bg);color:var(--tab-on-text);border-color:var(--tab-on-bg)}
+
+html[data-atelier-scheme=dark] textarea,html[data-atelier-scheme=dark] .card,html[data-atelier-scheme=dark] .chip,html[data-atelier-scheme=dark] .totals,html[data-atelier-scheme=dark] .notes,html[data-atelier-scheme=dark] .pick,html[data-atelier-scheme=dark] .tcard,html[data-atelier-scheme=dark] .buyat a,html[data-atelier-scheme=dark] .wtbstore,html[data-atelier-scheme=dark] .wtb a.wtblink,html[data-atelier-scheme=dark] .ffest,html[data-atelier-scheme=dark] .ffestsum,html[data-atelier-scheme=dark] .askpip,html[data-atelier-scheme=dark] .tourcard,html[data-atelier-scheme=dark] .seg,html[data-atelier-scheme=dark] .scard,html[data-atelier-scheme=dark] .pcmp,html[data-atelier-scheme=dark] .psum,html[data-atelier-scheme=dark] .pipface,html[data-atelier-scheme=dark] .pipc .pipface,
+html[data-atelier-scheme=dark] .seg label,html[data-atelier-scheme=dark] .fcres .big,html[data-atelier-scheme=dark] .pt-side,html[data-atelier-scheme=dark] .pt-altbtn,html[data-atelier-scheme=dark] .piph-message[data-role="pip"],html[data-atelier-scheme=dark] .piph-preview pre,html[data-atelier-scheme=dark] .skein-summary-mark,html[data-atelier-scheme=dark] .skein-toggle{background:var(--surface);color:var(--text)}
+html[data-atelier-scheme=dark] input[type=text],html[data-atelier-scheme=dark] input[type=number],html[data-atelier-scheme=dark] input[type=search],html[data-atelier-scheme=dark] input[type=email],html[data-atelier-scheme=dark] input[type=url],html[data-atelier-scheme=dark] select,html[data-atelier-scheme=dark] textarea,html[data-atelier-scheme=dark] .pnotes,html[data-atelier-scheme=dark] .ff-bulk-browse select,html[data-atelier-scheme=dark] .ff-bulk input,html[data-atelier-scheme=dark] .ff-bulk select,html[data-atelier-scheme=dark] .ff-storage-field input,html[data-atelier-scheme=dark] .ff-storage-field select,html[data-atelier-scheme=dark] .piph-controls textarea,html[data-atelier-scheme=dark] .pat-layout input:not([type=checkbox]):not([type=file]),html[data-atelier-scheme=dark] .pat-layout textarea{background:var(--input-bg);color:var(--text-strong);border-color:var(--input-border)}
+html[data-atelier-scheme=dark] .askpipbtn{background:var(--chip-bg);color:var(--sec-text);border-color:var(--chip-border)}
+html[data-atelier-scheme=dark] .askpipbtn:hover,html[data-atelier-scheme=dark] .askpip .aans,html[data-atelier-scheme=dark] .piptog:hover,html[data-atelier-scheme=dark] .pipc .pipmin:hover{background:var(--hover-tint)}
+html[data-atelier-scheme=dark] .sec,html[data-atelier-scheme=dark] .btnlink.sec{background:transparent;color:var(--sec-text)}
+html[data-atelier-scheme=dark] .seg label:has(input:checked),html[data-atelier-scheme=dark] .note,html[data-atelier-scheme=dark] .ready,html[data-atelier-scheme=dark] .chip.value,html[data-atelier-scheme=dark] .ffbanner,html[data-atelier-scheme=dark] .pat-saved,html[data-atelier-scheme=dark] .piph-message[data-role="user"],html[data-atelier-scheme=dark] .piph-preview{background:var(--tint-green);color:var(--text);border-color:var(--ok-line)}
+html[data-atelier-scheme=dark] .chip.cheap,html[data-atelier-scheme=dark] .errbox,html[data-atelier-scheme=dark] .ready.no,html[data-atelier-scheme=dark] .pat-saved.errbox,html[data-atelier-scheme=dark] mark.badline{background:var(--tint-rose);color:var(--text);border-color:var(--att-line)}
+html[data-atelier-scheme=dark] .fftermpop,html[data-atelier-scheme=dark] .ffpipbox,html[data-atelier-scheme=dark] .ffpipline,html[data-atelier-scheme=dark] .ffeli5,html[data-atelier-scheme=dark] .pat-check,html[data-atelier-scheme=dark] .demohead,html[data-atelier-scheme=dark] .cmpprev,html[data-atelier-scheme=dark] .sumgrid div,html[data-atelier-scheme=dark] .bknotice,html[data-atelier-scheme=dark] .ff-readiness-inline,html[data-atelier-scheme=dark] .pfstep,html[data-atelier-scheme=dark] .pat-pin,html[data-atelier-scheme=dark] .piph-dialog,html[data-atelier-scheme=dark] .pat-dialog,html[data-atelier-scheme=dark] .pipA-bubble,html[data-atelier-scheme=dark] .ff-bulk,html[data-atelier-scheme=dark] .ff-bulk .ff-bulk-preview,html[data-atelier-scheme=dark] .ff-storage,html[data-atelier-scheme=dark] .skein-panel,html[data-atelier-scheme=dark] .skein-panel>summary.skein-summary,html[data-atelier-scheme=dark] .piptip{background:var(--surface-2);color:var(--text);border-color:var(--hair)}
+html[data-atelier-scheme=dark] .pfstep[aria-current=step]{background:var(--tab-on-bg);color:var(--tab-on-text);border-color:var(--tab-on-bg)}
+html[data-atelier-scheme=dark] .pfstep.done:not([aria-current]),html[data-atelier-scheme=dark] .ff-rg-have h4,html[data-atelier-scheme=dark] .pt-tag,html[data-atelier-scheme=dark] .ffsaved{color:var(--ok-ink)}
+html[data-atelier-scheme=dark] .ff-rg-buy h4,html[data-atelier-scheme=dark] .pat-warnings,html[data-atelier-scheme=dark] .warn,html[data-atelier-scheme=dark] .unk,html[data-atelier-scheme=dark] .why,html[data-atelier-scheme=dark] .tcard .caut,html[data-atelier-scheme=dark] .tcard.st-review,html[data-atelier-scheme=dark] .err,html[data-atelier-scheme=dark] .pt-err,html[data-atelier-scheme=dark] .bagwarn{color:var(--att-ink)}
+html[data-atelier-scheme=dark] .ff-rg-review h4,html[data-atelier-scheme=dark] .tcard.st-awaiting{color:var(--wait-ink)}
+html[data-atelier-scheme=dark] .tcard.st-buy{color:var(--buy-ink)}html[data-atelier-scheme=dark] .tcard.st-have,html[data-atelier-scheme=dark] .tcard.st-received{color:var(--ok-ink)}
+html[data-atelier-scheme=dark] .ff-readiness-inline .mut,html[data-atelier-scheme=dark] .pat-tip,html[data-atelier-scheme=dark] .pat-status,html[data-atelier-scheme=dark] .pat-row>small:not(.pat-warnings),html[data-atelier-scheme=dark] .piph-note,html[data-atelier-scheme=dark] .piph-status,html[data-atelier-scheme=dark] .ff-skein-note,html[data-atelier-scheme=dark] .ff-skein-direct,html[data-atelier-scheme=dark] .ff-skein-off,html[data-atelier-scheme=dark] .pipstrip,html[data-atelier-scheme=dark] .ffsub{color:var(--text-muted)}
+html[data-atelier-scheme=dark] .ff-loc,html[data-atelier-scheme=dark] .piph-dialog,html[data-atelier-scheme=dark] .pat-dialog,html[data-atelier-scheme=dark] .piph-preview h4,html[data-atelier-scheme=dark] .ff-storage summary,html[data-atelier-scheme=dark] .pipA-bubble{color:var(--text)}
+html[data-atelier-scheme=dark] .piph-link,html[data-atelier-scheme=dark] .ffmore>summary{color:var(--link)}
+html[data-atelier-scheme=dark] .demotag{background:var(--demo-bg);color:var(--demo-ink)}
+html[data-atelier-scheme=dark] .step,html[data-atelier-scheme=dark] .num,html[data-atelier-scheme=dark] .skein-summary-title .skein-on,html[data-atelier-scheme=dark] .chipsf button[aria-pressed=true],html[data-atelier-scheme=dark] .seg label:has(input:checked){color:var(--on-accent)}
+html[data-atelier-scheme=dark] .seg label:has(input:checked){background:var(--tab-on-bg);color:var(--tab-on-text)}
+html[data-atelier-scheme=dark] .step{background:var(--sage-ink)}
+html[data-atelier-scheme=dark] .piph-header,html[data-atelier-scheme=dark] .piph-controls,html[data-atelier-scheme=dark] .pat-header,html[data-atelier-scheme=dark] .pat-row,html[data-atelier-scheme=dark] .pt-item,html[data-atelier-scheme=dark] .pat-layout details,html[data-atelier-scheme=dark] .bktab th,html[data-atelier-scheme=dark] .bktab td{border-color:var(--hair)}
+html[data-atelier-scheme=dark] input[aria-invalid=true]{background:var(--att-bg)}
+html[data-atelier-scheme=dark] .skein-switch{background:var(--hair);border-color:var(--surface-border)}
 @media (prefers-color-scheme:dark){
-:root{--link:#f6c77e;--tint-warm:#2a2312;--tint-green:#1f3d2f;--tint-rose:#3a2116;--hair:#3a4d43}
-html body{background:var(--bg-art),var(--pbg)}
-html .pri:hover,html .btnlink.pri:hover{background:var(--pri-bg-hover)}
-html .sec:hover{background:#22382f}
-html textarea,html .card,html .chip,html .totals,html .notes,html .pick,html .tcard,html .buyat a,html .wtbstore,html .wtb a.wtblink,html .ffest,html .ffestsum,html .askpip,html .tourcard,html .seg,html .scard,html .pcmp,html .psum,html .pipface,html .pipc .pipface,
-html .seg label,html .fcres .big,html .pt-side,html .pt-altbtn,html .piph-message[data-role="pip"],html .piph-preview pre,html .skein-summary-mark,html .skein-toggle{background:var(--surface);color:var(--text)}
-html input[type=text],html input[type=number],html input[type=search],html input[type=email],html input[type=url],html select,html textarea,html .pnotes,html .ff-bulk-browse select,html .ff-bulk input,html .ff-bulk select,html .ff-storage-field input,html .ff-storage-field select,html .piph-controls textarea,html .pat-layout input:not([type=checkbox]):not([type=file]),html .pat-layout textarea{background:var(--input-bg);color:var(--text-strong);border-color:var(--input-border)}
-html .askpipbtn{background:var(--chip-bg);color:var(--sec-text);border-color:var(--chip-border)}
-html .askpipbtn:hover,html .askpip .aans,html .piptog:hover,html .pipc .pipmin:hover{background:#22382f}
-html .sec,html .btnlink.sec{background:transparent;color:var(--sec-text)}
-html .seg label:has(input:checked),html .note,html .ready,html .chip.value,html .ffbanner,html .pat-saved,html .piph-message[data-role="user"],html .piph-preview{background:var(--tint-green);color:var(--text);border-color:#4f8a62}
-html .chip.cheap,html .errbox,html .ready.no,html .pat-saved.errbox,html mark.badline{background:var(--tint-rose);color:var(--text);border-color:#a8603f}
-html .fftermpop,html .ffpipbox,html .ffpipline,html .ffeli5,html .pat-check,html .demohead,html .cmpprev,html .sumgrid div,html .bknotice,html .ff-readiness-inline,html .pfstep,html .pat-pin,html .piph-dialog,html .pat-dialog,html .pipA-bubble,html .ff-bulk,html .ff-bulk .ff-bulk-preview,html .ff-storage,html .skein-panel,html .skein-panel>summary.skein-summary,html .piptip{background:var(--surface-2);color:var(--text);border-color:var(--hair)}
-html .pfstep[aria-current=step]{background:var(--tab-on-bg);color:var(--tab-on-text);border-color:var(--tab-on-bg)}
-html .pfstep.done:not([aria-current]),html .ff-rg-have h4,html .pt-tag,html .ffsaved{color:#a9e2b9}
-html .ff-rg-buy h4,html .pat-warnings,html .warn,html .unk,html .why,html .tcard .caut,html .tcard.st-review,html .err,html .pt-err,html .bagwarn{color:#ffb59a}
-html .ff-rg-review h4,html .tcard.st-awaiting{color:#f1df9a}
-html .tcard.st-buy{color:#ffc58a}html .tcard.st-have,html .tcard.st-received{color:#a9e2b9}
-html .ff-readiness-inline .mut,html .pat-tip,html .pat-status,html .pat-row>small:not(.pat-warnings),html .piph-note,html .piph-status,html .ff-skein-note,html .ff-skein-direct,html .ff-skein-off,html .pipstrip,html .ffsub{color:var(--text-muted)}
-html .ff-loc,html .piph-dialog,html .pat-dialog,html .piph-preview h4,html .ff-storage summary,html .pipA-bubble{color:var(--text)}
-html .piph-link,html .ffmore>summary{color:var(--link)}
-html .demotag{background:#2e2848;color:#d9d1ff}
-html .step,html .num,html .skein-summary-title .skein-on,html .chipsf button[aria-pressed=true],html .seg label:has(input:checked){color:var(--on-accent)}
-html .seg label:has(input:checked){background:var(--tab-on-bg);color:var(--tab-on-text)}
-html .step{background:var(--sage-ink)}
-html .piph-header,html .piph-controls,html .pat-header,html .pat-row,html .pt-item,html .pat-layout details,html .bktab th,html .bktab td{border-color:var(--hair)}
-html input[aria-invalid=true]{background:#3a2116}
-html .skein-switch{background:#3a4d43;border-color:#566a5f}}
+:root:not([data-atelier-scheme]){--link:#f6c77e;--tint-warm:#2a2312;--tint-green:#1f3d2f;--tint-rose:#3a2116;--hair:#3a4d43}
+html:not([data-atelier-scheme]) body{background:var(--bg-art),var(--pbg)}
+html:not([data-atelier-scheme]) .pri:hover,html:not([data-atelier-scheme]) .btnlink.pri:hover{background:var(--pri-bg-hover)}
+html:not([data-atelier-scheme]) .sec:hover{background:var(--hover-tint)}
+html:not([data-atelier-scheme]) textarea,html:not([data-atelier-scheme]) .card,html:not([data-atelier-scheme]) .chip,html:not([data-atelier-scheme]) .totals,html:not([data-atelier-scheme]) .notes,html:not([data-atelier-scheme]) .pick,html:not([data-atelier-scheme]) .tcard,html:not([data-atelier-scheme]) .buyat a,html:not([data-atelier-scheme]) .wtbstore,html:not([data-atelier-scheme]) .wtb a.wtblink,html:not([data-atelier-scheme]) .ffest,html:not([data-atelier-scheme]) .ffestsum,html:not([data-atelier-scheme]) .askpip,html:not([data-atelier-scheme]) .tourcard,html:not([data-atelier-scheme]) .seg,html:not([data-atelier-scheme]) .scard,html:not([data-atelier-scheme]) .pcmp,html:not([data-atelier-scheme]) .psum,html:not([data-atelier-scheme]) .pipface,html:not([data-atelier-scheme]) .pipc .pipface,
+html:not([data-atelier-scheme]) .seg label,html:not([data-atelier-scheme]) .fcres .big,html:not([data-atelier-scheme]) .pt-side,html:not([data-atelier-scheme]) .pt-altbtn,html:not([data-atelier-scheme]) .piph-message[data-role="pip"],html:not([data-atelier-scheme]) .piph-preview pre,html:not([data-atelier-scheme]) .skein-summary-mark,html:not([data-atelier-scheme]) .skein-toggle{background:var(--surface);color:var(--text)}
+html:not([data-atelier-scheme]) input[type=text],html:not([data-atelier-scheme]) input[type=number],html:not([data-atelier-scheme]) input[type=search],html:not([data-atelier-scheme]) input[type=email],html:not([data-atelier-scheme]) input[type=url],html:not([data-atelier-scheme]) select,html:not([data-atelier-scheme]) textarea,html:not([data-atelier-scheme]) .pnotes,html:not([data-atelier-scheme]) .ff-bulk-browse select,html:not([data-atelier-scheme]) .ff-bulk input,html:not([data-atelier-scheme]) .ff-bulk select,html:not([data-atelier-scheme]) .ff-storage-field input,html:not([data-atelier-scheme]) .ff-storage-field select,html:not([data-atelier-scheme]) .piph-controls textarea,html:not([data-atelier-scheme]) .pat-layout input:not([type=checkbox]):not([type=file]),html:not([data-atelier-scheme]) .pat-layout textarea{background:var(--input-bg);color:var(--text-strong);border-color:var(--input-border)}
+html:not([data-atelier-scheme]) .askpipbtn{background:var(--chip-bg);color:var(--sec-text);border-color:var(--chip-border)}
+html:not([data-atelier-scheme]) .askpipbtn:hover,html:not([data-atelier-scheme]) .askpip .aans,html:not([data-atelier-scheme]) .piptog:hover,html:not([data-atelier-scheme]) .pipc .pipmin:hover{background:var(--hover-tint)}
+html:not([data-atelier-scheme]) .sec,html:not([data-atelier-scheme]) .btnlink.sec{background:transparent;color:var(--sec-text)}
+html:not([data-atelier-scheme]) .seg label:has(input:checked),html:not([data-atelier-scheme]) .note,html:not([data-atelier-scheme]) .ready,html:not([data-atelier-scheme]) .chip.value,html:not([data-atelier-scheme]) .ffbanner,html:not([data-atelier-scheme]) .pat-saved,html:not([data-atelier-scheme]) .piph-message[data-role="user"],html:not([data-atelier-scheme]) .piph-preview{background:var(--tint-green);color:var(--text);border-color:var(--ok-line)}
+html:not([data-atelier-scheme]) .chip.cheap,html:not([data-atelier-scheme]) .errbox,html:not([data-atelier-scheme]) .ready.no,html:not([data-atelier-scheme]) .pat-saved.errbox,html:not([data-atelier-scheme]) mark.badline{background:var(--tint-rose);color:var(--text);border-color:var(--att-line)}
+html:not([data-atelier-scheme]) .fftermpop,html:not([data-atelier-scheme]) .ffpipbox,html:not([data-atelier-scheme]) .ffpipline,html:not([data-atelier-scheme]) .ffeli5,html:not([data-atelier-scheme]) .pat-check,html:not([data-atelier-scheme]) .demohead,html:not([data-atelier-scheme]) .cmpprev,html:not([data-atelier-scheme]) .sumgrid div,html:not([data-atelier-scheme]) .bknotice,html:not([data-atelier-scheme]) .ff-readiness-inline,html:not([data-atelier-scheme]) .pfstep,html:not([data-atelier-scheme]) .pat-pin,html:not([data-atelier-scheme]) .piph-dialog,html:not([data-atelier-scheme]) .pat-dialog,html:not([data-atelier-scheme]) .pipA-bubble,html:not([data-atelier-scheme]) .ff-bulk,html:not([data-atelier-scheme]) .ff-bulk .ff-bulk-preview,html:not([data-atelier-scheme]) .ff-storage,html:not([data-atelier-scheme]) .skein-panel,html:not([data-atelier-scheme]) .skein-panel>summary.skein-summary,html:not([data-atelier-scheme]) .piptip{background:var(--surface-2);color:var(--text);border-color:var(--hair)}
+html:not([data-atelier-scheme]) .pfstep[aria-current=step]{background:var(--tab-on-bg);color:var(--tab-on-text);border-color:var(--tab-on-bg)}
+html:not([data-atelier-scheme]) .pfstep.done:not([aria-current]),html:not([data-atelier-scheme]) .ff-rg-have h4,html:not([data-atelier-scheme]) .pt-tag,html:not([data-atelier-scheme]) .ffsaved{color:var(--ok-ink)}
+html:not([data-atelier-scheme]) .ff-rg-buy h4,html:not([data-atelier-scheme]) .pat-warnings,html:not([data-atelier-scheme]) .warn,html:not([data-atelier-scheme]) .unk,html:not([data-atelier-scheme]) .why,html:not([data-atelier-scheme]) .tcard .caut,html:not([data-atelier-scheme]) .tcard.st-review,html:not([data-atelier-scheme]) .err,html:not([data-atelier-scheme]) .pt-err,html:not([data-atelier-scheme]) .bagwarn{color:var(--att-ink)}
+html:not([data-atelier-scheme]) .ff-rg-review h4,html:not([data-atelier-scheme]) .tcard.st-awaiting{color:var(--wait-ink)}
+html:not([data-atelier-scheme]) .tcard.st-buy{color:var(--buy-ink)}html:not([data-atelier-scheme]) .tcard.st-have,html:not([data-atelier-scheme]) .tcard.st-received{color:var(--ok-ink)}
+html:not([data-atelier-scheme]) .ff-readiness-inline .mut,html:not([data-atelier-scheme]) .pat-tip,html:not([data-atelier-scheme]) .pat-status,html:not([data-atelier-scheme]) .pat-row>small:not(.pat-warnings),html:not([data-atelier-scheme]) .piph-note,html:not([data-atelier-scheme]) .piph-status,html:not([data-atelier-scheme]) .ff-skein-note,html:not([data-atelier-scheme]) .ff-skein-direct,html:not([data-atelier-scheme]) .ff-skein-off,html:not([data-atelier-scheme]) .pipstrip,html:not([data-atelier-scheme]) .ffsub{color:var(--text-muted)}
+html:not([data-atelier-scheme]) .ff-loc,html:not([data-atelier-scheme]) .piph-dialog,html:not([data-atelier-scheme]) .pat-dialog,html:not([data-atelier-scheme]) .piph-preview h4,html:not([data-atelier-scheme]) .ff-storage summary,html:not([data-atelier-scheme]) .pipA-bubble{color:var(--text)}
+html:not([data-atelier-scheme]) .piph-link,html:not([data-atelier-scheme]) .ffmore>summary{color:var(--link)}
+html:not([data-atelier-scheme]) .demotag{background:var(--demo-bg);color:var(--demo-ink)}
+html:not([data-atelier-scheme]) .step,html:not([data-atelier-scheme]) .num,html:not([data-atelier-scheme]) .skein-summary-title .skein-on,html:not([data-atelier-scheme]) .chipsf button[aria-pressed=true],html:not([data-atelier-scheme]) .seg label:has(input:checked){color:var(--on-accent)}
+html:not([data-atelier-scheme]) .seg label:has(input:checked){background:var(--tab-on-bg);color:var(--tab-on-text)}
+html:not([data-atelier-scheme]) .step{background:var(--sage-ink)}
+html:not([data-atelier-scheme]) .piph-header,html:not([data-atelier-scheme]) .piph-controls,html:not([data-atelier-scheme]) .pat-header,html:not([data-atelier-scheme]) .pat-row,html:not([data-atelier-scheme]) .pt-item,html:not([data-atelier-scheme]) .pat-layout details,html:not([data-atelier-scheme]) .bktab th,html:not([data-atelier-scheme]) .bktab td{border-color:var(--hair)}
+html:not([data-atelier-scheme]) input[aria-invalid=true]{background:var(--att-bg)}
+html:not([data-atelier-scheme]) .skein-switch{background:var(--hair);border-color:var(--surface-border)}
+}
+
+html select:disabled,html input:disabled:not([type=checkbox]):not([type=radio]){background:var(--disabled-bg);color:var(--disabled-text);border-color:var(--disabled-line);opacity:1}
+html label:has(>input:disabled){color:var(--disabled-text)}

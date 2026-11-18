@@ -9,7 +9,8 @@ html.ff-landing body{padding:0!important;margin:0!important}
 .land .lpip img{position:relative;width:100%;height:100%;object-fit:contain;filter:var(--pip-glow);animation:pip-in .9s ease-out both}
 @keyframes pip-in{from{opacity:0}to{opacity:1}}
 @keyframes halo-pulse{0%,100%{opacity:.75;transform:scale(.97)}50%{opacity:1;transform:scale(1.04)}}
-@media (prefers-color-scheme:dark){.land .lhalo{animation:halo-pulse 4.5s ease-in-out infinite}}
+@media (prefers-reduced-motion:no-preference){html[data-atelier-scheme=dark] .land .lhalo{animation:halo-pulse 4.5s ease-in-out infinite}}
+@media (prefers-color-scheme:dark) and (prefers-reduced-motion:no-preference){html:not([data-atelier-scheme]) .land .lhalo{animation:halo-pulse 4.5s ease-in-out infinite}}
 .land .say{position:relative;margin:10px 0 18px;padding:12px 18px;max-width:330px;text-align:center;font:600 22px/1.25 var(--font-head);background:var(--bubble-bg);color:var(--bubble-text);border:1px solid var(--bubble-border);border-radius:22px}
 .land .say::before{content:"";position:absolute;top:-8px;left:50%;width:16px;height:16px;transform:translateX(-50%) rotate(45deg);background:var(--bubble-bg);border-left:1px solid var(--bubble-border);border-top:1px solid var(--bubble-border)}
 .land .choices{margin-bottom:auto;width:100%;display:flex;flex-direction:column;gap:10px;position:static;background:none;border:0;padding:0}
