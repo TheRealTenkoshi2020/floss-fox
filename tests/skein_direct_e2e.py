@@ -10,15 +10,25 @@ PROJ={'schema':2,'projects':[{'id':'t20a','name':'Inline test','notes':'','buyBr
 TH={'schema':1,'threads':{'415':{'n':2,'partial':False,'restock':False,'confirmed':True,'updated':'2026-10-14T00:00:00Z'},'3865':{'n':2,'partial':False,'restock':False,'updated':'2026-10-14T00:00:00Z'}}}
 EXP={'310':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/310-black--dmc-mouline-grays-embroidery-floss/p/106215','https://www.everythingcrossstitch.com/floss-embroidery-dmc-black-mrp-p550.aspx'],
  '321':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/321-red---dmc-mouline-reds-embroidery-floss/p/106224','https://www.everythingcrossstitch.com/floss-embroidery-dmc-xmas-red-mrp-p559.aspx'],
- '666':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/666-bright-red---dmc-mouline-reds-embroidery-floss/p/106317','https://www.everythingcrossstitch.com/floss-embroidery-dmc-xmas-red--mrp-p653.aspx']}
+ '666':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/666-bright-red---dmc-mouline-reds-embroidery-floss/p/106317','https://www.everythingcrossstitch.com/floss-embroidery-dmc-xmas-red--mrp-p653.aspx'],
+ '48':['https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/48-variegated-baby-pink---dmc-mouline-pinks-embroidery-floss/p/106528','https://www.everythingcrossstitch.com/floss-embroidery-dmc--mrp-p499.aspx']}
 R=[0,0]
 def ok(n,c,i=''):R[0 if c else 1]+=1;print(('PASS ' if c else 'FAIL ')+n+('' if c else ' -> '+str(i)[:300]))
 INIT="if(!sessionStorage.getItem('s')){sessionStorage.setItem('s',1);localStorage.setItem('%s.tour.v1','{\"status\":\"dismissed\"}');localStorage.setItem('%s',%s);localStorage.setItem('%s',%s)}"%(PFX,KEY,json.dumps(json.dumps(PROJ)),TKEY,json.dumps(json.dumps(TH)))
 def ctx_for(b,w,mob,sw='block'):
  c=b.new_context(viewport={'width':w,'height':844 if mob else 900},is_mobile=mob,device_scale_factor=2 if mob else 1,service_workers=sw);c.add_init_script(INIT)
  c.route(re.compile(r'https://(www\.hobbylobby|www\.everythingcrossstitch)\.com/.*'),lambda r:r.fulfill(status=200,body='<title>stub</title>',content_type='text/html'));return c
+
+def click_tab(g,tid):
+ loc=g.locator('#'+tid)
+ if loc.count() and loc.first.is_visible():
+  loc.first.click();return
+ more=g.locator('#ffuxNavSummary')
+ if more.count() and more.first.is_visible():
+  more.first.click()
+ g.locator('#'+tid).click()
 def openshop(g,q=''):
- g.goto(B+q);g.wait_for_load_state('networkidle');g.click('#tabProjects');g.click('[data-open="t20a"]');g.wait_for_timeout(250);g.click('#tabShop');g.wait_for_timeout(250)
+ g.goto(B+q);g.wait_for_load_state('networkidle');g.click('#tabProjects');g.click('[data-open="t20a"]');g.wait_for_timeout(250);click_tab(g,'tabShop');g.wait_for_timeout(250)
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
  for w,mob in ((390,True),(1280,False)):
@@ -30,7 +40,7 @@ with sync_playwright() as p:
   for x in pills:got.setdefault(x['c'],[]).append(x['h'])
   ok(t+'pill URLs exactly as expected',got==EXP,got)
   ok(t+'target _blank, rel noopener noreferrer, no sponsored, kind direct',all(x['t']=='_blank' and x['r']=='noopener noreferrer' and x['k']=='direct' and x['tr']=='false' for x in pills),pills)
-  ok(t+'no pills for 3865 check-first/unconfirmed, 415 owned, 48 specialty',not({'3865','415','48'}&set(got)))
+  ok(t+'no pills for 3865 check-first/unconfirmed or 415 owned',not({'3865','415'}&set(got)))
   note=g.evaluate("[...document.querySelectorAll('#shopView .ff-skein-direct')].map(e=>e.textContent)")
   ok(t+'one direct-link note',note==["These are plain store links, and Floss Fox doesn't earn anything from them. Before you order, double-check the color, thread type, amount and availability on the store's site."],note)
   dm=g.evaluate("(()=>{const h=document.body.innerHTML.replace(/<script[\\s\\S]*?<\\/script>/g,'');return [h.match(/.{60}(\\(demo\\)|\\.example).{40}/g),!!document.querySelector('.wtb'),(FLOSS_FOX_SHOP.mockMerchants||[]).length]})()")
@@ -49,10 +59,10 @@ with sync_playwright() as p:
    g.keyboard.press('Tab');a=g.evaluate("(()=>{const e=document.activeElement;const s=getComputedStyle(e);return{id:e.id,pill:e.classList.contains('ff-skein-pill'),h:e.href||'',ring:s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0||s.boxShadow!=='none'}})()")
    order.append(a)
    if a['pill'] or a['id'] in ('tabShop','ffuxNavSummary'):ring&=a['ring']
-   if a['pill'] and len([o for o in order if o['pill']])==6:break
+   if a['pill'] and len([o for o in order if o['pill']])==8:break
   ids=[o['id'] for o in order];ph=[o['h'] for o in order if o['pill']]
   ok(t+'Tab reaches Shopping tab (or the More tools menu that holds it, guided UX)',('tabShop' in ids) or ('ffuxNavSummary' in ids and g.locator('#ffuxNavMore #tabShop').count()==1),ids[:10])
-  ok(t+'Tab reaches each pill in order',ph==EXP['310']+EXP['321']+EXP['666'],ph)
+  ok(t+'Tab reaches each pill in order',ph==EXP['48']+EXP['310']+EXP['321']+EXP['666'],ph)
   ok(t+'visible focus ring on Shopping tab and pills',ring,order)
   with c.expect_page() as pi:g.keyboard.press('Enter')
   ok(t+'Enter activates focused pill',pi.value.url==EXP['666'][1],pi.value.url);pi.value.close()
@@ -79,9 +89,9 @@ with sync_playwright() as p:
  g.evaluate("navigator.serviceWorker.ready.then(()=>new Promise(r=>setTimeout(r,1500)))");g.reload();g.wait_for_load_state('networkidle')
  ctl=g.evaluate("!!navigator.serviceWorker.controller");c.set_offline(True)
  try:
-  g.reload();g.wait_for_timeout(800);g.click('#tabProjects');g.click('[data-open="t20a"]');g.wait_for_timeout(250);g.click('#tabShop');g.wait_for_timeout(300)
+  g.reload();g.wait_for_timeout(800);g.click('#tabProjects');g.click('[data-open="t20a"]');g.wait_for_timeout(250);click_tab(g,'tabShop');g.wait_for_timeout(300)
   o=g.evaluate("({vis:!document.getElementById('shopView').hidden,list:!!document.querySelector('#shopView #pPlan #pShopH'),pills:document.querySelectorAll('#shopView .ff-skein-inline').length,a:document.querySelectorAll('#shopView .ff-skein-pill:not(#pCheck .ff-skein-pill)').length,off:[...document.querySelectorAll('#shopView .ff-skein-off')].map(e=>e.textContent)})")
-  ok('offline: SW controlled, Shopping tab + list + pills render',ctl and o['vis'] and o['list'] and o['a']==6,o);print('offline detail:',o)
+  ok('offline: SW controlled, Shopping tab + list + pills render',ctl and o['vis'] and o['list'] and o['a']==8,o);print('offline detail:',o)
  except Exception as e: ok('offline reload',False,e)
  c.close()
  # Myke (flow phase 3): assumed amounts get the same untracked store links, plus a "check your pattern" note; math unchanged.
@@ -91,7 +101,7 @@ with sync_playwright() as p:
  AI="if(!sessionStorage.getItem('s')){sessionStorage.setItem('s',1);localStorage.setItem('%s.tour.v1','{\"status\":\"dismissed\"}');localStorage.setItem('%s',%s)}"%(PFX,KEY,json.dumps(json.dumps({'schema':2,'projects':[A]})))
  c=b.new_context(viewport={'width':390,'height':844},is_mobile=True,device_scale_factor=2,service_workers='block');c.add_init_script(AI)
  c.route(re.compile(r'https://(www\.hobbylobby|www\.everythingcrossstitch)\.com/.*'),lambda r:r.fulfill(status=200,body='<title>stub</title>',content_type='text/html'))
- g=c.new_page();g.goto(B);g.wait_for_load_state('networkidle');g.click('#tabProjects');g.click('[data-open="asm"]');g.wait_for_timeout(250);g.click('#tabShop');g.wait_for_timeout(300)
+ g=c.new_page();g.goto(B);g.wait_for_load_state('networkidle');g.click('#tabProjects');g.click('[data-open="asm"]');g.wait_for_timeout(250);click_tab(g,'tabShop');g.wait_for_timeout(300)
  r=g.evaluate("""(()=>{const w=[...document.querySelectorAll('#shopView .ff-skein-inline')];return w.map(x=>({c:x.dataset.dmc,n:x.querySelectorAll('.ff-skein-pill').length,h:[...x.querySelectorAll('.ff-skein-pill')].map(a=>a.href),tr:[...x.querySelectorAll('.ff-skein-pill')].map(a=>a.dataset.tracked+a.rel),note:(x.querySelector('.ff-skein-asm')||{}).textContent||'',li:x.closest('li').textContent}))})()""")
  by={x['c']:x for x in r}
  ok('A1 assumed-amount row (321) gets both store links',by.get('321',{}).get('n')==2,r)
@@ -104,7 +114,7 @@ with sync_playwright() as p:
  # Flow phase 3: "Estimated" badge + count line on assumed rows (project list), and the combined plan keeps its grouping but gets links.
  c=b.new_context(viewport={'width':390,'height':844},is_mobile=True,device_scale_factor=2,service_workers='block');c.add_init_script(AI)
  c.route(re.compile(r'https://(www\.hobbylobby|www\.everythingcrossstitch)\.com/.*'),lambda r:r.fulfill(status=200,body='<title>stub</title>',content_type='text/html'))
- g=c.new_page();g.goto(B);g.wait_for_load_state('networkidle');g.click('#tabProjects');g.click('[data-open="asm"]');g.wait_for_timeout(250);g.click('#tabShop');g.wait_for_timeout(300)
+ g=c.new_page();g.goto(B);g.wait_for_load_state('networkidle');g.click('#tabProjects');g.click('[data-open="asm"]');g.wait_for_timeout(250);click_tab(g,'tabShop');g.wait_for_timeout(300)
  e=g.evaluate("""(()=>{const lis=[...document.querySelectorAll('#shopView #pPlan ul')[0].children];return lis.map(li=>({t:li.textContent,b:!!li.querySelector(':scope > label .ffest, :scope .ffest')}))})()""")
  ok('E1 badge "Estimated" only on the assumed row, next to the quantity',[x['b'] for x in e]==[False,True] and '× 1≈ Estimated' in e[1]['t'].replace('\u00a0',' '),e)
  st=g.evaluate("(()=>{const b=document.querySelector('#shopView .ffest');const s=getComputedStyle(b);return{border:s.borderStyle,txt:b.textContent}})()")

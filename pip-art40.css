@@ -1,0 +1,6 @@
+/* Pip ideas 11-50 (dev): modest art in existing slots. No new chrome. */
+#ffLanding .lpip img{object-fit:contain}
+#ffuxResume.ffux-resume{flex-direction:row;align-items:center;gap:10px}
+#ffuxResume .ff-art40{flex:none;width:72px;height:72px}
+#ffuxResume .ff-art40 img{width:72px;height:72px;object-fit:contain;display:block}
+#helpView .helphead img{object-fit:contain}

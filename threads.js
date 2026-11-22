@@ -115,15 +115,23 @@ function row(c,dm){const M=dm?data.demo:data.threads,e=M[c],s=C.state(e),id=(dm?
  return`<li class="tcard th st-${s==='out'?'buy':s==='partial'?'awaiting':'have'}${dm?' demo':''}${ox?' thx':''}" data-code="${esc(c)}"${m} data-q="${esc((lab(c)+' '+nm(c)).toLowerCase())}">
  <div class="thtop">${sw(DMC[c].hex)}<button type="button" class="thname thtog" id="tx-${id}" data-tog="${id}" aria-expanded="${ox}" aria-controls="to-${id}" aria-label="Edit DMC ${L}"><b>DMC ${L}</b>${dm?' <span class="tag demotag">Demo</span>':''} <small class="mut">${esc(nm(c))}</small><br><small class="thst">${ST[s]}${e.restock?' · <b>restock</b>':''}</small><span class="thedit" aria-hidden="true">${ox?'Done':'Edit'}</span></button>
  <div class="stepper" role="group" aria-label="Full skeins of ${dm?'demo ':''}DMC ${L}"><button type="button" class="sec" id="tm-${id}"${m} data-step="-1" data-c="${esc(c)}" aria-label="One fewer skein of ${dm?'demo ':''}DMC ${L}"${e.n?'':' disabled'}>−</button><input type="number" class="thn" id="tn-${id}"${m} data-n="${esc(c)}" value="${e.n}" min="0" max="999" step="1" inputmode="numeric" aria-label="Full skeins of ${dm?'demo ':''}DMC ${L}"><button type="button" class="sec" id="tp-${id}"${m} data-step="1" data-c="${esc(c)}" aria-label="One more skein of ${dm?'demo ':''}DMC ${L}">+</button></div></div>
+ ${!dm&&(e.restock||s==='out')?`<div class="ff-buy-slot noprint" data-ffbuyhost="${esc(c)}"></div>`:''}
  <div class="thopts" id="to-${id}"><label><input type="checkbox" id="tpa-${id}"${m} data-part="${esc(c)}"${e.partial?' checked':''}> Partial skein</label><label><input type="checkbox" id="tr-${id}"${m} data-rs="${esc(c)}"${e.restock?' checked':''}> Restock</label><button type="button" class="ghost small"${m} data-del="${esc(c)}">Remove</button></div>${e.n>0&&e.confirmed!==true?`<p class="hint">Check this full-skein count before using it with Pip’s estimates. <button type="button" class="sec small" id="tv-${id}"${m} data-verify="${esc(c)}">Confirm ${e.n} full skein${e.n===1?'':'s'}</button></p>`:''}</li>`}
 const byCode=(a,b)=>{const na=/^\d+$/.test(a)?+a:1e6,nb=/^\d+$/.test(b)?+b:1e6;return na-nb||a.localeCompare(b)};
 function sorted(){return Object.keys(data.threads).sort(byCode)}
+
+function attachThreadBuys(){if(!(window.FLOSS_FOX_ENV==='preview'||window.FLOSS_FOX_DIRECT_LINKS===true)||!window.FlossFoxSkeinPreviewUI)return;
+ const items=[...document.querySelectorAll('#thList .th:not(.demo) [data-ffbuyhost]')].map(h=>{
+  const c=h.getAttribute('data-ffbuyhost');if(!c)return null;
+  return{host:h,need:{brand:'dmc',code:c,family:'six-strand-cotton',pack:'single-skein',qty:1,assumed:false,disputed:false}};
+ }).filter(Boolean);
+ if(items.length)FlossFoxSkeinPreviewUI.buyToggle(items,{prefix:'ffTh',list:document.getElementById('thList')})}
 function render(){const V=$('threadsView');if(!V)return;const codes=sorted(),T=data.threads,D=Object.keys(data.demo||{}).sort(byCode);
  const sk=codes.reduce((a,c)=>a+T[c].n,0),out=codes.filter(c=>C.state(T[c])==='out').length,rs=codes.filter(c=>T[c].restock).length;
  $('thSum').innerHTML=(codes.length?`<b>${codes.length}</b> color${codes.length===1?'':'s'} · ${sk} full skein${sk===1?'':'s'}${out?` · ${out} out of stock`:''}${rs?` · ${rs} to restock`:''}`:'Your keepsake box is empty for now. Add the DMC numbers you own above to fill it.')+(D.length?` <span class="mut">(plus ${D.length} demo threads, counted separately)</span>`:'');
  $('thFilt').innerHTML=[['all','All'],['restock','Restock'],['out','Out of stock']].map(([k,l])=>`<button type="button" data-show="${k}" aria-pressed="${show===k}">${l}</button>`).join('');
  $('thList').innerHTML=codes.map(c=>row(c,false)).join('')+(D.length?`<li class="demohead" id="thDemoHead"><b>Demo threads</b> <span class="hint">Sample data for trying Floss Fox. Kept apart from your own threads and never added to them.</span> <button type="button" class="sec small" id="thRemoveDemo">Remove demo data</button></li>`+D.map(c=>row(c,true)).join(''):'');
- $('thTools').hidden=!codes.length&&!D.length;filter();bind();tip('threads');if(root.FlossFoxThreadLocationsUI)root.FlossFoxThreadLocationsUI.enhance();if(root.FlossFoxBulkStorageUI)root.FlossFoxBulkStorageUI.enhance()}
+ $('thTools').hidden=!codes.length&&!D.length;filter();bind();attachThreadBuys();tip('threads');if(root.FlossFoxThreadLocationsUI)root.FlossFoxThreadLocationsUI.enhance();if(root.FlossFoxBulkStorageUI)root.FlossFoxBulkStorageUI.enhance()}
 function filter(){const s=q.trim().toLowerCase().replace(/^dmc\s*/,'');let n=0;
  document.querySelectorAll('#thList .th').forEach(li=>{const c=li.dataset.code,e=MM(li)[c];const ok=(!s||li.dataset.q.includes(s)||lab(c).toLowerCase()===s)&&(show==='all'||show==='restock'&&e.restock||show==='out'&&C.state(e)==='out');li.hidden=!ok;if(ok)n++});
  const dh=$('thDemoHead');if(dh)dh.hidden=!!s||show!=='all';

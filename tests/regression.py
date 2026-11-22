@@ -95,6 +95,12 @@ with sync_playwright() as p:
         pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.on('console', lambda c: c.type == 'error' and errs.append(c.text)); pg.on('dialog', lambda d: d.accept())
         return pg
+    def close_finished_contexts(*keep):
+        # Section fixtures have independent storage. Release finished contexts;
+        # retain only fixtures deliberately reused by later checks (pp and c).
+        for context in list(br.contexts):
+            if context not in keep: context.close()
+
     pg = page()
     # ---------- Quick convert ----------
     pg.goto(B + '?sample'); pg.wait_for_timeout(200)
@@ -175,7 +181,7 @@ with sync_playwright() as p:
     pg.locator('#projList [data-del]').first.click(); pg.wait_for_selector('#ffConfirm:not([hidden])'); pg.click('#ffConfirmGo'); pg.wait_for_timeout(80); ok('delete with confirmation', pg.locator('[data-open]').count() == 1)
     def restore(buf, name='b.json'): pg.set_input_files('#restoreFile', {'name': name, 'mimeType': 'application/json', 'buffer': buf}); pg.wait_for_timeout(200)
     restore(bk.encode()); pg.check('input[name=rmode][value=skip]'); pg.click('#rGo')
-    ok('restore adds missing, skips existing (no duplicates)', pg.locator('[data-open]').count() == 2 and '1 added' in pg.inner_text('#projStatus') and '1 skipped' in pg.inner_text('#projStatus'), pg.inner_text('#projStatus'))
+    ok('restore adds missing, skips existing (no duplicates)', pg.locator('[data-open]').count() == 2 and '1 added' in pg.inner_text('#restorePanel') and '1 skipped' in pg.inner_text('#restorePanel'), pg.inner_text('#projStatus'))
     restore(bk.encode()); pg.check('input[name=rmode][value=replace]'); pg.click('#rGo'); ok('restore replace keeps count', pg.locator('[data-open]').count() == 2, pg.inner_text('#projStatus'))
     restore(bk.encode()); pg.check('input[name=rmode][value=copy]'); pg.click('#rGo'); ok('restore as copy is explicit', pg.locator('[data-open]').count() == 4 and 'restored copy' in pg.inner_text('#projList'))
     restore(b'{not json'); ok('malformed backup rejected, nothing changed', "isn't a valid Floss Fox backup" in pg.inner_text('#restorePanel') and pg.locator('[data-open]').count() == 4)
@@ -191,6 +197,7 @@ with sync_playwright() as p:
     pq = page(init="Storage.prototype.setItem=function(){throw new DOMException('full','QuotaExceededError')}"); pq.goto(B); conv(pq, '310', 'dmc'); pq.click('#saveProj')
     ok('storage full: save reports not saved', 'storage is full' in pq.inner_text('#projStatus') or "Saved for this session only" in pq.inner_text('#copymsg'), (pq.inner_text('#projStatus'), pq.inner_text('#copymsg')))
     # ---------- Milestone 1.1: readiness + receipt workflow, mobile cards ----------
+    close_finished_contexts()
     FIX = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures', 'backup-v1.json')
     def newproj(pg, text, name='T'):
         pg.goto(B); pg.click('#tabProjects'); pg.click('#newEmpty'); pg.fill('#pName', name); pg.locator('#pName').blur()
@@ -231,7 +238,7 @@ with sync_playwright() as p:
     mg.click('.pmore summary') if not mg.locator('#pNotes').is_visible() else None
     ok('T8c v1 notes/brand/owned preserved', mg.input_value('#pNotes') == 'made with schema 1' and mg.input_value('#pDest') == 'sullivans' and 'after subtracting what you have' in mg.inner_text('#pPlan'))
     mg2 = page(); mg2.goto(B); mg2.click('#tabProjects'); mg2.set_input_files('#restoreFile', FIX); mg2.wait_for_timeout(200); mg2.click('#rGo')
-    ok('T8d v1 backup file restores', '1 added' in mg2.inner_text('#projStatus') and 'V1 fixture' in mg2.inner_text('#projList'), mg2.inner_text('#projStatus'))
+    ok('T8d v1 backup file restores', '1 added' in mg2.inner_text('#restorePanel') and 'V1 fixture' in mg2.inner_text('#projList'), mg2.inner_text('#projStatus'))
     # T9/T10 cards
     m.evaluate("localStorage.removeItem('"+KEY.replace('.v1', '.threads.v1')+"')")
     newproj(m, '310 x2, 321', 'Cards')
@@ -287,6 +294,7 @@ with sync_playwright() as p:
     c13.set_input_files('#restoreFile', {'name': 'b.json', 'mimeType': 'application/json', 'buffer': bk13.encode()}); c13.wait_for_timeout(150); c13.click('#rGo'); c13.click('[data-open]')
     c13.click('#pCopy'); c13.wait_for_timeout(100); ok('T13b backup/restore round-trip gives identical plan text', c13.evaluate('navigator.clipboard.readText()') == txt13)
     # ---------- Milestone 1.2: welcome, example mode, search/filter, shopping mode, a11y ----------
+    close_finished_contexts()
     CJS = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'contrast.js'), encoding='utf-8').read()
     h = page(412, True); h.goto(B)
     ok('N1 welcome headline, label, 3 steps, actions', 'Watch your colors come to light.' in h.inner_text('#heroH') and h.inner_text('label[for=inp]') == 'Paste your DMC color list' and h.locator('.hero .steps li').count() == 3 and h.inner_text('#go') == 'Add my colors' and h.inner_text('#sample') == 'Try an example')
@@ -387,6 +395,7 @@ with sync_playwright() as p:
       const sg=document.querySelector('.seg');out.choice_border=r(P(getComputedStyle(sg).borderTopColor),[255,255,255]);return out})()""")
     print('NONTEXT', json.dumps(nt)); ok('N12b form-control borders >= 3:1 against white', min(nt.values()) >= 3, nt)
     # ---------- Pip companion ----------
+    close_finished_contexts()
     PK = PFX + '.pip.v1'
     pp = page(412, True); reqs = []; pp.on('request', lambda r: reqs.append(r.url)); pp.goto(B); pp.wait_for_load_state('networkidle')
     pst = lambda g: g.evaluate("[FlossFoxPip.current(), document.getElementById('pip').dataset.pose, document.getElementById('pipMsg').textContent]")
@@ -446,6 +455,7 @@ with sync_playwright() as p:
     ok('P8 reduced motion: no Pip animation', rmp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
     ok('P8b with motion: gentle whole-image animation only', pp.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") in ('pippop', 'piptilt', 'pipfade', 'pfin', 'none'))  # pfin = one-Pip soft pose crossfade (opacity/transform only)
     # ---------- Pip phase 2 ----------
+    close_finished_contexts(pp.context)
     def fresh(w=412, rm=False):
         c = br.new_context(viewport={'width': w, 'height': 900}, reduced_motion='reduce' if rm else 'no-preference'); g = c.new_page(); rq = []
         g.on('request', lambda r: rq.append(r.url)); g.on('pageerror', lambda e: errs.append(str(e))); g.goto(B); g.wait_for_load_state('networkidle'); return g, rq
@@ -531,6 +541,7 @@ with sync_playwright() as p:
     pp.fill('#inp', '9999'); pp.click('#go'); pp.evaluate('scrollTo(0,0)'); cr = pp.evaluate(CJS)
     ok('P10 contrast incl. Pip bubble (error state)', not cr['fails'], cr['fails'])
     # ---------- Pip 2: dialogue specifics, toggle placement, assumed quantities ----------
+    close_finished_contexts(pp.context)
     q2 = page(412, True); q2.goto(B)
     def sub2(t): q2.fill('#inp', t); q2.click('#go'); return pst(q2)
     ok('Q1 unclear amount named', sub2('310 two skeins')[2] == "Let's fix that one. I couldn't read the amount in “310 two skeins”. It's highlighted below.", pst(q2))
@@ -568,6 +579,7 @@ with sync_playwright() as p:
         ok(f'Q4 {w}px: Minimize control next to Pip, ≥44px, nothing overlaps; main button on first screen', r['tw'] >= 44 and r['th'] >= 44 and r['near'] and not r['over'] and r['goBottom'] - r['banner'] <= r['vh'], r)  # dev preview only: its intentional banner is excluded; production has no banner (banner == 0)
         g.context.close()
     # ---------- 1.5A shopping layer: "Where to buy your missing supplies" ----------
+    close_finished_contexts(pp.context)
     REALFX = """window.FLOSS_FOX_SHOP.merchants.push({merchantId:'fx-real',displayName:'Fixture Floss Store',affiliateNetwork:'Awin',programId:'0',approvalState:'approved',approvedForProduction:true,approvedForPreview:true,
       allowedDomains:['floss-store.invalid'],trackingHosts:['www.awin1.com'],destinationParam:'ued',rel:'sponsored noopener',termsReviewedAt:'2026-10-01',termsEvidence:'TEST FIXTURE',trackingLinkSource:'TEST FIXTURE (not a real Awin link)',verifiedAt:'2026-10-01',
       categoryLandings:[{offerType:'category',family:'six-strand-cotton',brands:['dmc','anchor'],url:'https://floss-store.invalid/embroidery-floss',linkVerifiedAt:new Date().toISOString()}],
@@ -577,7 +589,8 @@ with sync_playwright() as p:
         c = br.new_context(viewport={'width': w, 'height': 900}, is_mobile=w < 700); c.grant_permissions(['clipboard-read', 'clipboard-write'])
         c.add_init_script(SEED + (init or ''))
         def h(route):
-            resp = route.fetch(); route.fulfill(response=resp, body=resp.text() + '\n' + extra)
+            body = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'shop', 'merchants.js'), encoding='utf-8').read()
+            route.fulfill(status=200, content_type='text/javascript', body=body + '\n' + extra)
         c.route('**/shop/merchants.js', h); g = c.new_page(); g.on('dialog', lambda d: d.accept()); g.on('pageerror', lambda e: errs.append(str(e))); return g
     LIST = '310 x2\n321 x1\n3865 x1\n48 x1\n699'
     PREVIEW = 'floss-fox-dev' in B or KEY.startswith('flossfox-dev')
@@ -694,6 +707,7 @@ with sync_playwright() as p:
     ok('S33 Pip hidden: shopping section unaffected', hp.locator('#wtb .wtb').count() == 1)
     hp_t = hp.locator('#wtb .wtbpip').count(); ok('S33b Pip hidden: no Pip line in the section', hp_t == 0 or not hp.locator('#wtb .wtbpip').is_visible())
     # ---------- 2.0A Concept 2: grouped by retailer ----------
+    close_finished_contexts(pp.context)
     c2 = spage(REALFX, 390); c2.goto(B); c2.fill('#inp', LIST); c2.click('#go'); c2.wait_for_timeout(150)
     if PREVIEW: c2.evaluate("FLOSS_FOX_SHOP.mockMerchants=[]"); c2.click('#go'); c2.wait_for_timeout(100)
     st = c2.evaluate("[...document.querySelectorAll('#wtb .wtbstores>li.wtbstore')].map(li=>({m:li.dataset.merchant,h:li.querySelector('h4').textContent,a:li.querySelectorAll('a[data-level=A]').length,b:li.querySelectorAll('a[data-level=B]').length}))")
@@ -734,6 +748,7 @@ with sync_playwright() as p:
     ok('C2-16 shop CSS uses no new colors outside the existing tokens', True if PREVIEW else not re.search(r'#[0-9a-fA-F]{3,6}', re.search(r'2\.0A Concept 2[^\n]*', __import__('urllib.request').request.urlopen(B).read().decode()).group(0).replace('#fff', '')))
     c2.context.close()
     # ---------- Pip guided tour + Ask Pip ----------
+    close_finished_contexts(pp.context)
     from urllib.parse import urlparse as _up
     def tp(w=412, fresh=True, rm=False, init=None):
         c = br.new_context(viewport={'width': w, 'height': 860 if w < 700 else 900}, is_mobile=w < 700, has_touch=w < 700, reduced_motion='reduce' if rm else 'no-preference', fresh=fresh)
@@ -860,6 +875,7 @@ with sync_playwright() as p:
     allrq = g.rq + d.rq + e.rq + v.rq + a.rq + h.rq
     ok('T22 tour + Ask Pip make no outside requests', all(_up(u).netloc == _up(B).netloc for u in allrq if u.startswith('http')), [u for u in allrq if _up(u).netloc != _up(B).netloc][:5])
     # ---------- Milestone 1.4: transparent art + 5 new poses ----------
+    close_finished_contexts(pp.context)
     import io
     from PIL import Image as _Im
     noalpha = []
@@ -911,6 +927,7 @@ with sync_playwright() as p:
     rmn = tp(412, fresh=False, rm=True); rmn.evaluate("FlossFoxPip.show('idle')"); ok('M11 reduced motion on new poses', rmn.evaluate("getComputedStyle(document.getElementById('pipImg')).animationName") == 'none')
     hdn = tp(412, fresh=False, init=f"localStorage.setItem('{PFX}.pip.v1','hidden')"); hdn.click('#tabHelp'); ok('M12 Pip hidden (one-Pip build): no peeking Pip on Help either, companion art hidden', hdn.locator('#helpPip .apeek img').is_hidden() and hdn.locator('#pipFig').is_hidden())
     # ---------- Milestone 1.4 batch 2: reassuring / puzzled / presenting / discovery / saved / face icon ----------
+    close_finished_contexts()
     b2 = tp(412, fresh=False)
     def b2s(t): b2.fill('#inp', t); b2.click('#go'); b2.wait_for_timeout(60); return b2.evaluate("[FlossFoxPip.current(),document.getElementById('pip').dataset.pose,document.getElementById('pipMsg').textContent]")
     e1 = b2s('310\n9999'); e2 = b2s('310 x2\n310 two'); e3 = b2s('310 321')
@@ -946,6 +963,7 @@ with sync_playwright() as p:
     favok = all(sv.request.get(B + h).status == 200 for h in fav)
     ok('B6b favicons load; the original SVG favicon is kept as a fallback', favok and 'favicon.svg' in fav, fav)
     # ---------- Batch 3 + 4: needle, organizing, goodbye, cross-stitch ----------
+    close_finished_contexts()
     c = page(412, True, init=SEED); c.goto(B); c.wait_for_timeout(200)
     c.click('#tabProjects'); c.wait_for_timeout(150)
     og = c.evaluate("(()=>{const i=document.querySelector('#projectsView .empty img[data-pose=organizing]');if(!i)return null;const r=i.getBoundingClientRect(),p=i.closest('.card').getBoundingClientRect();return [i.naturalWidth>0,Math.round(r.height-r.width*566/480),r.width,r.bottom<=p.bottom]})()")
@@ -965,6 +983,7 @@ with sync_playwright() as p:
     ok('C5 list still to buy -> no cross-stitch yet (only real events)', c.locator('img[data-pose=cross-stitch]').count() == 0)
     ok('C6 everything bought (not checked in) -> no cross-stitch', c.locator('img[data-pose=cross-stitch]').count() == 0)
     # ---------- Release review: shopping completion ----------
+    close_finished_contexts(c.context)
     DONE = "(()=>{const e=document.querySelector('#shopView [data-done]')||document.querySelector('#projEdit [data-done]');if(!e)return null;const i=e.querySelector('img');return [e.dataset.done,i?i.dataset.pose:null,e.innerText]})()"
     STK = "JSON.stringify((JSON.parse(localStorage.getItem('%s'))||{}).projects.map(p=>[p.decisions,p.purchased,p.received]))" % KEY
     sd = page(412, True, init=SEED); newproj(sd, '310 x1, 321 x1', 'Done'); sd.click('#pAllBuy'); sd.wait_for_timeout(80)
@@ -992,6 +1011,7 @@ with sync_playwright() as p:
         se = page(412, True, init=SEED); newproj(se, '310 x1', 'Empty'); se.click('#pShop') if se.locator('#pShop').count() else None; se.wait_for_timeout(80); d7 = se.evaluate(DONE)
         ok('R5 nothing marked to buy -> organizing (or no completion block), never cross-stitch', (d7 is None or d7[1] in ('organizing', 'reassuring', None)) and se.locator('img[data-pose=cross-stitch]').count() == 0, d7)
     # ---------- Release review: art delivery and usability ----------
+    close_finished_contexts(c.context)
     ld = page(412, True, init=SEED); reqs = []; ld.on('request', lambda r: reqs.append(r.url) if '/assets/pip/' in r.url else None); ld.goto(B); ld.wait_for_timeout(600)
     poses = sorted({re.sub(r'-(\d+)\.(webp|png)$', '', u.split('/pip-')[-1]) for u in reqs})
     ok('A1 first screen loads only the Pip images it shows (current pose + Ask Pip face, one size each)', set(poses) - {'curious', 'presenting', 'reassuring', 'puzzled'} <= {'greeting', 'greeting-alt', 'neutral', 'face-icon', 'gardener', 'starlight'} and len([u for u in reqs if 'face-icon' in u]) == 1, reqs)  # returning visitors also fetch the HTML default greeting once (known, ~15 KB)
@@ -1021,6 +1041,7 @@ with sync_playwright() as p:
     nb.fill('#inp', '99999'); nb.click('#go'); nb.wait_for_timeout(150)
     ok('C8 goodbye is calm: shows on a calm base, never over an error', was == 'goodbye' and nb.evaluate("FlossFoxPip.bye()") is False, was)
     # ---------- Phone layout ----------
+    close_finished_contexts()
     pm = page(412, True); pm.goto(B + '?sample'); pm.wait_for_timeout(200)
     ok('phone convert: no horizontal overflow', pm.evaluate('document.documentElement.scrollWidth') <= 412)
     if A.shots: pm.screenshot(path=os.path.join(A.shots, 'live-mobile.png'), full_page=True)

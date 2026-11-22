@@ -18,11 +18,12 @@ async function main(){
   const context=await browser.newContext({viewport:{width,height:844},acceptDownloads:true,serviceWorkers:'block'});contexts.push(context);const requests=[],errors=[];
   await context.route('**/*',route=>{const u=route.request().url();if(u.startsWith(base+'/'))return route.continue();requests.push(u);return route.abort();});
   await context.addInitScript(({seed,threads,KEY,TK,picker})=>{
+   sessionStorage.setItem('ff.landing.seen','1');
    if(!localStorage.getItem('ff.stage0.seeded')){localStorage.setItem(KEY,JSON.stringify(seed));localStorage.setItem(TK,JSON.stringify(threads));localStorage.setItem('ff.stage0.seeded','yes');}
    for(const pfx of ['flossfox-dev','flossfox']){localStorage.setItem(pfx+'.tour.v1','{"status":"dismissed"}');localStorage.setItem(pfx+'.hints.v1','off');}
    if(picker==='unsupported')Object.defineProperty(window,'showSaveFilePicker',{value:undefined,configurable:true,writable:true});
   },{seed,threads,KEY,TK,picker});
-  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());await page.goto(base+'/?nosw');await page.waitForFunction(()=>window.FlossFoxBackupUI&&window.FlossFoxProjects);return{page,context,requests,errors};
+  const page=await context.newPage();const click=page.click.bind(page);page.click=async(selector,...args)=>{if(selector==='#tabSettings'&&!await page.isVisible(selector))await click('#ffuxNavSummary');return click(selector,...args)};page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());await page.goto(base+'/?nosw');await page.waitForFunction(()=>window.FlossFoxBackupUI&&window.FlossFoxProjects);return{page,context,requests,errors};
  }
  const raw=page=>page.evaluate(({KEY,TK})=>({projects:localStorage.getItem(KEY),threads:localStorage.getItem(TK)}),{KEY,TK});
  const meta=page=>page.evaluate(SK=>JSON.parse(localStorage.getItem(SK)||'null'),SK);

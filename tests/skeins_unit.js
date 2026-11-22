@@ -68,7 +68,7 @@ const context={console,setTimeout:()=>0,clearTimeout:()=>{},Date,Math,JSON,Numbe
  DMC,APP_NAME:'Floss Fox',BRAND:{dmc:'DMC',anchor:'Anchor',sullivans:'Sullivans'},PRICES:{checked:'fixture',dmc:{lo:1,hi:1},anchor:{lo:1,hi:1},sullivans:{lo:1,hi:1}},
  $:element,esc:s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),fam,lab:c=>c,disp:(d,c)=>c,asmOf:i=>i.assumed||0,asmTxt:(q,a)=>a?' (assumed)':'',rng:(a,b)=>`${a}–${b}`,
  resolve:(it,dest,pick)=>({ok:true,to:dest==='dmc'?it.code:pick||DMC[it.code].anchor[0]||it.code,prov:'fixture'}),parse:require('../parse.js').make(DMC),
- localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{getElementById:element,querySelector:()=>null},window:{FlossFoxSkeins:S}};
+ localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{getElementById:element,querySelector:()=>null,addEventListener:()=>{}},window:{FlossFoxSkeins:S}};
 context.window.FlossFoxThreadsUI={data:()=>collection,compare:items=>C.compare(items,collection),exportData:()=>collection,core:C};
 vm.createContext(context);
 const source=fs.readFileSync(__dirname+'/../projects.js','utf8');

@@ -26,7 +26,7 @@ def visible(g, sel): return g.locator(sel).first.is_visible()
 def noxover(g): return g.evaluate("document.documentElement.scrollWidth<=innerWidth+1")
 def pressed(g, i): return g.get_attribute('#' + i, 'aria-pressed') == 'true'
 with sync_playwright() as p:
-    br = p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
+    br = p.chromium.launch(executable_path=os.environ.get('FF_CHROME','/usr/bin/google-chrome'), args=['--no-sandbox'])
     for w in (360, 390, 768, 1280):
         h = 800 if w < 700 else 900
         # ---- fresh visitor ----
@@ -106,8 +106,8 @@ with sync_playwright() as p:
     c = br.new_context(viewport={'width': 390, 'height': 800}); g = c.new_page(); g.set_default_timeout(15000)
     g.goto(B); g.wait_for_function("navigator.serviceWorker&&navigator.serviceWorker.controller", timeout=15000) if g.evaluate("!!navigator.serviceWorker.controller") else (g.wait_for_timeout(2500), g.reload(), g.wait_for_timeout(1500))
     g.wait_for_timeout(1000)
-    ck = g.evaluate("caches.keys().then(async ks=>{const k=ks.find(x=>x==='flossfox-v4.0-1');if(!k)return{ks};const c=await caches.open(k);return{k,ks,js:!!(await c.match('guided-ux.js')),css:!!(await c.match('guided-ux.css'))}})")
-    ok('SW-1 cache flossfox-v4.0-1 holds guided-ux.js and .css; no older flossfox cache left', ck.get('js') and ck.get('css') and all(k=='flossfox-v4.0-1' for k in ck['ks'] if k.startswith('flossfox-')), ck)
+    ck = g.evaluate("caches.keys().then(async ks=>{const k=ks.find(x=>x==='flossfox-v5.0-1');if(!k)return{ks};const c=await caches.open(k);return{k,ks,js:!!(await c.match('guided-ux.js')),css:!!(await c.match('guided-ux.css'))}})")
+    ok('SW-1 cache flossfox-v5.0-1 holds guided-ux.js and .css; no older flossfox cache left', ck.get('js') and ck.get('css') and all(k=='flossfox-v5.0-1' for k in ck['ks'] if k.startswith('flossfox-')), ck)
     c.set_offline(True); g.reload(); g.wait_for_timeout(1500)
     ok('SW-2 offline reload still shows guided nav', g.locator('#ffuxNavMore').count() == 1 and g.evaluate("!!window.FlossFoxGuidedUX"))
     c.close(); br.close()

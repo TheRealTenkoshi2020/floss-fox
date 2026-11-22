@@ -16,11 +16,11 @@ function harness({prefs=null,meta=null,failWrites=false,savingPaused=false}={}){
  class Clock extends Date{constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
  const T={data:()=>data,canSave:()=>!savingPaused,exportData:()=>({schema:2,threads:JSON.parse(JSON.stringify(data.threads))})};
  const P={KEY,_store:()=>store,canSave:()=>!savingPaused,downloadBackupText:(text,name,type)=>downloads.push({text,name,type}),showView:()=>{}};
- const sandbox={FlossFoxBackupCore:C,FlossFoxProjects:P,FlossFoxThreadsUI:T,document:{hidden:false,getElementById:id=>nodes.get(id)||null,createElement:()=>new Node(),addEventListener:add},localStorage:{getItem:k=>db.get(k)??null,setItem:(k,v)=>{if(failWrites)throw new Error('storage blocked');db.set(k,v);}},Date:Clock,setInterval:(fn,period)=>{assert.equal(period,60000);return 1;},addEventListener:add,console,SCHEMA:2,BK_VERSION:2,store,TUI:()=>T,nowISO:()=>new Clock().toISOString(),lsGet:k=>db.get(k)??null};
+ const sandbox={FlossFoxBackupCore:C,FlossFoxProjects:P,FlossFoxThreadsUI:T,document:{hidden:false,getElementById:id=>nodes.get(id)||null,createElement:()=>new Node(),querySelectorAll:()=>[],addEventListener:add},localStorage:{getItem:k=>db.get(k)??null,setItem:(k,v)=>{if(failWrites)throw new Error('storage blocked');db.set(k,v);}},Date:Clock,setInterval:(fn,period)=>{assert.equal(period,60000);return 1;},addEventListener:add,console,SCHEMA:2,BK_VERSION:2,store,ALS:()=>null,TUI:()=>T,nowISO:()=>new Clock().toISOString(),lsGet:k=>db.get(k)??null};
  sandbox.window=sandbox;
  const projectSource=fs.readFileSync(require.resolve('../projects.js'),'utf8');
  const prefKeys=projectSource.match(/const PREF_KEYS=(\{[^\n]+\});/);assert.ok(prefKeys);
- const exporter=projectSource.slice(projectSource.indexOf('function fullBackup()'),projectSource.indexOf('\nfunction backup('));assert.ok(exporter.includes('store.projects.filter'));
+ const exporter=projectSource.slice(projectSource.indexOf('function sessionBackup()'),projectSource.indexOf('\nlet lastMediaMissing='));assert.ok(exporter.includes('store.projects.filter'));
  const context=vm.createContext(sandbox);vm.runInContext('const PFX="flossfox-dev"; const PREF_KEYS='+prefKeys[1]+';\n'+exporter+';globalThis.__export=fullBackup;',context);P.fullBackup=sandbox.__export;
  vm.runInContext(fs.readFileSync(require.resolve('../backup-ui.js'),'utf8'),context);
  return{ui:sandbox.FlossFoxBackupUI,nodes,db,downloads,P,T,store,data,sandbox,emit:(name,value)=>{for(const f of events.get(name)||[])f(value);},advance:n=>{now+=n;},state:()=>JSON.parse(db.get(SK)||'null'),raw:()=>[db.get(KEY),db.get(TK)]};

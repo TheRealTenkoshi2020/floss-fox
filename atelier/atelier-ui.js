@@ -274,7 +274,10 @@ function renderRestock(msg){const card=$('ffRestock');if(!card)return;const th=t
   const m=el('span',{class:'ffa-rmeta'});m.append(el('b',null,'DMC '+c+(CAT&&CAT[c]?' \u00b7 '+cname(CAT[c].name):'')),el('span',null,t('search.res.owned',{n:e.n},e.n)));
   const rm=el('button',{type:'button',class:'ghost',id:'ffRsRm-'+c,'aria-label':t('restock.remove')+': DMC '+c},t('restock.remove'));
   rm.onclick=()=>{const r=T&&T.setRestock?T.setRestock(c,false):{ok:false};renderRestock(r.ok?t('restock.removed',{brand:'DMC',code:c}):t('common.notSaved'));const f=$('ffRestockMsg');if(f)f.focus()};
-  li.append(sw,m,rm);ul.append(li)});card.append(ul)}
+  li.append(sw,m,rm);ul.append(li)});card.append(ul);
+ if((window.FLOSS_FOX_ENV==='preview'||window.FLOSS_FOX_DIRECT_LINKS===true)&&window.FlossFoxSkeinPreviewUI){
+  const items=codes.map(c=>{const li=ul.querySelector('li[data-code="'+CSS.escape(c)+'"]');return li?{li,need:{brand:'dmc',code:c,family:'six-strand-cotton',pack:'single-skein',qty:1,assumed:false,disputed:false}}:null}).filter(Boolean);
+  if(items.length)FlossFoxSkeinPreviewUI.buyToggle(items,{prefix:'ffRs',list:ul})}}
 // ---------- wiring ----------
 function boot(){mountWorkbasket();mountSearch();mountSettings();mountLibrary();mountRestock();
  const obs=new MutationObserver(()=>{syncTab();if(current()==='workbasket')renderWB();record()});

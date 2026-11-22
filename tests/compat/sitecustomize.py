@@ -51,3 +51,7 @@ try:
     _Locator.tap = _loc_tap
 except Exception:
     pass
+
+# Explicit runner override for machines with system Chromium instead of Google Chrome.
+if os.environ.get('FF_CHROME'):
+    import browser_runtime

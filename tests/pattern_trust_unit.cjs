@@ -77,6 +77,6 @@ const rr=PCH.check([{page:1,text:'',items}],DMC);ok('"● 1 White" is read as DM
   ['nothing',S.nothing,"There's no color name to go on, so we won't guess. Type the DMC number from your pattern."],['notDmc',S.notDmc,'Not in the DMC catalog'],
   ['typeBad',S.typeBad,"We don't know that DMC number. Check it against your pattern."],['changed',S.changed(x),'Changed DMC 3999 to DMC 987.'],['undone',S.undone(x),'Put back DMC 3999.'],
   ['undoneAll 2',S.undoneAll(2),'Put back 2 fixes.'],['undoneAll 1',S.undoneAll(1),'Put back 1 fix.'],['pipRed',S.pipRed,"A few things need a look before you stitch. See Pattern check. I haven't changed anything."]])ok('Pixel text: '+k,got===want,got);
- const csv=fs.readFileSync('/workspace/pip-art/m-involved/a-strings.csv','utf8'),row=csv.split('\n').find(l=>l.startsWith('pipA.pcheck.red,'));const pip=fs.readFileSync(path.join(__dirname,'..','pip.js'),'utf8');
+ const csv=fs.readFileSync(path.join(__dirname,'fixtures','pip-pattern-check.csv'),'utf8'),row=csv.split('\n').find(l=>l.startsWith('pipA.pcheck.red,'));const pip=fs.readFileSync(path.join(__dirname,'..','pip.js'),'utf8');
  ok('pipA.pcheck.red in pip.js matches a-strings.csv and uses magnifier',row&&row.includes(S.pipRed)&&row.includes(',magnifier,')&&pip.includes("'pipA.pcheck.red':v=>`"+S.pipRed+'`')&&pip.includes("'pipA.pcheck.red':'magnifier'"))}
 console.log(`${N} passed, ${F} failed`);process.exitCode=F?1:0;
