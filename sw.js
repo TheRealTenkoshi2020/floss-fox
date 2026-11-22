@@ -1,5 +1,5 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v5.0-1'; // 5.0: V5 tools + calm-down pass + new Pip art + verified store links everywhere + sitewide SEO; OCR vendor files are lazy, never precached
+const CACHE = 'flossfox-v5.0-2'; // 5.0.1: precache bypasses the HTTP cache so updates never keep old files (fixes missing Restock store links after 5.0); OCR vendor files are lazy, never precached
 const CORE = [
   "audit/ff-audit-core.js",
   "audit/ff-stitch-sessions.js",
@@ -254,7 +254,8 @@ const CORE = [
   'manifest.webmanifest'
 ];
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => Promise.all(CORE.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));
+  // cache:'reload' skips the browser's HTTP cache (GitHub Pages sends max-age=600), so a new version never precaches files left over from the old one.
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(CORE.map(u => c.add(new Request(u, {cache: 'reload'})).catch(() => {})))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('flossfox-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -267,6 +268,6 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(r).then(res => { if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return res; })
       .catch(() => caches.match(r, {ignoreSearch: true}).then(m => m || caches.match('./')).then(m => m || caches.match('offline.html'))));
   } else {
-    e.respondWith(caches.match(r).then(m => m || fetch(r).then(res => { if (res.ok && res.type === 'basic') { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return res; })));
+    e.respondWith(caches.match(r).then(m => m || fetch(r, {cache: 'no-cache'}).then(res => { if (res.ok && res.type === 'basic') { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return res; })));
   }
 });
