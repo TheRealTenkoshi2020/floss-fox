@@ -48,7 +48,7 @@ function pipReply(kind,projs){const active=projs.find(p=>p.status!=='done');swit
  case 'quiet':return 'We can simply look at what you have made, or enjoy a quiet minute. The threadwork will be here when you are ready.';
  case 'stash':return ownedCount()?'Your collection holds '+ownedCount()+' recorded colors. Would you like to browse them?':'Your collection is empty right now. You can add colors by hand or bring an existing list into FlossFox.';
  default:return 'What shall we explore?'} }
-function buildPip(projs){const area=el('details','tw-panel');area.id='twPip';area.open=true;area.append(h('summary','Talk with Pip'));
+function buildPip(projs){const area=el('details','tw-panel');area.id='twPip';area.open=false;area.append(h('summary','Talk with Pip'));
  const inner=el('div','tw-inside');inner.append(h('p','A helpful word, a little inspiration, or simply a place to pause.','tw-muted'));
  const speech=h('p','Welcome! Every stitch has its own story. What are you in the mood for?','tw-speech');speech.id='twPipReply';speech.setAttribute('aria-live','polite');inner.append(speech);
  const row=el('div','tw-choices');[['Continue a project','continue'],['A stitching tip','tip'],['Surprise me','discover'],['My collection','stash'],['Just visiting','quiet']].forEach(([label,kind])=>row.append(btn(label,()=>{speech.textContent=pipReply(kind,projects());if(kind==='discover')focusArea('Treasures')},'ghost')));

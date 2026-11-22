@@ -1,4 +1,7 @@
 # Floss Fox
+
+V5 development candidate combines the current Smart Stash and Threadwood application, the Gemini audit implementation, and the sitewide SEO update. See [V5 integration](docs/V5_INTEGRATION.md) for the current entry points, data safeguards, verification commands and release boundaries. The pages in this repository intentionally remain `noindex`; this source candidate does not imply a production deployment.
+
 Static DMC → Anchor floss converter. No build step: open `index.html`.
 
 - Rename: change `APP_NAME` in index.html.

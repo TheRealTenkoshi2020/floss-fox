@@ -7,12 +7,16 @@ const preview='preview';
 test('973 individually curated direct product URLs; exactly 2 retailers',()=>{
  const manifest=require('../docs/product-links.json');
  assert.equal(manifest.length,973);
+ const ids=new Set(S.stores().map(s=>s.id));
+ assert.deepEqual([...ids].sort(),['everythingcrossstitch','hobbylobby']);
  for(const x of manifest){const links=S.linksFor(valid({code:x.code}),preview);
-   assert.equal(links.length,2);
    const link=links.find(l=>l.storeId===x.merchantId);
+   assert.ok(link,x.merchantId+' '+x.code);
    assert.equal(link.url,x.url);
    assert.equal(link.exact,true);
+   assert.equal(link.type,'exact-product');
    assert.equal(link.untracked,true);
+   assert.ok(!/search|\?q=|query=/i.test(link.url));
  }
 });
 test('correct precise Hobby Lobby variant for DMC 310',()=>{
@@ -24,15 +28,18 @@ test('correct Everything Cross Stitch DMC 321 and 3012 direct products',()=>{
  for(const c of ['321','3012']){const link=S.linksFor(valid({code:c}),preview)[1];
  assert.equal(link.type,'exact-product');assert.equal(link.code,c)}
 });
-test('uncatalogued color has two honest DMC cotton catalog links',()=>{
+test('uncatalogued color has no guessed or catalog-fallback links',()=>{
  const links=S.linksFor(valid({code:'57'}),preview);
- assert.equal(links.length,2);assert.ok(links.every(l=>l.type==='catalog'&&!l.exact));
- assert.ok(links.every(l=>l.label.includes('Find DMC 57')));
- assert.ok(links.every(l=>l.url.startsWith('https://')));
+ assert.equal(links.length,0);
+ assert.ok(!JSON.stringify(links).includes('search'));
 });
-test('never claim all link targets are product pages',()=>{
+test('partial coverage: only the verified store is linked (3829 is ECS only)',()=>{
  const links=S.linksFor(valid({code:'3829'}),preview);
- assert.equal(links[0].exact,false);assert.equal(links[1].exact,true);
+ assert.equal(links.length,1);
+ assert.equal(links[0].storeId,'everythingcrossstitch');
+ assert.equal(links[0].exact,true);
+ assert.equal(links[0].type,'exact-product');
+ assert.ok(!/search/i.test(links[0].url));
 });
 test('reject code injection, ambiguous ids, special shades and invalid ranges',()=>{
  for(const code of ['310?x=1','0310','E5200','S5200','B310','B52000','WHITEX','E310','S310','C310','4000','99999','',null]){
@@ -40,17 +47,29 @@ test('reject code injection, ambiguous ids, special shades and invalid ranges',(
  }
 });
 test('preserve special 01 / 09 shade strings',()=>{
- for(const code of ['01','09']) assert.equal(S.linksFor(valid({code}),preview)[1].code,code);
+ for(const code of ['01','09']){const l=S.linksFor(valid({code}),preview);assert.ok(l.length>=1);assert.ok(l.every(x=>x.code===code&&x.exact))}
 });
 test('never render links unless explicit preview environment',()=>{
  for(const env of ['production','preview2',undefined,null]) assert.deepEqual(S.linksFor(valid(),env),[]);
 });
-test('reject wrong brand, specialty, packages, unresolved substitutions',()=>{
+test('reject wrong brand, packages, unresolved substitutions',()=>{
  for(const item of [
-  valid({brand:'anchor'}),valid({brand:'sullivans'}),valid({family:'specialty'}),
+  valid({brand:'anchor'}),valid({brand:'sullivans'}),
   valid({pack:'assortment'}),valid({disputed:true}),
   valid({substitutionUnapproved:true}),
- ]) assert.equal(S.linksFor(item,preview).length,0);
+ ]) assert.equal(S.linksFor(item,preview).length,0,JSON.stringify(item));
+});
+test('variegated cotton with a verified page still gets exact links (DMC 48)',()=>{
+ const links=S.linksFor(valid({code:'48',family:'variegated'}),preview);
+ assert.equal(links.length,2);
+ assert.ok(links.every(l=>l.exact&&l.type==='exact-product'));
+ assert.ok(links.every(l=>!/search/i.test(l.url)));
+});
+test('BLANC is never linked as WHITE and has no guessed URL',()=>{
+ const links=S.linksFor(valid({code:'BLANC'}),preview);
+ assert.equal(links.length,0);
+ assert.equal(S.normalize('BLANC'),'BLANC');
+ assert.notEqual(S.normalize('BLANC'),'WHITE');
 });
 test('assumed amounts get the same untracked links (Myke, flow phase 3)',()=>{
  const a=S.linksFor(valid({assumed:true}),preview),b=S.linksFor(valid(),preview);
@@ -87,10 +106,16 @@ test('named shades WHITE, BLANC, ECRU, B5200 normalize (BLANC is never WHITE; 52
  for(const [inp,out] of [['WHITE','WHITE'],['white','WHITE'],['Blanc','BLANC'],['BLANC','BLANC'],['BLANC (White)',null],['ecru','ECRU'],['B5200','B5200'],['b5200','B5200'],['5200','B5200'],[' 5200 ','B5200']])
   assert.equal(S.normalize(inp),out,inp);
  assert.equal(S.normalize('BLANC(White)'),null);assert.equal(S.normalize('WHITE (Blanc)'),null);
- for(const c of ['WHITE','ECRU']){const l=S.linksFor(valid({code:c}),preview);assert.equal(l.length,2);assert.ok(l.every(x=>x.exact&&x.code===c))}
+ for(const c of ['WHITE','ECRU']){const l=S.linksFor(valid({code:c}),preview);assert.equal(l.length,2);assert.ok(l.every(x=>x.exact&&x.code===c&&x.label==='Buy DMC '+c+' at '+x.storeName))}
  assert.ok(S.linksFor(valid({code:'BLANC'}),preview).every(x=>x.code!=='WHITE'),'BLANC never gets a WHITE link');
- const b=S.linksFor(valid({code:'5200'}),preview);assert.equal(b[0].exact,false);assert.equal(b[1].exact,true);assert.equal(b[1].code,'B5200');
- assert.match(b[1].label,/View DMC B5200 skein/);
+ assert.equal(S.linksFor(valid({code:'BLANC'}),preview).length,0);
+ const b=S.linksFor(valid({code:'5200'}),preview);assert.equal(b.length,1);assert.equal(b[0].exact,true);assert.equal(b[0].storeId,'everythingcrossstitch');assert.equal(b[0].code,'B5200');
+ assert.equal(b[0].label,'Buy DMC B5200 at Everything Cross Stitch');
+ assert.ok(!/search/i.test(b[0].url));
+ const w=S.linksFor(valid({code:'WHITE'}),preview),bw=S.linksFor(valid({code:'B5200'}),preview);
+ assert.notEqual(w[0].url,bw[0]&&bw[0].url);
+ assert.ok(w.every(l=>l.code==='WHITE'));
+ assert.ok(bw.every(l=>l.code==='B5200'));
 });
 test('numeric handling unchanged by named-shade aliases',()=>{
  assert.equal(S.normalize('310'),'310');assert.equal(S.normalize(310),'310');assert.equal(S.normalize('09'),'09');

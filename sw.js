@@ -1,6 +1,11 @@
 /* Floss Fox service worker: offline support. Same-origin GET only; HTML network-first, static cache-first. */
-const CACHE = 'flossfox-v4.0-1'; // 4.0: 3.9 Stage H + Guided UX + long-name wrap + Smart Stash + Threadwood; OCR vendor files are lazy, never precached
+const CACHE = 'flossfox-v5.0-1'; // 5.0: V5 tools + calm-down pass + new Pip art + verified store links everywhere + sitewide SEO; OCR vendor files are lazy, never precached
 const CORE = [
+  "audit/ff-audit-core.js",
+  "audit/ff-stitch-sessions.js",
+  "audit/ff-audit-ui.js",
+  "audit/ff-audit-feedback.js",
+  "audit/ff-audit.css",
   "backup-core.js",
   "backup-ui.js",
   "snapshots.js",
@@ -20,7 +25,7 @@ const CORE = [
   "analytics.js",
   "build-config.js",
   "landing.js",
-  "guided-ux.js","guided-ux.css",
+  "guided-ux.js","guided-ux.css","calm.js","calm.css","pip-art40.js","pip-art40.css",
   "landing.css",
   "support/links.js","support/links.css",
   "pip-hybrid/pattern-ui.js",
@@ -41,6 +46,10 @@ const CORE = [
   "pip-hybrid/pip-flows.js",
   "pip-hybrid/offline-knowledge.js",
   './',
+  "tools.html",
+  "floss-conversion-guide.html",
+  "thread-inventory-guide.html",
+  "cross-stitch-project-planning.html",
   "about.html",
   "assets/nav.css",
   "fabric.html",

@@ -1,0 +1,12 @@
+/* Calm pass: folded sections and quieter secondary accents. Existing tokens only. */
+details.ffcalm{margin:var(--s3,12px) 0;border:1px solid var(--line,rgba(0,0,0,.12));border-radius:12px;padding:0 var(--s3,12px)}
+details.ffcalm>summary{min-height:44px;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;cursor:pointer;font-weight:700;padding:8px 0}
+details.ffcalm>summary:focus-visible{outline:3px solid currentColor;outline-offset:2px}
+details.ffcalm[open]>summary{margin-bottom:var(--s2,8px)}
+.ffcalm-sub{display:block;width:100%;font-weight:400;font-size:.85em}
+#shopFoot>details.ffcalm{flex:1 1 100%;order:9}
+#shopFoot>details.ffcalm[open]>button{margin:0 8px 8px 0}
+/* one highlighted button per screen: suggestions and folded extras use the secondary look */
+#ffLowSuggest .pri,#ffauShopStart.pri{background:var(--sec-bg,transparent);color:var(--sec-text,inherit);border:2px solid var(--sec-border,currentColor);box-shadow:none}
+/* do not stack an inline Pip tip under the open Pip companion; minimizing Pip shows it again */
+html:has(#pip:not([hidden]) #pipMinBtn[aria-expanded="true"]) #thTip{display:none}

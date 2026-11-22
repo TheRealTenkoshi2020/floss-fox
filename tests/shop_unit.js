@@ -13,7 +13,7 @@ const cfg=(ms,extra)=>Object.assign({SHOPPING_LAYER:true,linkMaxAgeDays:180,merc
 const sel=(needs,c,env)=>O.select(needs,c,env||'production',NOW);
 
 // ---- Commercial gating ----
-ok('G1 production register: env is production', PROD.FLOSS_FOX_ENV==='production');
+ok('G1 dev register: preview environment stays separate from production', PROD.FLOSS_FOX_ENV==='preview');
 ok('G2 production register: no merchant approved, none approved for production or preview', PROD.FLOSS_FOX_SHOP.merchants.every(m=>m.approvalState!=='approved'&&m.approvedForProduction===false&&m.approvedForPreview===false));
 ok('G3 production register: zero URLs anywhere (no offers, no landings)', !/https?:\/\/[^'\s]*(fatquartershop|herrschners|leisurearts|michaels|hobbylobby|awin1)/i.test(JSON.stringify(PROD.FLOSS_FOX_SHOP.merchants.map(m=>[m.offers,m.categoryLandings]))) && PROD.FLOSS_FOX_SHOP.merchants.every(m=>!m.offers.length&&!m.categoryLandings.length));
 let r=sel([need()],PROD.FLOSS_FOX_SHOP);ok('G4 all merchants applied/researching: layer off, 0 links', !r.layer&&r.linkCount===0&&r.excluded.length===5, r.excluded);

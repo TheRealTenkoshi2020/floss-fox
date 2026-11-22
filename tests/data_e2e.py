@@ -9,7 +9,7 @@ from playwright.sync_api import sync_playwright
 ap = argparse.ArgumentParser(); ap.add_argument('base', nargs='?', default='http://localhost:8765/'); ap.add_argument('--chrome', default='/usr/bin/google-chrome')
 A = ap.parse_args(); B = A.base if A.base.endswith('/') else A.base + '/'
 KEY = os.environ.get('FF_KEY', 'flossfox.v1'); PFX = KEY[:-3]; TKEY = PFX + '.threads.v1'; PRE = PFX + '.preimport.v1'
-DEV = 'floss-fox-dev' in B
+DEV = KEY.startswith('flossfox-dev.')
 QUIET = "try{localStorage.setItem('%s.tour.v1','{\"status\":\"dismissed\"}')}catch(e){}" % PFX
 FIX = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fixtures')
 R = {'pass': 0, 'fail': 0}; errs = []; DLG = {'m': 'accept', 'seen': []}
@@ -76,7 +76,7 @@ with sync_playwright() as p:
     # clear storage, import into an empty browser
     g.evaluate('localStorage.clear()'); g.reload(); g.wait_for_load_state('networkidle'); g.click('#tabProjects'); g.click('#backupBox summary')
     g.set_input_files('#restoreFile', path); g.wait_for_timeout(250); t = g.inner_text('#restorePanel')
-    ok('K5 import summary counts projects, colors and prefs', '1 project(s)' in t and '3 thread colors' in t and 'preference' in t, t)
+    ok('K5 import summary counts projects, colors and prefs', '1 project' in t and '3 thread colors' in t and 'preference' in t, t)
     ok('K6 merge or replace offered, merge is the default', g.is_checked('input[name=imode][value=merge]') and g.locator('input[name=imode][value=replace]').count() == 1)
     g.click('#rGo'); g.wait_for_timeout(200)
     ok('K7 after clear + import, projects and collection are back', [x['name'] for x in proj(g)] == ['Backup me'] and json.loads(ls(g, TKEY))['threads'].keys() == {'310', '321', '666'} and json.loads(ls(g, TKEY))['threads']['666']['n'] == 3)
@@ -143,7 +143,7 @@ with sync_playwright() as p:
     g.click('[data-open="u-1"]'); g.wait_for_timeout(100); g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); box = g.inner_text('#pCmpBox')
     ok('S2 thread card shows "1,500 stitches" apart from "2 skeins needed"', '1,500 stitches' in g.inner_text('#pCards') and '2 skeins needed' in g.inner_text('#pCards'), g.inner_text('#pCards')[:300])
     ok('Q1 counts kept apart: 1 owned, 1 quantity not verified, 1 short, 1 missing', g.inner_text('#cmpOwned').startswith('✓ 1') and g.inner_text('#cmpUnver').startswith('? 1') and g.inner_text('#cmpShort').startswith('◐ 1') and g.inner_text('#cmpMissing').startswith('✗ 1'), box)
-    ok('Q2 assumed + owned says "Color owned, quantity not verified", not have enough', 'quantity not verified' in box.lower(), box)
+    ok('Q2 assumed + owned says "Color owned, quantity not verified", not have enough', 'amount not confirmed' in box.lower(), box)
     ok('Q3 independence note in plain words', "Each project is checked against your whole collection, minus any skeins set aside for other projects." in box, box)
     before = proj(g)[0]['decisions']; collBefore = ls(g, TKEY)
     g.evaluate("(()=>{const d=document.getElementById('pCmpBox');if(d&&!d.open)d.querySelector('summary').click()})()"); g.click('#pUseColl'); g.wait_for_timeout(100); pv = g.inner_text('#pCmpPrev')

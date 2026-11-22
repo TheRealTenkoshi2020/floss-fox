@@ -50,6 +50,9 @@ with sync_playwright() as p:
     r = g.evaluate("(()=>{const d=JSON.parse(localStorage.getItem('%s'));d.projects[0].name='Quota';localStorage.setItem('%s',JSON.stringify(d));return FlossFoxSnapshots.take('open',{force:true})})()" % (KEY, KEY))
     ok('QUOTA-1 quota error caught, reported as skipped', r.get('ok') is False and r.get('skipped') == 'quota', r)
     ok('QUOTA-2 old snapshots untouched and real data saved', ls(g, SN) == before and json.loads(ls(g, KEY))['projects'][0]['name'] == 'Quota')
+    ok('STALE-1 a stale tab cannot overwrite changed saved projects', g.evaluate("FlossFoxProjects.isCurrent()") is False)
+    g.reload(); g.wait_for_function('window.FlossFoxSnapshots')
+    g.evaluate(f"(()=>{{const o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){{if(k==='{SN}')throw new DOMException('full','QuotaExceededError');return o.call(this,k,v)}}}})()")
     ok('QUOTA-3 app save still works', g.evaluate("FlossFoxProjects.add({id:'q2',name:'After quota',items:[],decisions:{},purchased:{},buyBrand:'dmc',status:'planning',notes:'',created:'2026-10-01T00:00:00Z',updated:'2026-10-01T00:00:00Z'})") is not None and 'After quota' in ls(g, KEY))
     g.reload(); g.wait_for_function('window.FlossFoxSnapshots'); g.wait_for_timeout(200)
     # Restore with confirm: cancel first

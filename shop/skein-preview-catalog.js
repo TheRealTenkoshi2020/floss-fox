@@ -989,12 +989,8 @@
     })
   });
   const STORES = Object.freeze([
-    Object.freeze({ id:'hobbylobby', name:'Hobby Lobby', host:'www.hobbylobby.com',
-      fallback:'https://www.hobbylobby.com/yarn-needle-art/cross-stitch/floss-thread/c/5-127-1109',
-      help:'Browse cotton embroidery floss and locate the stated DMC color.' }),
-    Object.freeze({ id:'everythingcrossstitch', name:'Everything Cross Stitch', host:'www.everythingcrossstitch.com',
-      fallback:'https://www.everythingcrossstitch.com/dmc-cotton-cross-stitch-floss-mrl-c274.aspx',
-      help:'Use the DMC cotton color catalog or Quick Order quantities to find your number.' })
+    Object.freeze({ id:'hobbylobby', name:'Hobby Lobby', host:'www.hobbylobby.com' }),
+    Object.freeze({ id:'everythingcrossstitch', name:'Everything Cross Stitch', host:'www.everythingcrossstitch.com' })
   ]);
   function validUrl(url, host) {
     try { const u = new URL(url); return u.protocol === 'https:' && u.hostname === host && !u.username && !u.password; }
@@ -1011,10 +1007,16 @@
     if (!/^(?:0[1-9]|[1-9][0-9]{0,3})$/.test(c)) return null;
     return Number(c) <= 3866 ? c : null;
   }
+  function exactUrl(storeId, code) {
+    const s = STORES.find(x => x.id === storeId);
+    const exact = s && PRODUCTS[s.id] && PRODUCTS[s.id][code];
+    return exact && validUrl(exact, s.host) ? exact : null;
+  }
   function eligible(n, env) {
-    if ((env !== 'preview' && env !== 'direct') || !n || n.brand !== 'dmc' || n.family !== 'six-strand-cotton') return false;
+    if ((env !== 'preview' && env !== 'direct') || !n || n.brand !== 'dmc') return false;
     if (n.pack && n.pack !== 'single-skein') return false;
     // Myke (flow phase 3): assumed amounts get links too; the UI adds a "check your pattern" note on those rows.
+    // Family is not a gate: variegated 6-strand cotton has verified product pages; metallics without a verified URL simply get no link.
     if (n.disputed || n.substitutionUnapproved) return false;
     if (!Number.isSafeInteger(n.qty) || n.qty < 1 || n.qty > 9999) return false;
     return !!normalize(n.code);
@@ -1022,18 +1024,18 @@
   function linksFor(n, env) {
     if (!eligible(n,env)) return [];
     const code=normalize(n.code);
+    // Only verified exact product pages. Never search URLs, never guessed slugs, never a category fallback.
     return STORES.map(s => {
-      const exact = PRODUCTS[s.id][code];
-      const direct = !!exact && validUrl(exact, s.host);
-      const url = direct ? exact : s.fallback;
-      if (!validUrl(url,s.host)) return null;
+      const url = exactUrl(s.id, code);
+      if (!url) return null;
       return Object.freeze({storeId:s.id, storeName:s.name, code, url,
-        type:direct?'exact-product':'catalog', exact:direct, untracked:true, tracked:false, kind:'direct',
-        label:(direct?'View DMC '+code+' skein':'Find DMC '+code+' in catalog')+' at '+s.name,
-        hint:direct?'Individual DMC 6-strand cotton listing; confirm options and availability at store.':s.help,
-        identityChecked:direct?LAST_CHECKED:null});
+        type:'exact-product', exact:true, untracked:true, tracked:false, kind:'direct',
+        label:'Buy DMC '+code+' at '+s.name,
+        hint:'Individual DMC listing; confirm the color, thread type, amount and availability at the store.',
+        identityChecked:LAST_CHECKED});
     }).filter(Boolean);
   }
+  function stores(){ return STORES.map(s => Object.freeze({id:s.id, name:s.name, host:s.host})); }
   function rowsFor(needs, env) {
     if (!Array.isArray(needs)) return [];
     const candidates=needs.filter(n=>eligible(n,env));
@@ -1044,5 +1046,5 @@
     return candidates.filter(n=>counts.get(normalize(n.code))===1)
       .map(n=>Object.freeze({code:normalize(n.code),qty:n.qty,assumed:!!n.assumed,links:linksFor(n,env)}));
   }
-  return Object.freeze({linksFor,rowsFor,eligible,normalize,validUrl,LAST_CHECKED});
+  return Object.freeze({linksFor,rowsFor,eligible,normalize,validUrl,exactUrl,stores,LAST_CHECKED});
 });

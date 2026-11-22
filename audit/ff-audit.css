@@ -1,0 +1,50 @@
+/* FlossFox audit sprint — additive, mobile-first, unobtrusive. */
+.ffau-import{margin:.75rem 0;padding:.75rem;background:var(--psurface,#fff);border:1px solid #b6a78a;border-radius:12px}
+.ffau-import .hint{margin:.35rem 0 0}
+.ffau-big{min-height:48px;white-space:normal;line-height:1.3}
+.ffau-trip,.ffau-sessions,.ffau-color,.ffau-color-pref{margin:1rem 0;padding:1rem;border:1px solid #b8a995;border-radius:14px;background:var(--psurface,#fff);color:var(--text,#252525)}
+.ffau-trip h2,.ffau-sessions h3{margin-top:0}
+.ffau-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.85rem 0}
+.ffau-field{display:flex;flex-direction:column;gap:.3rem;margin:.5rem 0;font-weight:650}
+.ffau-field input:not([type=checkbox]),.ffau-field textarea{font:inherit;max-width:100%;width:100%;box-sizing:border-box;min-height:44px;padding:.6rem;border:1px solid #8e877d;border-radius:9px;background:var(--psurface,#fff);color:var(--text,#252525)}
+.ffau-field:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:.6rem;min-height:44px}
+.ffau-stats{display:flex;flex-wrap:wrap;gap:.65rem;margin:.9rem 0}
+.ffau-stat{flex:1 1 110px;display:flex;flex-direction:column;gap:.2rem;border:1px solid #d0c7b8;border-radius:10px;padding:.65rem}
+.ffau-stat strong{font-size:1.25rem}
+.ffau-stat small{font-size:.78rem}
+.ffau-sessions form{max-width:550px}
+.ffau-sessions details{margin:.6rem 0}
+.ffau-sessions form button{margin-top:.7rem}
+#ffauRecent ul{list-style:none;padding:0}
+#ffauRecent li{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;padding:.55rem 0;border-bottom:1px solid #ddd4c7}
+.ffau-chart{display:flex;align-items:end;gap:.4rem;min-height:96px;max-width:330px;padding:.5rem 0}
+.ffau-bar-col{flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:end}
+.ffau-bar{width:100%;max-width:32px;background:#8fa87d;border-radius:5px 5px 2px 2px}
+.ffau-bar-col small{font-size:.76rem}
+.ffau-trip fieldset{border:1px solid #d2c6b3;border-radius:9px}
+.ffau-trip fieldset label{display:flex;align-items:center;min-height:45px;gap:.6rem}
+.ffau-trip input[type=checkbox]{min-width:22px;min-height:22px;accent-color:#446c50}
+.ffau-trip-list{list-style:none;margin:.5rem 0;padding:0}
+.ffau-trip-list li{margin:.25rem 0}
+.ffau-trip-row{min-height:56px;display:flex;gap:.85rem;align-items:center;padding:.5rem .8rem;background:var(--surface-2,#f7f3eb);border:1px solid #d5cab9;color:var(--text,#29251f);border-radius:10px;font-size:1rem;font-weight:650;line-height:1.35;cursor:pointer}
+.ffau-trip-row.ffau-found{text-decoration:line-through;opacity:.65}
+.ffau-trip-count{font-weight:750}
+.ffau-overlay{position:fixed;inset:0;z-index:999999;background:rgba(20,20,20,.76);display:flex;justify-content:center;align-items:flex-start;padding:1rem;overflow-y:auto}
+.ffau-shared{background:var(--psurface,#fff);color:var(--text,#242424);max-width:620px;width:100%;border-radius:15px;padding:1rem 1.25rem;box-shadow:0 10px 45px rgba(0,0,0,.3);margin:1rem auto}
+.ffau-shared ul{padding-left:1.3rem;max-height:40vh;overflow:auto}
+.ffau-shared li{padding:.3rem 0}
+.ffau-color ul{list-style:none;padding:0}
+.ffau-color li{display:flex;align-items:center;gap:.65rem;margin:.4rem 0}
+.ffau-swatch{min-width:28px;min-height:28px;border:1px solid #444;border-radius:5px}
+@media(max-width:460px){.ffau-actions>button{flex:1 1 160px}.ffau-sessions,.ffau-trip{padding:.8rem}.ffau-stat{flex:1 1 95px}}
+@media print{.ffau-import,.ffau-overlay,.ffau-color,.ffau-color-pref,.ffau-sessions form{display:none!important}}
+
+.ffau-sessions>summary{font-weight:700;cursor:pointer;min-height:44px;display:list-item}
+.ffau-field>span,.ffau-trip-row>span{min-width:0;overflow-wrap:anywhere}
+.ffau-trip,.ffau-shared,.ffau-sessions{box-sizing:border-box;min-width:0;overflow-wrap:anywhere}
+.ffau-trip fieldset{min-width:0}
+.ffau-overlay{box-sizing:border-box}
+.ffau-trip :focus-visible,.ffau-sessions :focus-visible,.ffau-shared :focus-visible,.ffau-color :focus-visible{outline:3px solid var(--brand-accent,#a8441f);outline-offset:3px}
+
+/* Single-project Bought guidance does not apply to the separate Found checklist. */
+body:has(#ffauTrip:not([hidden])) #pip{display:none!important}
